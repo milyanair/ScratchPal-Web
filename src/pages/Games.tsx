@@ -1,0 +1,503 @@
+import { Layout } from '@/components/layout/Layout';
+import { MessageSlider } from '@/components/MessageSlider';
+import { GameCard } from '@/components/GameCard';
+import { Award, Trophy, Heart, Search, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { Game, Favorite, ForumTopic } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUserColors } from '@/hooks/useUserColor';
+import { slugifyCategory } from '@/lib/utils';
+import { useStateFromUrl } from '@/hooks/useStateFromUrl';
+
+export function Games() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const stateSetFromUrl = useStateFromUrl();
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'rank' | 'prizes'>('rank');
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+
+  // Get user's selected state
+  const { data: userPref, isLoading: isPrefLoading } = useQuery({
+    queryKey: ['userPreference', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Get selected state from localStorage for anonymous users
+  const [anonymousState, setAnonymousState] = useState<string>(() => {
+    return localStorage.getItem('selected_state') || '';
+  });
+
+  // Listen for localStorage changes (for header updates and URL state changes)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAnonymousState(localStorage.getItem('selected_state') || '');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const selectedState = stateSetFromUrl || (user ? userPref?.selected_state : anonymousState);
+
+  // Redirect to state selection if no state selected (only after loading completes)
+  useEffect(() => {
+    // Don't redirect while user preferences are still loading
+    if (user && isPrefLoading) return;
+    
+    // Don't redirect if state is being set from URL
+    if (stateSetFromUrl) {
+      console.log('State set from URL, skipping redirect:', stateSetFromUrl);
+      return;
+    }
+    
+    // Don't redirect if user is on profile page or other protected routes
+    const protectedRoutes = ['/profile', '/admin', '/select-state'];
+    const isProtectedRoute = protectedRoutes.some(route => window.location.pathname.startsWith(route));
+    
+    if (!selectedState && !isProtectedRoute) {
+      console.log('No state selected, redirecting to state selection');
+      navigate('/select-state');
+    }
+  }, [selectedState, navigate, user, isPrefLoading, stateSetFromUrl]);
+
+  // Fetch games
+  const { data: games = [], refetch: refetchGames } = useQuery({
+    queryKey: ['games', selectedState, sortBy],
+    queryFn: async () => {
+      if (!selectedState) return [];
+      
+      let query = supabase
+        .from('games')
+        .select('*')
+        .eq('state', selectedState);
+
+      if (sortBy === 'rank') {
+        query = query.order('rank', { ascending: false });
+      } else {
+        query = query.order('top_prizes_remaining', { ascending: false });
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Game[];
+    },
+    enabled: !!selectedState,
+  });
+
+  // Fetch user favorites
+  const { data: favorites = [], refetch: refetchFavorites } = useQuery({
+    queryKey: ['favorites', user?.id, 'game'],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('favorite_type', 'game');
+      
+      if (error) throw error;
+      return data as Favorite[];
+    },
+    enabled: !!user,
+  });
+
+  const favoriteGameIds = new Set(favorites.map(f => f.reference_id));
+
+  // Fetch recent forum topics
+  const { data: hotTopics = [] } = useQuery({
+    queryKey: ['hotTopics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('forum_topics')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6);
+      
+      if (error) throw error;
+      return data as ForumTopic[];
+    },
+  });
+
+  // Price range options
+  const priceRanges: Record<string, { label: string; min: number; max: number }> = {
+    all: { label: 'All', min: 0, max: 999 },
+    '1-5': { label: '$1-$5', min: 1, max: 5 },
+    '6-10': { label: '$6-$10', min: 6, max: 10 },
+    '11-20': { label: '$11-$20', min: 11, max: 20 },
+    '21-50': { label: '$21+', min: 21, max: 999 },
+  };
+
+  // Filter games
+  const filteredGames = games.filter((game) => {
+    const range = priceRanges[selectedPriceRange];
+    const priceMatch = game.price >= range.min && game.price <= range.max;
+    const favoriteMatch = !favoritesOnly || favoriteGameIds.has(game.id);
+    const searchMatch = searchTerm === '' || 
+      game.game_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      game.game_number.toLowerCase().includes(searchTerm.toLowerCase());
+    return priceMatch && favoriteMatch && searchMatch;
+  });
+
+  const handleFavoriteChange = () => {
+    refetchFavorites();
+    refetchGames();
+  };
+
+  const toggleTopicExpanded = (topicId: string) => {
+    setExpandedTopics(prev => {
+      const next = new Set(prev);
+      if (next.has(topicId)) {
+        next.delete(topicId);
+      } else {
+        next.add(topicId);
+      }
+      return next;
+    });
+  };
+
+  // Get all unique user IDs from hot topics
+  const hotTopicUserIds = hotTopics.map(t => t.user_id);
+  const { data: userColors = {} } = useUserColors(hotTopicUserIds);
+
+  const getInitials = (index: number) => {
+    // Generate consistent initials based on index
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    return letters[index % 26];
+  };
+
+  const getContentSnippet = (content: string, isExpanded: boolean) => {
+    const maxLength = 450; // Tripled from 150
+    if (!isExpanded) return '';
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
+  };
+
+  // Determine which games to display (top 20 or all)
+  const displayedGames = showAll ? filteredGames : filteredGames.slice(0, 20);
+  const hasMoreGames = filteredGames.length > 20;
+
+  // Show loading state while checking for selected state
+  if ((user && isPrefLoading) || !selectedState) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <MessageSlider />
+      
+      <div className="max-w-screen-xl mx-auto px-4 py-6">
+        {/* Filters */}
+        <div className="mb-6 space-y-4">
+          {/* Search Field - Mobile: Full Width Row */}
+          <div className="md:hidden">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search games..."
+                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Desktop: Search + Price Buttons + Sort Buttons */}
+          <div className="hidden md:flex items-center gap-4 justify-center">
+            {/* Search Field */}
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search games..."
+                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm"
+              />
+            </div>
+
+            {/* Price Filter Buttons */}
+            <div className="flex gap-2 justify-center">
+              {Object.entries(priceRanges).map(([key, { label }]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedPriceRange(key)}
+                  className={`w-20 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    selectedPriceRange === key
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 hover:bg-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort/Filter Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortBy('rank')}
+                className={`p-3 rounded-lg transition-colors ${
+                  sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
+                }`}
+                title="Sort by Rank"
+              >
+                <span className="text-xl">🏅</span>
+              </button>
+              <button
+                onClick={() => setSortBy('prizes')}
+                className={`p-3 rounded-lg transition-colors ${
+                  sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
+                }`}
+                title="Sort by Prizes Remaining"
+              >
+                <span className="text-xl">🎁</span>
+              </button>
+              <button
+                onClick={() => setFavoritesOnly(!favoritesOnly)}
+                className={`p-3 rounded-lg transition-colors ${
+                  favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
+                }`}
+                title="Favorites Only"
+              >
+                <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile: Price Buttons + Sort Buttons */}
+          <div className="md:hidden flex flex-col gap-3">
+            {/* Price Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(priceRanges).map(([key, { label }]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedPriceRange(key)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedPriceRange === key
+                      ? 'bg-teal text-white'
+                      : 'bg-gray-200 hover:bg-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort/Filter Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSortBy('rank')}
+                className={`flex-1 p-3 rounded-lg transition-colors ${
+                  sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
+                }`}
+                title="Sort by Rank"
+              >
+                <span className="text-xl mx-auto block">🏅</span>
+              </button>
+              <button
+                onClick={() => setSortBy('prizes')}
+                className={`flex-1 p-3 rounded-lg transition-colors ${
+                  sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
+                }`}
+                title="Sort by Prizes Remaining"
+              >
+                <span className="text-xl mx-auto block">🎁</span>
+              </button>
+              <button
+                onClick={() => setFavoritesOnly(!favoritesOnly)}
+                className={`flex-1 p-3 rounded-lg transition-colors ${
+                  favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
+                }`}
+                title="Favorites Only"
+              >
+                <span className="text-xl mx-auto block">{favoritesOnly ? '❤️' : '🩶'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Top 20 Games Header */}
+        {filteredGames.length > 0 && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Top 20 Games</h2>
+            <span className="text-sm text-gray-500">
+              ↪ by {sortBy === 'rank' ? 'rank' : 'prizes'}
+            </span>
+          </div>
+        )}
+
+        {/* Games Grid */}
+        {filteredGames.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">
+              {favoritesOnly 
+                ? 'No favorite games yet. Start favoriting games to see them here!'
+                : 'No games available for your selected state.'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {displayedGames.map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  isFavorited={favoriteGameIds.has(game.id)}
+                  onFavoriteChange={handleFavoriteChange}
+                />
+              ))}
+            </div>
+
+            {/* View More Button */}
+            {!showAll && hasMoreGames && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => setShowAll(true)}
+                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                >
+                  View More ({filteredGames.length - 20} more games)
+                </button>
+              </div>
+            )}
+
+            {/* Show Less Button (when all are shown) */}
+            {showAll && hasMoreGames && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => {
+                    setShowAll(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors"
+                >
+                  Show Less
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Hot Topics Section */}
+        {hotTopics.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-bold mb-4">Hot Topics</h2>
+            <div className="bg-white rounded-lg shadow divide-y">
+              {hotTopics.map((topic, index) => {
+                const isExpanded = expandedTopics.has(topic.id);
+                const contentSnippet = getContentSnippet(topic.content, isExpanded);
+                
+                return (
+                  <div key={topic.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    {/* Header Row */}
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer"
+                      onClick={() => toggleTopicExpanded(topic.id)}
+                    >
+                      {/* Identifier Circle */}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
+                        style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                      >
+                        {topic.user_id.substring(0, 2).toUpperCase()}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {/* Category Badge */}
+                          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium">
+                            {topic.category}
+                          </span>
+                          {/* Date */}
+                          <span className="text-xs text-gray-500">
+                            {new Date(topic.created_at).toLocaleDateString()}
+                          </span>
+                          {/* Upvotes */}
+                          <span className="flex items-center gap-1 text-xs text-gray-600">
+                            <ThumbsUp className="w-3 h-3" />
+                            {topic.upvotes}
+                          </span>
+                        </div>
+                        {/* Topic Title */}
+                        <h3 className="font-semibold text-base line-clamp-1">{topic.title}</h3>
+                      </div>
+
+                      {/* Expand/Collapse Icon */}
+                      <div className="flex-shrink-0">
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="mt-3 ml-13 pl-3 border-l-2 border-gray-200">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {contentSnippet}
+                        </p>
+
+                        {/* View More Button */}
+                        <div className="mt-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (topic.slug) {
+                                navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                              } else {
+                                navigate(`/topic/${topic.id}`);
+                              }
+                            }}
+                            className="text-sm text-teal font-semibold hover:underline"
+                          >
+                            View More →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* View All Topics Link */}
+            <div className="text-center mt-4">
+              <button
+                onClick={() => navigate('/hot-topics')}
+                className="text-teal font-semibold hover:underline"
+              >
+                View All Topics →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+}
