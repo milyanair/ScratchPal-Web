@@ -509,6 +509,12 @@ export function GameDetail() {
                     <span>{game.downvotes}</span>
                   </button>
                 </div>
+                <div className="col-span-2">
+                  <div className="text-sm text-gray-500">Game Duration</div>
+                  <div className="text-lg font-bold">
+                    Started: {game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'} | Ended: {game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}
+                  </div>
+                </div>
                 {game.overall_odds && (
                   <div className="col-span-2">
                     <div className="text-sm text-gray-500">Overall Odds</div>
