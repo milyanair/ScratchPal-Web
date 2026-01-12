@@ -77,16 +77,20 @@ export function Games() {
     }
   }, [selectedState, navigate, user, isPrefLoading, stateSetFromUrl]);
 
-  // Fetch games
+  // Fetch games (exclude expired games where end_date is today or earlier)
   const { data: games = [], refetch: refetchGames } = useQuery({
     queryKey: ['games', selectedState, sortBy],
     queryFn: async () => {
       if (!selectedState) return [];
       
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
       let query = supabase
         .from('games')
         .select('*')
-        .eq('state', selectedState);
+        .eq('state', selectedState)
+        .or(`end_date.is.null,end_date.gt.${today}`); // Include games with no end_date OR end_date > today
 
       if (sortBy === 'rank') {
         query = query.order('rank', { ascending: false });

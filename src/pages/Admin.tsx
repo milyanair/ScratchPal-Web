@@ -467,6 +467,7 @@ export function Admin() {
                   <li>• Only ONE rank 100 game per state (best overall)</li>
                   <li>• Within each price group ($1-$5, $6-$10, $11-$20, $21-$50), games get individual rankings</li>
                   <li>• Multiple games can share the same rank within different price groups</li>
+                  <li>• <strong>Expired games (end_date ≤ today) are automatically ranked 0 and excluded from main listings</strong></li>
                 </ul>
               </div>
               <button onClick={handleUpdateRanks} disabled={isUpdatingRanks} className="bg-white text-teal px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
