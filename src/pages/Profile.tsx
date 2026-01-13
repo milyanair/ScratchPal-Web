@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { StateConfig } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Share2, Copy, Users, Bell, BellOff, Palette, Code, ChevronDown, ChevronUp, Key } from 'lucide-react';
 import { isWebView, getWebViewType } from '@/lib/utils';
 
