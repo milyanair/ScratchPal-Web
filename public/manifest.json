@@ -1,6 +1,6 @@
 {
-  "name": "ScratchPal",
-  "short_name": "ScratchPal",
+  "name": "ScratchPal Web",
+  "short_name": "ScratchPal Web",
   "description": "The ultimate scratch-off lottery community - track tickets, find hot games, and join the conversation",
   "start_url": "/",
   "display": "standalone",
