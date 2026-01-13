@@ -35,6 +35,7 @@ export function Admin() {
   const [uploadedCsvUrl, setUploadedCsvUrl] = useState<string>('');
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
   // Game Manager state
   const [gameSearch, setGameSearch] = useState('');
@@ -1002,6 +1003,65 @@ export function Admin() {
                     <input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} placeholder="https://scratchpal.com/latest_game_data.csv" className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm" />
                     <p className="text-xs opacity-75 mt-2">Expected columns: game_number, game_name, state, price, top_prize, top_prizes_remaining, total_top_prizes, overall_odds, start_date, end_date, image_url</p>
                   </div>
+                  
+                  {/* Download First Button */}
+                  <button onClick={async () => {
+                    if (!csvUrl.trim()) {
+                      toast.error('Please enter a CSV file URL');
+                      return;
+                    }
+                    setIsDownloadingCsv(true);
+                    try {
+                      console.log('Downloading CSV from:', csvUrl);
+                      
+                      // Download the CSV file using fetch
+                      const response = await fetch(csvUrl);
+                      if (!response.ok) {
+                        throw new Error(`Failed to download CSV: ${response.status} ${response.statusText}`);
+                      }
+                      
+                      // Get the CSV content as blob
+                      const blob = await response.blob();
+                      console.log('Downloaded CSV, size:', blob.size, 'bytes');
+                      
+                      // Generate filename with timestamp
+                      const timestamp = Date.now();
+                      const originalFilename = csvUrl.split('/').pop()?.split('?')[0] || 'download';
+                      const filename = `csv_imports/${originalFilename.replace(/\.csv$/, '')}_${timestamp}.csv`;
+                      
+                      console.log('Uploading to Storage:', filename);
+                      
+                      // Upload to Supabase Storage
+                      const { data: uploadData, error: uploadError } = await supabase.storage
+                        .from('game-images')
+                        .upload(filename, blob, {
+                          contentType: 'text/csv',
+                          upsert: false,
+                        });
+                      
+                      if (uploadError) throw uploadError;
+                      
+                      // Get public URL
+                      const { data: publicUrlData } = supabase.storage
+                        .from('game-images')
+                        .getPublicUrl(filename);
+                      
+                      // Update the CSV URL field with the new local URL
+                      setCsvUrl(publicUrlData.publicUrl);
+                      setUploadedCsvUrl(publicUrlData.publicUrl);
+                      
+                      toast.success(`CSV downloaded and saved to Storage! Ready to import.`);
+                      console.log('Local URL:', publicUrlData.publicUrl);
+                    } catch (error: any) {
+                      console.error('CSV download error:', error);
+                      toast.error(error.message || 'Failed to download CSV');
+                    } finally {
+                      setIsDownloadingCsv(false);
+                    }
+                  }} disabled={isDownloadingCsv} className="w-full bg-white/20 border-2 border-white/50 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mb-3">
+                    {isDownloadingCsv ? (<><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Downloading...</>) : (<>📥 Download to Storage First</>)}
+                  </button>
+                  
                   <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV...'); setLastImportResult(null); try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.status === 'success') toast.success(`Import complete! Inserted: ${data.records_inserted}, Updated: ${data.records_updated}`); else if (data.status === 'partial') toast.warning(`Partial import: ${data.records_failed} records failed`); else toast.error('Import failed'); refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); } finally { setIsImporting(false); } }} disabled={isImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
                     {isImporting ? (<><div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full" />Importing...</>) : (<><Plus className="w-4 h-4" />Import CSV Data</>)}
                   </button>
