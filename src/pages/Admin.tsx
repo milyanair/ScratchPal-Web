@@ -1162,7 +1162,7 @@ export function Admin() {
 
                         setUploadedCsvUrl(data.localUrl);
                         setCsvUrl(data.localUrl);
-                        toast.success('CSV downloaded to storage: ' + data.localUrl);
+                        toast.success('CSV downloaded to storage');
                       } catch (error: any) {
                         console.error('Download error:', error);
                         toast.error(error.message || 'Failed to download CSV');
@@ -1176,14 +1176,6 @@ export function Admin() {
                     {isDownloadingCsv ? 'Downloading...' : 'Download First'}
                   </button>
                   <p className="text-xs text-gray-500 mt-2 text-center">Download external CSV to Supabase Storage before importing</p>
-                  
-                  {uploadedCsvUrl && csvUrl === uploadedCsvUrl && (
-                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-800 font-medium mb-1">✓ CSV Downloaded to Storage</p>
-                      <p className="text-xs text-blue-600 break-all mb-2">{uploadedCsvUrl}</p>
-                      <p className="text-xs text-green-700 font-medium">✓ Ready for import (CSV URL auto-populated above)</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
