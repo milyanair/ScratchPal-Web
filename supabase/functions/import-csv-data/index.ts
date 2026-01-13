@@ -334,14 +334,17 @@ Deno.serve(async (req) => {
     };
 
     // **OPTIMIZED: Use upsert to handle both inserts and updates in one operation**
-    console.log(`Using upsert strategy for ${rows.length} rows...`);
+    // Limit to 200 rows per import to avoid timeouts (users can run multiple imports)
+    const MAX_ROWS = 200;
+    const rowsToProcess = rows.slice(0, MAX_ROWS);
+    console.log(`Processing ${rowsToProcess.length} rows (${rows.length} total in CSV)...`);
     
-    const BATCH_SIZE = 50; // Process in batches to avoid overwhelming the database
+    const BATCH_SIZE = 20; // Smaller batches to avoid timeouts
     
-    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
-      const batchEnd = Math.min(batchStart + BATCH_SIZE, rows.length);
-      const batch = rows.slice(batchStart, batchEnd);
-      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rows.length / BATCH_SIZE)} (rows ${batchStart + 1}-${batchEnd})...`);
+    for (let batchStart = 0; batchStart < rowsToProcess.length; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, rowsToProcess.length);
+      const batch = rowsToProcess.slice(batchStart, batchEnd);
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
         // Prepare batch for upsert
@@ -440,6 +443,12 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Import complete:`, result);
+
+    // Add warning if CSV had more rows than we processed
+    if (rows.length > MAX_ROWS) {
+      result.error_message = (result.error_message ? result.error_message + ' | ' : '') + 
+        `CSV had ${rows.length} rows but only ${MAX_ROWS} were processed to avoid timeout. Run import again to process more.`;
+    }
 
     return new Response(
       JSON.stringify(result),
