@@ -411,111 +411,6 @@ export function Profile() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
-        {/* WebView Debug Panel - Only for logged-in users */}
-        {user && (
-          <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-            <button
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
-              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Code className="w-5 h-5 text-gray-600" />
-                <span className="font-semibold text-gray-800">WebView Debug Info</span>
-                {webViewDetected && (
-                  <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
-                    WebView Detected
-                  </span>
-                )}
-                {!webViewDetected && (
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                    Standard Browser
-                  </span>
-                )}
-              </div>
-              {showDebugPanel ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-
-            {showDebugPanel && (
-              <div className="px-6 pb-6 pt-2 border-t bg-gray-50">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 uppercase">Detection Status</label>
-                    <div className="mt-1 text-sm">
-                      {webViewDetected ? (
-                        <span className="text-orange-600 font-semibold">✓ WebView Detected - Google OAuth will open in system browser</span>
-                      ) : (
-                        <span className="text-green-600 font-semibold">✓ Standard Browser - Google OAuth works normally</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 uppercase">Browser Type</label>
-                    <div className="mt-1 text-sm font-mono bg-white px-3 py-2 rounded border">
-                      {webViewType}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 uppercase">User Agent</label>
-                    <div className="mt-1 text-xs font-mono bg-white px-3 py-2 rounded border break-all">
-                      {userAgent}
-                    </div>
-                  </div>
-
-                  {/* Test Deep Link Button - Always Visible */}
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-purple-800 text-sm mb-2 flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      Deep Link Test
-                    </h4>
-                    <p className="text-xs text-purple-700 mb-3">
-                      Test if your app can handle the deep link redirect from OAuth callback:
-                    </p>
-                    <button
-                      onClick={() => {
-                        console.log('🔑 Testing deep link redirect to: scratchpal://');
-                        console.log('📱 If configured correctly, this should open the app');
-                        window.location.href = 'scratchpal://';
-                      }}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Key className="w-4 h-4" />
-                      Test Deep Link (scratchpal://)
-                    </button>
-                    <p className="text-xs text-purple-600 mt-2 text-center">
-                      ✅ App should open if deep link is configured correctly<br/>
-                      ❌ If nothing happens, deep link registration is missing
-                    </p>
-                  </div>
-
-                  {webViewDetected && (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-orange-800 text-sm mb-2">⚠️ WebView OAuth Flow</h4>
-                      <ul className="text-xs text-orange-700 space-y-1 mb-3">
-                        <li>✓ Google OAuth will open in your system browser</li>
-                        <li>✓ After signing in, Google redirects to: <code className="bg-orange-100 px-1 rounded">scratchpal://oauth/callback</code></li>
-                        <li>✓ Your app MUST intercept this deep link</li>
-                        <li>✓ Extract tokens from URL and set Supabase session</li>
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-gray-500">
-                      This panel helps troubleshoot Google OAuth in WebViews. If you're having issues, take a screenshot of this info and share it with support.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {!user ? (
           <div className="bg-white rounded-lg shadow p-8">
             <h2 className="text-2xl font-bold mb-6 text-center">
@@ -1059,6 +954,91 @@ export function Profile() {
             >
               Sign Out
             </button>
+
+            {/* 🐝 Debug Toggle - Bottom of Logged-in Profile */}
+            <div className="mt-8 pt-6 border-t">
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowDebugPanel(!showDebugPanel)}
+                  className="text-2xl hover:scale-110 transition-transform"
+                  title="Toggle Debug Info"
+                >
+                  🐝
+                </button>
+              </div>
+
+              {showDebugPanel && (
+                <div className="bg-gray-50 rounded-lg border mt-4 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Code className="w-5 h-5 text-gray-600" />
+                    <span className="font-semibold text-sm">WebView Debug Info</span>
+                    {webViewDetected && (
+                      <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                        WebView
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Status</div>
+                      <div className={webViewDetected ? 'text-orange-600' : 'text-green-600'}>
+                        {webViewDetected ? '✓ WebView Detected - Google OAuth will open in system browser' : '✓ Standard Browser - Google OAuth works normally'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Type</div>
+                      <div className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                        {webViewType}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 uppercase mb-1">User Agent</div>
+                      <div className="font-mono text-[10px] bg-white px-2 py-1 rounded border break-all">
+                        {userAgent}
+                      </div>
+                    </div>
+                    
+                    {/* Test Deep Link Button */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-3">
+                      <h4 className="font-semibold text-purple-800 text-xs mb-2 flex items-center gap-2">
+                        <Key className="w-3 h-3" />
+                        Deep Link Test
+                      </h4>
+                      <p className="text-[10px] text-purple-700 mb-2">
+                        Test if your app can handle the OAuth deep link:
+                      </p>
+                      <button
+                        onClick={() => {
+                          console.log('🔑 Testing deep link redirect to: scratchpal://');
+                          console.log('📱 If configured correctly, this should open the app');
+                          window.location.href = 'scratchpal://';
+                        }}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Key className="w-3 h-3" />
+                        Test Deep Link
+                      </button>
+                      <p className="text-[10px] text-purple-600 mt-1 text-center">
+                        ✅ App opens = configured<br/>
+                        ❌ Nothing = missing setup
+                      </p>
+                    </div>
+
+                    {webViewDetected && (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        <h4 className="font-semibold text-orange-800 text-xs mb-2">⚠️ WebView OAuth Flow</h4>
+                        <ul className="text-[10px] text-orange-700 space-y-1">
+                          <li>✓ Google OAuth opens in system browser</li>
+                          <li>✓ Redirects to: <code className="bg-orange-100 px-1 rounded">scratchpal://oauth/callback</code></li>
+                          <li>✓ App must intercept deep link</li>
+                          <li>✓ Extract tokens and set session</li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
