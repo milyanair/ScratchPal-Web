@@ -31,7 +31,7 @@ interface ImportResult {
   };
 }
 
-function parseCSV(csvText: string): CSVRow[] {
+function parseCSV(csvText: string, columnMapping?: Record<string, string>): CSVRow[] {
   const lines = csvText.trim().split('\n');
   if (lines.length < 2) {
     throw new Error('CSV file is empty or has no data rows');
@@ -53,6 +53,11 @@ function parseCSV(csvText: string): CSVRow[] {
   // Parse header
   const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
   console.log(`CSV Headers (${headers.length}):`, headers);
+  
+  // Log custom column mapping if provided
+  if (columnMapping) {
+    console.log('Using custom column mapping:', columnMapping);
+  }
   
   // Parse rows
   const rows: CSVRow[] = [];
@@ -82,66 +87,97 @@ function parseCSV(csvText: string): CSVRow[] {
 
     // Map values to CSVRow object
     const row: any = {};
-    headers.forEach((header, index) => {
-      const value = values[index]?.replace(/"/g, '').trim() || '';
+    
+    // **USE CUSTOM COLUMN MAPPING IF PROVIDED**
+    if (columnMapping && Object.keys(columnMapping).length > 0) {
+      // Create reverse mapping (CSV column -> DB field)
+      const csvToDbMap: Record<string, string> = {};
+      Object.entries(columnMapping).forEach(([dbField, csvColumn]) => {
+        if (csvColumn) {
+          csvToDbMap[csvColumn.toLowerCase()] = dbField;
+        }
+      });
       
-      // **EXACT COLUMN NAME MATCHES FIRST** (more reliable for known formats)
-      if (header === 'game_number') {
-        row.game_number = value;
-      } else if (header === 'game_name') {
-        row.game_name = value;
-      } else if (header === 'state_code' || header === 'state') {
-        row.state = value.toUpperCase();
-      } else if (header === 'ticket_price' || header === 'price') {
-        row.price = parseFloat(value.replace(/[$,]/g, '')) || 0;
-      } else if (header === 'top_prize_amount' || header === 'top_prize') {
-        row.top_prize = parseFloat(value.replace(/[$,]/g, '')) || 0;
-      } else if (header === 'top_prizes_remaining') {
-        row.top_prizes_remaining = parseInt(value.replace(/,/g, '')) || 0;
-      } else if (header === 'top_prizes_total_original' || header === 'total_top_prizes') {
-        row.total_top_prizes = parseInt(value.replace(/,/g, '')) || 0;
-      } else if (header === 'overall_odds' || header === 'odds') {
-        row.overall_odds = value;
-      } else if (header === 'game_added_date' || header === 'start_date') {
-        row.start_date = value;
-      } else if (header === 'end_date') {
-        row.end_date = value;
-      } else if (header === 'image_url') {
-        row.image_url = value;
-      } else if (header === 'source_url') {
-        row.source_url = value;
-      } else if (header === 'source') {
-        row.source = value;
-      }
-      // **FALLBACK: FUZZY MATCHING** (for non-standard column names)
-      else if (header.includes('game') && header.includes('number')) {
-        row.game_number = value;
-      } else if (header.includes('game') && header.includes('name')) {
-        row.game_name = value;
-      } else if (header.includes('state')) {
-        row.state = value.toUpperCase();
-      } else if (header.includes('price')) {
-        row.price = parseFloat(value.replace(/[$,]/g, '')) || 0;
-      } else if (header.includes('top') && header.includes('prize') && !header.includes('remaining') && !header.includes('total') && !header.includes('claimed')) {
-        row.top_prize = parseFloat(value.replace(/[$,]/g, '')) || 0;
-      } else if (header.includes('remaining') && !header.includes('claimed')) {
-        row.top_prizes_remaining = parseInt(value.replace(/,/g, '')) || 0;
-      } else if (header.includes('total') && header.includes('prize') && !header.includes('claimed')) {
-        row.total_top_prizes = parseInt(value.replace(/,/g, '')) || 0;
-      } else if (header.includes('odds')) {
-        row.overall_odds = value;
-      } else if ((header.includes('start') || header.includes('added')) && header.includes('date')) {
-        row.start_date = value;
-      } else if (header.includes('end') && header.includes('date')) {
-        row.end_date = value;
-      } else if (header.includes('image')) {
-        row.image_url = value;
-      } else if (header.includes('source') && header.includes('url')) {
-        row.source_url = value;
-      } else if (header.includes('source') && !header.includes('url')) {
-        row.source = value;
-      }
-    });
+      headers.forEach((header, index) => {
+        const dbField = csvToDbMap[header];
+        const value = values[index]?.replace(/"/g, '').trim() || '';
+        
+        if (dbField) {
+          // Apply appropriate transformations based on field type
+          if (dbField === 'state') {
+            row.state = value.toUpperCase();
+          } else if (dbField === 'price' || dbField === 'top_prize') {
+            row[dbField] = parseFloat(value.replace(/[$,]/g, '')) || 0;
+          } else if (dbField === 'top_prizes_remaining' || dbField === 'total_top_prizes') {
+            row[dbField] = parseInt(value.replace(/,/g, '')) || 0;
+          } else {
+            row[dbField] = value;
+          }
+        }
+      });
+    } else {
+      // **FALLBACK: USE ORIGINAL HARDCODED LOGIC IF NO MAPPING PROVIDED**
+      headers.forEach((header, index) => {
+        const value = values[index]?.replace(/"/g, '').trim() || '';
+        
+        // **EXACT COLUMN NAME MATCHES FIRST** (more reliable for known formats)
+        if (header === 'game_number') {
+          row.game_number = value;
+        } else if (header === 'game_name') {
+          row.game_name = value;
+        } else if (header === 'state_code' || header === 'state') {
+          row.state = value.toUpperCase();
+        } else if (header === 'ticket_price' || header === 'price') {
+          row.price = parseFloat(value.replace(/[$,]/g, '')) || 0;
+        } else if (header === 'top_prize_amount' || header === 'top_prize') {
+          row.top_prize = parseFloat(value.replace(/[$,]/g, '')) || 0;
+        } else if (header === 'top_prizes_remaining') {
+          row.top_prizes_remaining = parseInt(value.replace(/,/g, '')) || 0;
+        } else if (header === 'top_prizes_total_original' || header === 'total_top_prizes') {
+          row.total_top_prizes = parseInt(value.replace(/,/g, '')) || 0;
+        } else if (header === 'overall_odds' || header === 'odds') {
+          row.overall_odds = value;
+        } else if (header === 'game_added_date' || header === 'start_date') {
+          row.start_date = value;
+        } else if (header === 'end_date') {
+          row.end_date = value;
+        } else if (header === 'image_url') {
+          row.image_url = value;
+        } else if (header === 'source_url') {
+          row.source_url = value;
+        } else if (header === 'source') {
+          row.source = value;
+        }
+        // **FALLBACK: FUZZY MATCHING** (for non-standard column names)
+        else if (header.includes('game') && header.includes('number')) {
+          row.game_number = value;
+        } else if (header.includes('game') && header.includes('name')) {
+          row.game_name = value;
+        } else if (header.includes('state')) {
+          row.state = value.toUpperCase();
+        } else if (header.includes('price')) {
+          row.price = parseFloat(value.replace(/[$,]/g, '')) || 0;
+        } else if (header.includes('top') && header.includes('prize') && !header.includes('remaining') && !header.includes('total') && !header.includes('claimed')) {
+          row.top_prize = parseFloat(value.replace(/[$,]/g, '')) || 0;
+        } else if (header.includes('remaining') && !header.includes('claimed')) {
+          row.top_prizes_remaining = parseInt(value.replace(/,/g, '')) || 0;
+        } else if (header.includes('total') && header.includes('prize') && !header.includes('claimed')) {
+          row.total_top_prizes = parseInt(value.replace(/,/g, '')) || 0;
+        } else if (header.includes('odds')) {
+          row.overall_odds = value;
+        } else if ((header.includes('start') || header.includes('added')) && header.includes('date')) {
+          row.start_date = value;
+        } else if (header.includes('end') && header.includes('date')) {
+          row.end_date = value;
+        } else if (header.includes('image')) {
+          row.image_url = value;
+        } else if (header.includes('source') && header.includes('url')) {
+          row.source_url = value;
+        } else if (header.includes('source') && !header.includes('url')) {
+          row.source = value;
+        }
+      });
+    }
 
     // Debug: Log first row to see what we're getting
     if (i === 1) {
@@ -173,7 +209,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { csvUrl, offset = 0 } = await req.json();
+    const { csvUrl, offset = 0, columnMapping } = await req.json();
 
     if (!csvUrl) {
       return new Response(
@@ -314,7 +350,7 @@ Deno.serve(async (req) => {
     // Parse CSV
     let rows: CSVRow[];
     try {
-      rows = parseCSV(csvText);
+      rows = parseCSV(csvText, columnMapping);
       console.log(`Parsed ${rows.length} rows from CSV`);
     } catch (parseError: any) {
       throw new Error(`CSV parsing failed: ${parseError.message}`);

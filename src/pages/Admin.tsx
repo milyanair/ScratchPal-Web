@@ -40,6 +40,36 @@ export function Admin() {
   const [isDragging, setIsDragging] = useState(false);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
+  // Column Mapping state
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('csv_column_mapping');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return {};
+      }
+    }
+    // Default mapping (matches current hardcoded logic)
+    return {
+      game_number: 'game_number',
+      game_name: 'game_name',
+      state: 'state_code',
+      price: 'ticket_price',
+      top_prize: 'top_prize_amount',
+      top_prizes_remaining: 'top_prizes_remaining',
+      total_top_prizes: 'top_prizes_total_original',
+      overall_odds: 'overall_odds',
+      start_date: 'game_added_date',
+      end_date: 'end_date',
+      image_url: 'image_url',
+      source: 'source',
+      source_url: 'source_url',
+    };
+  });
+  const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+  const [isDetectingColumns, setIsDetectingColumns] = useState(false);
+
   // Game Manager state
   const [gameSearch, setGameSearch] = useState('');
   const [gameStateFilter, setGameStateFilter] = useState('all');
@@ -1076,7 +1106,7 @@ export function Admin() {
                     {isDownloadingCsv ? (<><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Downloading...</>) : (<>📥 Download to Storage First</>)}
                   </button>
                   
-                  <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV chunk...'); const currentOffset = importOffset; try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl, offset: currentOffset }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.has_more) { setImportOffset(data.next_offset); toast.success(`Chunk complete! Processed ${data.processed_up_to}/${data.total_rows} rows. ${data.total_rows - data.processed_up_to} remaining. Click Import again to continue.`); } else { setImportOffset(0); if (data.status === 'success') toast.success(`Import complete! All ${data.total_rows} rows processed.`); else if (data.status === 'partial') toast.warning(`Import complete with ${data.records_failed} failures`); else toast.error('Import failed'); } refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); setImportOffset(0); } finally { setIsImporting(false); } }} disabled={isImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
+                  <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV chunk...'); const currentOffset = importOffset; try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl, offset: currentOffset, columnMapping }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.has_more) { setImportOffset(data.next_offset); toast.success(`Chunk complete! Processed ${data.processed_up_to}/${data.total_rows} rows. ${data.total_rows - data.processed_up_to} remaining. Click Import again to continue.`); } else { setImportOffset(0); if (data.status === 'success') toast.success(`Import complete! All ${data.total_rows} rows processed.`); else if (data.status === 'partial') toast.warning(`Import complete with ${data.records_failed} failures`); else toast.error('Import failed'); } refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); setImportOffset(0); } finally { setIsImporting(false); } }} disabled={isImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
                     {isImporting ? (<><div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full" />Importing...</>) : (<><Plus className="w-4 h-4" />{importOffset > 0 ? `Continue Import (from row ${importOffset + 1})` : 'Import CSV Data'}</>)}
                   </button>
                   {importProgress && (<div className="mt-4 p-3 bg-white/20 rounded-lg text-sm">{importProgress}</div>)}
@@ -1098,8 +1128,152 @@ export function Admin() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN - Image Conversion & Danger Zone */}
+              {/* RIGHT COLUMN - Column Mapping & Image Conversion */}
               <div className="space-y-6">
+                {/* Column Mapping Configuration */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-bold mb-2">📋 CSV Column Mapping</h3>
+                  <p className="text-sm text-gray-600 mb-4">Map CSV columns to database fields. Changes are saved automatically.</p>
+                  
+                  {/* Detect Columns Button */}
+                  <button
+                    onClick={async () => {
+                      if (!csvUrl.trim()) {
+                        toast.error('Please enter a CSV URL first');
+                        return;
+                      }
+                      setIsDetectingColumns(true);
+                      try {
+                        const response = await fetch(csvUrl);
+                        if (!response.ok) throw new Error('Failed to download CSV');
+                        const csvText = await response.text();
+                        const lines = csvText.trim().split('\n');
+                        if (lines.length < 1) throw new Error('CSV is empty');
+                        
+                        // Detect delimiter
+                        const firstLine = lines[0];
+                        let delimiter = ',';
+                        if (firstLine.split('\t').length > firstLine.split(',').length) {
+                          delimiter = '\t';
+                        } else if (firstLine.split(';').length > firstLine.split(',').length) {
+                          delimiter = ';';
+                        } else if (firstLine.split('|').length > firstLine.split(',').length) {
+                          delimiter = '|';
+                        }
+                        
+                        const headers = firstLine.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+                        setAvailableColumns(headers);
+                        toast.success(`Detected ${headers.length} columns`);
+                      } catch (error: any) {
+                        console.error('Column detection error:', error);
+                        toast.error(error.message || 'Failed to detect columns');
+                      } finally {
+                        setIsDetectingColumns(false);
+                      }
+                    }}
+                    disabled={isDetectingColumns}
+                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm mb-4"
+                  >
+                    {isDetectingColumns ? 'Detecting...' : '🔍 Detect Columns from CSV'}
+                  </button>
+
+                  {/* Column Mapping Form */}
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {[
+                      { db: 'game_number', label: 'Game Number', required: true },
+                      { db: 'game_name', label: 'Game Name', required: true },
+                      { db: 'state', label: 'State', required: true },
+                      { db: 'price', label: 'Price', required: false },
+                      { db: 'top_prize', label: 'Top Prize', required: false },
+                      { db: 'top_prizes_remaining', label: 'Prizes Remaining', required: false },
+                      { db: 'total_top_prizes', label: 'Total Prizes', required: false },
+                      { db: 'overall_odds', label: 'Overall Odds', required: false },
+                      { db: 'start_date', label: 'Start Date', required: false },
+                      { db: 'end_date', label: 'End Date', required: false },
+                      { db: 'image_url', label: 'Image URL', required: false },
+                      { db: 'source', label: 'Source', required: false },
+                      { db: 'source_url', label: 'Source URL', required: false },
+                    ].map(field => (
+                      <div key={field.db} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            {field.label}
+                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                          </label>
+                          <select
+                            value={columnMapping[field.db] || ''}
+                            onChange={(e) => {
+                              const newMapping = { ...columnMapping, [field.db]: e.target.value };
+                              setColumnMapping(newMapping);
+                              localStorage.setItem('csv_column_mapping', JSON.stringify(newMapping));
+                              toast.success(`Mapping saved: ${field.label}`);
+                            }}
+                            className="w-full px-3 py-2 border rounded text-sm"
+                          >
+                            <option value="">-- Skip this field --</option>
+                            {availableColumns.length > 0 ? (
+                              availableColumns.map(col => (
+                                <option key={col} value={col}>{col}</option>
+                              ))
+                            ) : (
+                              // Default options if columns haven't been detected
+                              <>
+                                <option value="game_number">game_number</option>
+                                <option value="game_name">game_name</option>
+                                <option value="state_code">state_code</option>
+                                <option value="state">state</option>
+                                <option value="ticket_price">ticket_price</option>
+                                <option value="price">price</option>
+                                <option value="top_prize_amount">top_prize_amount</option>
+                                <option value="top_prize">top_prize</option>
+                                <option value="top_prizes_remaining">top_prizes_remaining</option>
+                                <option value="top_prizes_total_original">top_prizes_total_original</option>
+                                <option value="total_top_prizes">total_top_prizes</option>
+                                <option value="overall_odds">overall_odds</option>
+                                <option value="odds">odds</option>
+                                <option value="game_added_date">game_added_date</option>
+                                <option value="start_date">start_date</option>
+                                <option value="end_date">end_date</option>
+                                <option value="image_url">image_url</option>
+                                <option value="source">source</option>
+                                <option value="source_url">source_url</option>
+                              </>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Reset Button */}
+                  <button
+                    onClick={() => {
+                      if (confirm('Reset to default column mapping?')) {
+                        const defaultMapping = {
+                          game_number: 'game_number',
+                          game_name: 'game_name',
+                          state: 'state_code',
+                          price: 'ticket_price',
+                          top_prize: 'top_prize_amount',
+                          top_prizes_remaining: 'top_prizes_remaining',
+                          total_top_prizes: 'top_prizes_total_original',
+                          overall_odds: 'overall_odds',
+                          start_date: 'game_added_date',
+                          end_date: 'end_date',
+                          image_url: 'image_url',
+                          source: 'source',
+                          source_url: 'source_url',
+                        };
+                        setColumnMapping(defaultMapping);
+                        localStorage.setItem('csv_column_mapping', JSON.stringify(defaultMapping));
+                        toast.success('Reset to default mapping');
+                      }
+                    }}
+                    className="w-full mt-4 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 text-sm"
+                  >
+                    Reset to Default Mapping
+                  </button>
+                </div>
                 {/* Image Conversion Tools */}
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-bold mb-2">Image Conversion Tools</h3>
