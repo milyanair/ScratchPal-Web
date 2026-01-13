@@ -19,6 +19,7 @@ export function Profile() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
 
   // WebView detection info
   const webViewDetected = isWebView();
@@ -190,6 +191,12 @@ export function Profile() {
   });
 
   const handleGoogleLogin = async () => {
+    // If WebView is detected and user is not logged in, show "Coming Soon" modal
+    if (webViewDetected && !user) {
+      setShowComingSoonModal(true);
+      return;
+    }
+    
     try {
       await signInWithGoogle();
     } catch (error: any) {
@@ -356,180 +363,110 @@ export function Profile() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
-        {/* WebView Debug Panel - Always Visible */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <button
-            onClick={() => setShowDebugPanel(!showDebugPanel)}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Code className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-800">WebView Debug Info</span>
-              {webViewDetected && (
-                <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
-                  WebView Detected
-                </span>
-              )}
-              {!webViewDetected && (
-                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                  Standard Browser
-                </span>
-              )}
-            </div>
-            {showDebugPanel ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            )}
-          </button>
-
-          {showDebugPanel && (
-            <div className="px-6 pb-6 pt-2 border-t bg-gray-50">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Detection Status</label>
-                  <div className="mt-1 text-sm">
-                    {webViewDetected ? (
-                      <span className="text-orange-600 font-semibold">✓ WebView Detected - Google OAuth will open in system browser</span>
-                    ) : (
-                      <span className="text-green-600 font-semibold">✓ Standard Browser - Google OAuth works normally</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">Browser Type</label>
-                  <div className="mt-1 text-sm font-mono bg-white px-3 py-2 rounded border">
-                    {webViewType}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 uppercase">User Agent</label>
-                  <div className="mt-1 text-xs font-mono bg-white px-3 py-2 rounded border break-all">
-                    {userAgent}
-                  </div>
-                </div>
-
-                {/* Test Deep Link Button - Always Visible */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-purple-800 text-sm mb-2 flex items-center gap-2">
-                    <Key className="w-4 h-4" />
-                    Deep Link Test
-                  </h4>
-                  <p className="text-xs text-purple-700 mb-3">
-                    Test if your app can handle the deep link redirect from OAuth callback:
-                  </p>
-                  <button
-                    onClick={() => {
-                      console.log('🔑 Testing deep link redirect to: scratchpal://');
-                      console.log('📱 If configured correctly, this should open the app');
-                      window.location.href = 'scratchpal://';
-                    }}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Key className="w-4 h-4" />
-                    Test Deep Link (scratchpal://)
-                  </button>
-                  <p className="text-xs text-purple-600 mt-2 text-center">
-                    ✅ App should open if deep link is configured correctly<br/>
-                    ❌ If nothing happens, deep link registration is missing
-                  </p>
-                </div>
-
+        {/* WebView Debug Panel - Only for logged-in users */}
+        {user && (
+          <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+            <button
+              onClick={() => setShowDebugPanel(!showDebugPanel)}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Code className="w-5 h-5 text-gray-600" />
+                <span className="font-semibold text-gray-800">WebView Debug Info</span>
                 {webViewDetected && (
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-orange-800 text-sm mb-2">⚠️ WebView OAuth Flow</h4>
-                    <ul className="text-xs text-orange-700 space-y-1 mb-3">
-                      <li>✓ Google OAuth will open in your system browser</li>
-                      <li>✓ After signing in, Google redirects to: <code className="bg-orange-100 px-1 rounded">scratchpal://oauth/callback</code></li>
-                      <li>✓ Your app MUST intercept this deep link</li>
-                      <li>✓ Extract tokens from URL and set Supabase session</li>
-                    </ul>
-                    
-                    <div className="bg-orange-100 rounded p-3 mt-3">
-                      <p className="text-xs font-bold text-orange-900 mb-2">Expected OAuth Callback URL Format:</p>
-                      <code className="text-[10px] text-orange-800 break-all block">
-                        scratchpal://oauth/callback#access_token=XXX&refresh_token=YYY&expires_in=3600&token_type=bearer
-                      </code>
-                    </div>
-                    
-                    <div className="bg-red-50 border border-red-200 rounded p-3 mt-3">
-                      <p className="text-xs font-bold text-red-900 mb-1">⚠️ Critical: OAuth Not Working?</p>
-                      <p className="text-xs text-red-700">
-                        If login completes but stays in browser, your app is NOT handling the callback deep link. 
-                        You must configure WebView to intercept <code className="bg-red-100 px-1 rounded">scratchpal://</code> URLs.
-                      </p>
+                  <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                    WebView Detected
+                  </span>
+                )}
+                {!webViewDetected && (
+                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                    Standard Browser
+                  </span>
+                )}
+              </div>
+              {showDebugPanel ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+
+            {showDebugPanel && (
+              <div className="px-6 pb-6 pt-2 border-t bg-gray-50">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 uppercase">Detection Status</label>
+                    <div className="mt-1 text-sm">
+                      {webViewDetected ? (
+                        <span className="text-orange-600 font-semibold">✓ WebView Detected - Google OAuth will open in system browser</span>
+                      ) : (
+                        <span className="text-green-600 font-semibold">✓ Standard Browser - Google OAuth works normally</span>
+                      )}
                     </div>
                   </div>
-                )}
 
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-gray-500 mb-3">
-                    This panel helps troubleshoot Google OAuth in WebViews. If you're having issues, take a screenshot of this info and share it with support.
-                  </p>
-                  
-                  {/* Configuration Checklist */}
-                  <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                    <h5 className="font-semibold text-blue-800 text-xs mb-2">Complete Setup Checklist:</h5>
-                    <ul className="text-xs text-blue-700 space-y-1">
-                      <li>☐ <strong>Step 1:</strong> Register deep link scheme in app manifest: <code className="bg-blue-100 px-1 rounded">scratchpal://</code></li>
-                      <li>☐ <strong>Step 2:</strong> Add to OnSpace Cloud → Auth Settings → Redirect URLs:</li>
-                      <li className="ml-4"><code className="bg-blue-100 px-1 rounded text-[10px]">scratchpal://oauth/callback</code></li>
-                      <li>☐ <strong>Step 3:</strong> Configure WebView to intercept URLs starting with <code className="bg-blue-100 px-1 rounded">scratchpal://</code></li>
-                      <li>☐ <strong>Step 4:</strong> When deep link is triggered, extract tokens from URL hash</li>
-                      <li>☐ <strong>Step 5:</strong> Call <code className="bg-blue-100 px-1 rounded">supabase.auth.setSession()</code> with tokens</li>
-                      <li>☐ <strong>Step 6:</strong> Test using the "Test Deep Link" button above</li>
-                    </ul>
-                    
-                    <div className="bg-blue-100 rounded p-2 mt-3">
-                      <p className="text-xs font-bold text-blue-900 mb-1">📚 WebView Deep Link Handler:</p>
-                      <pre className="text-[9px] text-blue-800 overflow-x-auto">{`// METHOD 1: Call global handler (Recommended)
-// In Android WebView:
-override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-  if (url.startsWith("scratchpal://oauth/callback")) {
-    val uri = Uri.parse(url)
-    val fragment = uri.fragment ?: ""
-    val params = fragment.split("&").associate {
-      val (key, value) = it.split("=")
-      key to value
-    }
-    val accessToken = params["access_token"]
-    val refreshToken = params["refresh_token"]
-    
-    // Call global JavaScript handler
-    view.evaluateJavascript(
-      "window.handleOAuthTokens('$accessToken', '$refreshToken')",
-      null
-    )
-    return true
-  }
-  return false
-}
-
-// METHOD 2: Navigate to callback page
-if (url.startsWith("scratchpal://oauth/callback")) {
-  val uri = Uri.parse(url)
-  val fragment = uri.fragment
-  view.loadUrl("https://yourapp.com/oauth/callback#$fragment")
-  return true
-}`}</pre>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 uppercase">Browser Type</label>
+                    <div className="mt-1 text-sm font-mono bg-white px-3 py-2 rounded border">
+                      {webViewType}
                     </div>
-                    
-                    <div className="bg-purple-100 rounded p-2 mt-2">
-                      <p className="text-xs font-bold text-purple-900 mb-1">🧪 Test Handler from Browser Console:</p>
-                      <pre className="text-[9px] text-purple-800 overflow-x-auto">{`// This global function is available:
-window.handleOAuthTokens('test-token', 'test-refresh')
+                  </div>
 
-// Or test the callback page directly:
-window.location.href = '/oauth/callback#access_token=test&refresh_token=test'`}</pre>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 uppercase">User Agent</label>
+                    <div className="mt-1 text-xs font-mono bg-white px-3 py-2 rounded border break-all">
+                      {userAgent}
                     </div>
+                  </div>
+
+                  {/* Test Deep Link Button - Always Visible */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-purple-800 text-sm mb-2 flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      Deep Link Test
+                    </h4>
+                    <p className="text-xs text-purple-700 mb-3">
+                      Test if your app can handle the deep link redirect from OAuth callback:
+                    </p>
+                    <button
+                      onClick={() => {
+                        console.log('🔑 Testing deep link redirect to: scratchpal://');
+                        console.log('📱 If configured correctly, this should open the app');
+                        window.location.href = 'scratchpal://';
+                      }}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Key className="w-4 h-4" />
+                      Test Deep Link (scratchpal://)
+                    </button>
+                    <p className="text-xs text-purple-600 mt-2 text-center">
+                      ✅ App should open if deep link is configured correctly<br/>
+                      ❌ If nothing happens, deep link registration is missing
+                    </p>
+                  </div>
+
+                  {webViewDetected && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-orange-800 text-sm mb-2">⚠️ WebView OAuth Flow</h4>
+                      <ul className="text-xs text-orange-700 space-y-1 mb-3">
+                        <li>✓ Google OAuth will open in your system browser</li>
+                        <li>✓ After signing in, Google redirects to: <code className="bg-orange-100 px-1 rounded">scratchpal://oauth/callback</code></li>
+                        <li>✓ Your app MUST intercept this deep link</li>
+                        <li>✓ Extract tokens from URL and set Supabase session</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-gray-500">
+                      This panel helps troubleshoot Google OAuth in WebViews. If you're having issues, take a screenshot of this info and share it with support.
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {!user ? (
           <div className="bg-white rounded-lg shadow p-8">
@@ -614,6 +551,53 @@ window.location.href = '/oauth/callback#access_token=test&refresh_token=test'`}<
                     Don't have an account? Sign up
                   </button>
                 </div>
+
+                {/* 🐝 Debug Toggle - Bottom of Login */}
+                <div className="mt-8 pt-6 border-t">
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setShowDebugPanel(!showDebugPanel)}
+                      className="text-2xl hover:scale-110 transition-transform"
+                      title="Toggle Debug Info"
+                    >
+                      🐝
+                    </button>
+                  </div>
+
+                  {showDebugPanel && (
+                    <div className="bg-gray-50 rounded-lg border mt-4 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Code className="w-5 h-5 text-gray-600" />
+                        <span className="font-semibold text-sm">WebView Debug Info</span>
+                        {webViewDetected && (
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                            WebView
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Status</div>
+                          <div className={webViewDetected ? 'text-orange-600' : 'text-green-600'}>
+                            {webViewDetected ? '✓ WebView Detected' : '✓ Standard Browser'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Type</div>
+                          <div className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                            {webViewType}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">User Agent</div>
+                          <div className="font-mono text-[10px] bg-white px-2 py-1 rounded border break-all">
+                            {userAgent}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -693,6 +677,53 @@ window.location.href = '/oauth/callback#access_token=test&refresh_token=test'`}<
                   >
                     Already have an account? Sign in
                   </button>
+                </div>
+
+                {/* 🐝 Debug Toggle - Bottom of Signup */}
+                <div className="mt-8 pt-6 border-t">
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setShowDebugPanel(!showDebugPanel)}
+                      className="text-2xl hover:scale-110 transition-transform"
+                      title="Toggle Debug Info"
+                    >
+                      🐝
+                    </button>
+                  </div>
+
+                  {showDebugPanel && (
+                    <div className="bg-gray-50 rounded-lg border mt-4 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Code className="w-5 h-5 text-gray-600" />
+                        <span className="font-semibold text-sm">WebView Debug Info</span>
+                        {webViewDetected && (
+                          <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                            WebView
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Status</div>
+                          <div className={webViewDetected ? 'text-orange-600' : 'text-green-600'}>
+                            {webViewDetected ? '✓ WebView Detected' : '✓ Standard Browser'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Type</div>
+                          <div className="font-mono text-xs bg-white px-2 py-1 rounded border">
+                            {webViewType}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-600 uppercase mb-1">User Agent</div>
+                          <div className="font-mono text-[10px] bg-white px-2 py-1 rounded border break-all">
+                            {userAgent}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1057,6 +1088,104 @@ window.location.href = '/oauth/callback#access_token=test&refresh_token=test'`}<
                 className="w-full px-6 py-3 border rounded-lg font-semibold hover:bg-gray-50"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Coming Soon Modal for WebView Google OAuth */}
+        {showComingSoonModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+              {/* Header with Coin Icon */}
+              <div className="flex justify-center mb-4">
+                <img 
+                  src="https://cdn-ai.onspace.ai/onspace/files/R25BtUg6LpGmrCRSQEkMCS/008bf7525_scratchpal_icon400.png" 
+                  alt="ScratchPal Coin" 
+                  className="w-20 h-20"
+                />
+              </div>
+
+              <h2 className="text-2xl font-bold mb-4 text-center text-teal">Coming Soon</h2>
+              
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                We are working diligently to bring secure authentication with Google to our Android and iOS app. In the interim you can enjoy Sign-In with Google via our web app at{' '}
+                <a href="https://play.scratchpal.com" className="text-teal font-semibold hover:underline" target="_blank" rel="noopener noreferrer">
+                  https://play.scratchpal.com
+                </a>
+              </p>
+
+              <p className="font-semibold text-gray-800 mb-4">Please choose one of the following options:</p>
+
+              {/* Option 1: Save Shortcut */}
+              <div className="bg-teal/5 border-2 border-teal rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl font-bold text-teal">1)</div>
+                  <div className="flex-1">
+                    <p className="text-gray-700 mb-3">
+                      <a 
+                        href="https://play.scratchpal.com" 
+                        className="text-teal font-bold hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Click to save a shortcut
+                      </a>{' '}
+                      to our Web App, which you can use in the interim, and we will notify you when "native" Sign-in with Google is available.
+                    </p>
+                    <div className="flex justify-center">
+                      <img 
+                        src="https://cdn-ai.onspace.ai/onspace/files/2Ymh4CnrMi4B4gvXSBVTTK/scratchpalthumbnailwide512.png" 
+                        alt="ScratchPal Web Shortcut" 
+                        className="max-w-full h-auto rounded-lg shadow-md"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* OR Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-gray-500 font-semibold">OR</span>
+                </div>
+              </div>
+
+              {/* Option 2: Register via Email */}
+              <div className="bg-purple-50 border-2 border-purple-400 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl font-bold text-purple-600">2)</div>
+                  <div className="flex-1">
+                    <p className="text-gray-700">
+                      <button
+                        onClick={() => {
+                          setShowComingSoonModal(false);
+                          setAuthMode('signup');
+                        }}
+                        className="text-purple-600 font-bold hover:underline"
+                      >
+                        Click here
+                      </button>{' '}
+                      to Register and Login to the app via traditional email.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <p className="text-center text-gray-600 mb-4">
+                Thank you for your patience. ✨
+              </p>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowComingSoonModal(false)}
+                className="w-full px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
