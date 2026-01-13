@@ -209,7 +209,7 @@ export function TermsOfService() {
                 If you have questions or concerns about these Terms of Service, please contact us:
               </p>
               <ul className="list-none space-y-2">
-                <li><strong>Email:</strong> <a href="mailto:contact@onspace.ai" className="text-teal hover:underline">contact@onspace.ai</a></li>
+                <li><strong>Email:</strong> <a href="mailto:info@scratchpal.com" className="text-teal hover:underline">info@scratchpal.com</a></li>
                 <li><strong>Ask Us:</strong> <a href="https://play.scratchpal.com/hot-topics" className="text-teal hover:underline">https://play.scratchpal.com/hot-topics</a></li>
               </ul>
             </section>
