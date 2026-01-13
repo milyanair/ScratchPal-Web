@@ -14,7 +14,9 @@ import { AdminStates } from './AdminStates';
 export function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'slider' | 'games' | 'rankings' | 'rewards' | 'users' | 'announcements' | 'scanner' | 'states'>('games');
+  const [activeMainTab, setActiveMainTab] = useState<'games' | 'member-services' | 'scanner'>('games');
+  const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'imports' | 'states' | 'rankings'>('manager');
+  const [memberServicesSubTab, setMemberServicesSubTab] = useState<'slider' | 'announcements' | 'users' | 'rewards'>('slider');
   const [isUpdatingRanks, setIsUpdatingRanks] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -379,20 +381,35 @@ export function Admin() {
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
 
-        {/* Tabs */}
+        {/* Main Tabs */}
         <div className="flex gap-2 mb-6 border-b">
-          <button onClick={() => setActiveTab('games')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Game Manager</button>
-          <button onClick={() => setActiveTab('slider')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'slider' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Slider Messages</button>
-          <button onClick={() => setActiveTab('rankings')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'rankings' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Ranking System</button>
-          <button onClick={() => setActiveTab('rewards')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'rewards' ? 'border-b-2 border-yellow-500 text-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}>Rewards</button>
-          <button onClick={() => setActiveTab('users')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'users' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Users</button>
-          <button onClick={() => setActiveTab('announcements')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'announcements' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Announcements</button>
-          <button onClick={() => setActiveTab('scanner')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'scanner' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}>Scanner Settings</button>
-          <button onClick={() => setActiveTab('states')} className={`px-6 py-3 font-semibold transition-colors ${activeTab === 'states' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}>States</button>
+          <button onClick={() => setActiveMainTab('games')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Games</button>
+          <button onClick={() => setActiveMainTab('member-services')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'member-services' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Member Services</button>
+          <button onClick={() => setActiveMainTab('scanner')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'scanner' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}>Scanner Settings</button>
         </div>
 
-        {/* SLIDER TAB - UNCHANGED */}
-        {activeTab === 'slider' && (
+        {/* Games Subtabs */}
+        {activeMainTab === 'games' && (
+          <div className="flex gap-2 mb-6 border-b bg-gray-50 -mx-4 px-4 py-2">
+            <button onClick={() => setGamesSubTab('manager')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'manager' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Game Manager</button>
+            <button onClick={() => setGamesSubTab('imports')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'imports' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Imports</button>
+            <button onClick={() => setGamesSubTab('states')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'states' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>States</button>
+            <button onClick={() => setGamesSubTab('rankings')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'rankings' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Ranking System</button>
+          </div>
+        )}
+
+        {/* Member Services Subtabs */}
+        {activeMainTab === 'member-services' && (
+          <div className="flex gap-2 mb-6 border-b bg-gray-50 -mx-4 px-4 py-2">
+            <button onClick={() => setMemberServicesSubTab('slider')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'slider' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Slider Messages</button>
+            <button onClick={() => setMemberServicesSubTab('announcements')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'announcements' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Announcements</button>
+            <button onClick={() => setMemberServicesSubTab('users')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'users' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Users</button>
+            <button onClick={() => setMemberServicesSubTab('rewards')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'rewards' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Rewards</button>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - SLIDER MESSAGES */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'slider' && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Slider Messages</h2>
@@ -456,8 +473,8 @@ export function Admin() {
           </div>
         )}
 
-        {/* RANKINGS TAB, REWARDS TAB, ANNOUNCEMENTS TAB, USERS TAB - ALL UNCHANGED, KEEPING AS-IS */}
-        {activeTab === 'rankings' && (
+        {/* GAMES - RANKING SYSTEM */}
+        {activeMainTab === 'games' && gamesSubTab === 'rankings' && (
           <div>
             <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
               <h2 className="text-2xl font-bold mb-2">Automatic Ranking System</h2>
@@ -518,11 +535,14 @@ export function Admin() {
           </div>
         )}
 
-        {activeTab === 'rewards' && <AdminRewards />}
+        {/* MEMBER SERVICES - REWARDS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'rewards' && <AdminRewards />}
 
-        {activeTab === 'states' && <AdminStates />}
+        {/* GAMES - STATES */}
+        {activeMainTab === 'games' && gamesSubTab === 'states' && <AdminStates />}
 
-        {activeTab === 'scanner' && (
+        {/* SCANNER SETTINGS - STANDALONE */}
+        {activeMainTab === 'scanner' && (
           <div>
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 mb-6">
               <h2 className="text-2xl font-bold mb-2">Scanner Accuracy Settings</h2>
@@ -667,7 +687,8 @@ export function Admin() {
           </div>
         )}
         
-        {activeTab === 'announcements' && (
+        {/* MEMBER SERVICES - ANNOUNCEMENTS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'announcements' && (
           <div>
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 mb-6">
               <h2 className="text-2xl font-bold mb-2">Send Announcement</h2>
@@ -690,7 +711,8 @@ export function Admin() {
           </div>
         )}
 
-        {activeTab === 'users' && (
+        {/* MEMBER SERVICES - USERS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'users' && (
           <div>
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
               <h2 className="text-2xl font-bold mb-2">User Management</h2>
@@ -815,8 +837,8 @@ export function Admin() {
           </div>
         )}
 
-        {/* GAMES TAB - REORGANIZED WITH TWO-COLUMN LAYOUT */}
-        {activeTab === 'games' && (
+        {/* GAMES - GAME MANAGER (TABLE ONLY) */}
+        {activeMainTab === 'games' && gamesSubTab === 'manager' && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Game Manager</h2>
@@ -878,7 +900,7 @@ export function Admin() {
             </div>
 
             {/* Pagination */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-600">Showing {totalGames === 0 ? 0 : startIndex + 1}-{endIndex} of {totalGames} games</div>
                 <div className="flex items-center gap-2">
@@ -903,9 +925,19 @@ export function Admin() {
               </div>
             </div>
 
-            {/* Two-Column Layout for Tools */}
+          </div>
+        )}
+
+        {/* GAMES - IMPORTS (NEW PAGE) */}
+        {activeMainTab === 'games' && gamesSubTab === 'imports' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Data Import & Conversion Tools</h2>
+            </div>
+
+            {/* Two-Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* LEFT COLUMN */}
+              {/* LEFT COLUMN - CSV Import Tools */}
               <div className="space-y-6">
                 {/* CSV Upload Section */}
                 <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow p-6">
@@ -1066,8 +1098,9 @@ export function Admin() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN - Image Conversion Tools */}
-              <div>
+              {/* RIGHT COLUMN - Image Conversion & Danger Zone */}
+              <div className="space-y-6">
+                {/* Image Conversion Tools */}
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-bold mb-2">Image Conversion Tools</h3>
                   <p className="text-sm text-gray-600 mb-2">Convert external image URLs to local storage. Images already hosted on play.scratchpal.com will be skipped.</p>
@@ -1094,6 +1127,17 @@ export function Admin() {
                       <p className="text-xs text-gray-500 mt-2">⚠️ Keep this tab open during conversion. Processes 1 image every 10 seconds to avoid rate limiting.</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Bulk Delete Tools (Danger Zone) */}
+                <div className="bg-white rounded-lg shadow p-6 border-2 border-red-200">
+                  <h3 className="text-lg font-bold mb-2 text-red-600">⚠️ Danger Zone</h3>
+                  <p className="text-sm text-red-800 font-semibold mb-2">Delete All Games in State</p>
+                  <p className="text-xs text-red-600 mb-4">This will permanently delete ALL games for the selected state. This action cannot be undone!</p>
+                  <button onClick={async () => { if (gameStateFilter === 'all') { toast.error('Please select a specific state to delete'); return; } const stateGamesCount = allGames.filter(g => g.state === gameStateFilter).length; const confirmText = `DELETE ${gameStateFilter}`; const userInput = prompt(`⚠️ WARNING: This will permanently delete ${stateGamesCount} games from ${gameStateFilter}.\n\nType "${confirmText}" to confirm:`); if (userInput !== confirmText) { toast.error('Deletion cancelled - confirmation text did not match'); return; } try { const { data, error } = await supabase.rpc('delete_games_by_state', { p_state: gameStateFilter, }); if (error) throw error; toast.success(`Deleted ${data.deleted_count} games from ${gameStateFilter}`); refetchGames(); refetchRankingSummary(); } catch (error: any) { console.error('Bulk delete error:', error); toast.error(error.message || 'Failed to delete games'); } }} disabled={gameStateFilter === 'all'} className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
+                    <Trash2 className="w-4 h-4" />
+                    Delete All {gameStateFilter !== 'all' ? `${gameStateFilter} Games` : '(Select State First)'}
+                  </button>
                 </div>
               </div>
             </div>
