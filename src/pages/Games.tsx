@@ -269,7 +269,7 @@ export function Games() {
                 }`}
                 title="Sort by Rank"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
                   <span className="text-xl">🏅</span>
                 </div>
               </button>
@@ -280,7 +280,7 @@ export function Games() {
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
                   <span className="text-xl">🎁</span>
                 </div>
               </button>
@@ -291,7 +291,7 @@ export function Games() {
                 }`}
                 title="Favorites Only"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
                   <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
                 </div>
               </button>
@@ -326,7 +326,7 @@ export function Games() {
                 }`}
                 title="Sort by Rank"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
                   <span className="text-xl">🏅</span>
                 </div>
               </button>
@@ -337,7 +337,7 @@ export function Games() {
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
                   <span className="text-xl">🎁</span>
                 </div>
               </button>
@@ -348,7 +348,7 @@ export function Games() {
                 }`}
                 title="Favorites Only"
               >
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
                   <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
                 </div>
               </button>
