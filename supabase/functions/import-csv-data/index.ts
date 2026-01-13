@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { csvUrl } = await req.json();
+    const { csvUrl, offset = 0 } = await req.json();
 
     if (!csvUrl) {
       return new Response(
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
 
     const result: ImportResult = {
       status: 'success',
-      records_processed: rows.length,
+      records_processed: 0,
       records_inserted: 0,
       records_updated: 0,
       records_failed: 0,
@@ -333,16 +333,24 @@ Deno.serve(async (req) => {
       },
     };
 
-    // **OPTIMIZED: Process ALL rows in batches**
-    // Batch processing prevents timeouts while still importing entire CSV
-    console.log(`Processing all ${rows.length} rows from CSV...`);
+    // **CHUNKED PROCESSING: Process 200 rows per run to avoid timeouts**
+    const CHUNK_SIZE = 200; // Process max 200 rows per Edge Function invocation
+    const startRow = offset;
+    const endRow = Math.min(startRow + CHUNK_SIZE, rows.length);
+    const rowsToProcess = rows.slice(startRow, endRow);
     
-    const BATCH_SIZE = 20; // Process 20 rows at a time to avoid timeouts
+    console.log(`Total CSV rows: ${rows.length}`);
+    console.log(`Processing chunk: rows ${startRow + 1}-${endRow} (${rowsToProcess.length} rows)`);
+    console.log(`Remaining after this run: ${Math.max(0, rows.length - endRow)} rows`);
     
-    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
-      const batchEnd = Math.min(batchStart + BATCH_SIZE, rows.length);
-      const batch = rows.slice(batchStart, batchEnd);
-      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rows.length / BATCH_SIZE)} (rows ${batchStart + 1}-${batchEnd})...`);
+    result.records_processed = rowsToProcess.length;
+    
+    const BATCH_SIZE = 20; // Process 20 rows at a time within this chunk
+    
+    for (let batchStart = 0; batchStart < rowsToProcess.length; batchStart += BATCH_SIZE) {
+      const batchEnd = Math.min(batchStart + BATCH_SIZE, rowsToProcess.length);
+      const batch = rowsToProcess.slice(batchStart, batchEnd);
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (chunk rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
         // Prepare batch for upsert
@@ -378,7 +386,7 @@ Deno.serve(async (req) => {
           batch.forEach((row, idx) => {
             result.records_failed++;
             result.details.failed.push({ 
-              row: batchStart + idx + 2, 
+              row: startRow + batchStart + idx + 2, 
               error: upsertError.message 
             });
           });
@@ -395,7 +403,7 @@ Deno.serve(async (req) => {
         batch.forEach((row, idx) => {
           result.records_failed++;
           result.details.failed.push({ 
-            row: batchStart + idx + 2, 
+            row: startRow + batchStart + idx + 2, 
             error: batchError.message 
           });
         });
@@ -403,12 +411,19 @@ Deno.serve(async (req) => {
     }
 
     // Update result status
-    if (result.records_failed === rows.length) {
+    if (result.records_failed === rowsToProcess.length) {
       result.status = 'failed';
-      result.error_message = 'All records failed to import';
+      result.error_message = 'All records in this chunk failed to import';
     } else if (result.records_failed > 0) {
       result.status = 'partial';
-      result.error_message = `${result.records_failed} records failed`;
+      result.error_message = `${result.records_failed} records failed in this chunk`;
+    }
+    
+    // Add continuation info if there are more rows to process
+    const hasMoreRows = endRow < rows.length;
+    if (hasMoreRows) {
+      result.error_message = (result.error_message ? result.error_message + ' | ' : '') + 
+        `Processed ${endRow}/${rows.length} rows. ${rows.length - endRow} rows remaining. Run import again to continue.`;
     }
 
     // Log import to database
@@ -440,10 +455,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Import complete:`, result);
+    console.log(`Chunk import complete:`, result);
 
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        ...result,
+        total_rows: rows.length,
+        processed_up_to: endRow,
+        has_more: hasMoreRows,
+        next_offset: hasMoreRows ? endRow : null,
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
