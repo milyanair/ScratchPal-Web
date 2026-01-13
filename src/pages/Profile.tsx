@@ -1145,16 +1145,15 @@ export function Profile() {
         {showComingSoonModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-              {/* Header with Coin Icon */}
-              <div className="flex justify-center mb-4">
+              {/* Header with Coin Icon and Title */}
+              <div className="flex items-center gap-4 mb-4">
                 <img 
-                  src="https://cdn-ai.onspace.ai/onspace/files/R25BtUg6LpGmrCRSQEkMCS/008bf7525_scratchpal_icon400.png" 
+                  src="https://cdn-ai.onspace.ai/onspace/files/8iZMsD2CHxsGawePToLNxE/scratchpalcoin100.png" 
                   alt="ScratchPal Coin" 
-                  className="w-20 h-20"
+                  className="w-16 h-16 flex-shrink-0"
                 />
+                <h2 className="text-2xl font-bold text-teal">Coming Soon</h2>
               </div>
-
-              <h2 className="text-2xl font-bold mb-4 text-center text-teal">Coming Soon</h2>
               
               <p className="text-gray-700 mb-6 leading-relaxed">
                 We are working diligently to bring secure authentication with Google to our Android and iOS app. In the interim you can enjoy Sign-In with Google via our web app at{' '}
@@ -1165,7 +1164,7 @@ export function Profile() {
 
               <p className="font-semibold text-gray-800 mb-4">Please choose one of the following options:</p>
 
-              {/* Option 1: Add to Home Screen */}
+              {/* Option 1: Open Web App */}
               <div className="bg-teal/5 border-2 border-teal rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <div className="text-2xl font-bold text-teal">1)</div>
@@ -1177,7 +1176,7 @@ export function Profile() {
                       }}
                       className="text-teal font-bold hover:underline text-left"
                     >
-                      Click to save a shortcut to our Web App
+                      Click to open the Web App, then click Install when prompted to save it as a button.
                     </button>
                   </div>
                 </div>
