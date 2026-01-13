@@ -1004,7 +1004,7 @@ export function Admin() {
                     <p className="text-xs opacity-75 mt-2">Expected columns: game_number, game_name, state, price, top_prize, top_prizes_remaining, total_top_prizes, overall_odds, start_date, end_date, image_url</p>
                   </div>
                   
-                  {/* Download First Button */}
+                  {/* Download First Button - Uses Edge Function to bypass CORS */}
                   <button onClick={async () => {
                     if (!csvUrl.trim()) {
                       toast.error('Please enter a CSV file URL');
@@ -1014,44 +1014,25 @@ export function Admin() {
                     try {
                       console.log('Downloading CSV from:', csvUrl);
                       
-                      // Download the CSV file using fetch
-                      const response = await fetch(csvUrl);
-                      if (!response.ok) {
-                        throw new Error(`Failed to download CSV: ${response.status} ${response.statusText}`);
+                      // Use edge function to download CSV (bypasses CORS)
+                      const { data, error } = await supabase.functions.invoke('download-csv', {
+                        body: { csvUrl },
+                      });
+                      
+                      if (error) {
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context?.text();
+                          throw new Error(errorText || error.message);
+                        }
+                        throw error;
                       }
                       
-                      // Get the CSV content as blob
-                      const blob = await response.blob();
-                      console.log('Downloaded CSV, size:', blob.size, 'bytes');
-                      
-                      // Generate filename with timestamp
-                      const timestamp = Date.now();
-                      const originalFilename = csvUrl.split('/').pop()?.split('?')[0] || 'download';
-                      const filename = `csv_imports/${originalFilename.replace(/\.csv$/, '')}_${timestamp}.csv`;
-                      
-                      console.log('Uploading to Storage:', filename);
-                      
-                      // Upload to Supabase Storage
-                      const { data: uploadData, error: uploadError } = await supabase.storage
-                        .from('game-images')
-                        .upload(filename, blob, {
-                          contentType: 'text/csv',
-                          upsert: false,
-                        });
-                      
-                      if (uploadError) throw uploadError;
-                      
-                      // Get public URL
-                      const { data: publicUrlData } = supabase.storage
-                        .from('game-images')
-                        .getPublicUrl(filename);
-                      
                       // Update the CSV URL field with the new local URL
-                      setCsvUrl(publicUrlData.publicUrl);
-                      setUploadedCsvUrl(publicUrlData.publicUrl);
+                      setCsvUrl(data.url);
+                      setUploadedCsvUrl(data.url);
                       
-                      toast.success(`CSV downloaded and saved to Storage! Ready to import.`);
-                      console.log('Local URL:', publicUrlData.publicUrl);
+                      toast.success(`CSV downloaded and saved to Storage! (${(data.size / 1024).toFixed(1)} KB)`);
+                      console.log('Local URL:', data.url);
                     } catch (error: any) {
                       console.error('CSV download error:', error);
                       toast.error(error.message || 'Failed to download CSV');
