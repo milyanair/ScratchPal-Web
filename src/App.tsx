@@ -145,6 +145,8 @@ import { ScanTickets } from '@/pages/ScanTickets';
 import { Donate } from '@/pages/Donate';
 import { OAuthCallback } from '@/pages/OAuthCallback';
 import { Sitemap } from '@/pages/Sitemap';
+import { PrivacyPolicy } from '@/pages/PrivacyPolicy';
+import { TermsOfService } from '@/pages/TermsOfService';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -299,6 +301,8 @@ function AppRoutes() {
         <Route path="/scan-tickets" element={<ScanTickets />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/sitemap" element={<Sitemap />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

@@ -155,13 +155,41 @@ export function StateSelection() {
               .
             </div>
             
-            {/* Sitemap Link */}
-            <div className="mt-4 text-center">
+            {/* Bottom Links */}
+            <div className="mt-6 flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm">
+              <button
+                onClick={() => navigate('/privacy-policy')}
+                className="text-teal hover:underline"
+              >
+                Privacy Policy
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={() => navigate('/terms-of-service')}
+                className="text-teal hover:underline"
+              >
+                Terms of Service
+              </button>
+              <span className="text-gray-300">|</span>
               <button
                 onClick={() => navigate('/sitemap')}
-                className="text-teal hover:underline text-sm"
+                className="text-teal hover:underline"
               >
-                Browse Site Index
+                Sitemap
+              </button>
+              <span className="text-gray-300">|</span>
+              <a
+                href="https://play.scratchpal.com/hot-topics"
+                className="text-teal hover:underline"
+              >
+                Ask Us
+              </a>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={() => navigate('/donate')}
+                className="text-teal hover:underline"
+              >
+                Donate
               </button>
             </div>
           </div>
