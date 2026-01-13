@@ -952,127 +952,51 @@ export function Admin() {
               <p className="opacity-90">Review all scanned tickets from all users. Monitor scan activity and moderate content.</p>
             </div>
             
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">User</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Scan Name</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold">Matches</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold">Sample</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {allScans.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-gray-500">No scans found</td>
-                    </tr>
-                  ) : (
-                    allScans.map((scan: any) => (
-                      <tr key={scan.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center text-xs font-bold">
-                              {scan.user_profiles?.username?.[0]?.toUpperCase() || '?'}
-                            </div>
-                            <div>
-                              <div className="font-medium">{scan.user_profiles?.username || 'Unknown'}</div>
-                              <div className="text-xs text-gray-500">{scan.user_profiles?.email || 'N/A'}</div>
-                            </div>
+            {allScans.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg">
+                <p className="text-gray-500">No scans found</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold">All User Scans ({allScans.length})</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {allScans.map((scan: any) => (
+                    <div key={scan.id} className="relative">
+                      {/* User Info Badge */}
+                      <div className="absolute top-2 left-2 z-10 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-teal text-white flex items-center justify-center text-xs font-bold">
+                            {scan.user_profiles?.username?.[0]?.toUpperCase() || '?'}
                           </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium">{scan.state}</td>
-                        <td className="px-4 py-3 text-sm">{scan.scan_name || 'Unnamed'}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                            {Array.isArray(scan.ticket_matches) ? scan.ticket_matches.length : 0}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {new Date(scan.created_at).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            scan.is_sample 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {scan.is_sample ? 'Yes' : 'No'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <a
-                              href={scan.image_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 hover:bg-gray-200 rounded text-blue-600"
-                              title="View image"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </a>
-                            <button
-                              onClick={async () => {
-                                if (confirm(`Mark this scan as ${scan.is_sample ? 'private' : 'sample'}?`)) {
-                                  try {
-                                    const { error } = await supabase
-                                      .from('scanned_images')
-                                      .update({ is_sample: !scan.is_sample })
-                                      .eq('id', scan.id);
-                                    
-                                    if (error) throw error;
-                                    toast.success(`Scan marked as ${!scan.is_sample ? 'sample' : 'private'}`);
-                                    refetchScans();
-                                  } catch (error: any) {
-                                    console.error('Update error:', error);
-                                    toast.error('Failed to update scan');
-                                  }
-                                }
-                              }}
-                              className="p-1 hover:bg-gray-200 rounded text-purple-600"
-                              title={scan.is_sample ? 'Mark as private' : 'Mark as sample'}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={async () => {
-                                if (confirm('Delete this scan? This action cannot be undone.')) {
-                                  try {
-                                    const { error } = await supabase
-                                      .from('scanned_images')
-                                      .delete()
-                                      .eq('id', scan.id);
-                                    
-                                    if (error) throw error;
-                                    toast.success('Scan deleted');
-                                    refetchScans();
-                                  } catch (error: any) {
-                                    console.error('Delete error:', error);
-                                    toast.error('Failed to delete scan');
-                                  }
-                                }
-                              }}
-                              className="p-1 hover:bg-red-100 rounded text-red-600"
-                              title="Delete scan"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          <div>
+                            <div className="text-xs font-medium">{scan.user_profiles?.username || 'Unknown'}</div>
+                            <div className="text-xs text-gray-500">{scan.user_profiles?.email || 'N/A'}</div>
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                      </div>
+
+                      {/* Sample Badge */}
+                      {scan.is_sample && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                            Sample
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Scan Card */}
+                      <SavedScanCard 
+                        scan={scan}
+                        onDelete={refetchScans}
+                        showAdminActions={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
