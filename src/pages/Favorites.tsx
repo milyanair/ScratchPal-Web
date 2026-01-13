@@ -121,7 +121,16 @@ export function Favorites() {
 
         {!user && (
           <div className="text-center py-12 bg-white rounded-lg mb-6">
-            <p className="text-gray-500">Please sign in to view and save favorites</p>
+            <p className="text-gray-500">
+              Please{' '}
+              <button
+                onClick={() => navigate('/profile')}
+                className="text-teal hover:underline font-semibold"
+              >
+                sign in
+              </button>
+              {' '}to view and save favorites
+            </p>
           </div>
         )}
 
