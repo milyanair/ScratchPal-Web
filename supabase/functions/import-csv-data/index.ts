@@ -390,22 +390,14 @@ Deno.serve(async (req) => {
       
       try {
         // **STEP 1: Check which records already exist using composite key (state, game_number, price, top_prize)**
-        const compositeKeys = batch.map(row => ({
-          state: row.state,
-          game_number: row.game_number,
-          price: row.price,
-          top_prize: row.top_prize,
-        }));
+        // Get unique states in this batch
+        const statesInBatch = Array.from(new Set(batch.map(row => row.state)));
         
-        // Build OR query to find existing records
-        const orConditions = compositeKeys.map(key => 
-          `and(state.eq.${key.state},game_number.eq.${key.game_number},price.eq.${key.price},top_prize.eq.${key.top_prize})`
-        ).join(',');
-        
+        // Fetch ALL existing games for these states (simpler query, no OR conditions)
         const { data: existingGames, error: fetchError } = await supabaseAdmin
           .from('games')
           .select('id, state, game_number, price, top_prize, start_date, total_top_prizes, end_date, source, source_url, top_prizes_remaining')
-          .or(orConditions);
+          .in('state', statesInBatch);
         
         if (fetchError) {
           throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
