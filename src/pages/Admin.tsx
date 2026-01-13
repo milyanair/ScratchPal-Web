@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AdminRewards } from './AdminRewards';
 import { AdminStates } from './AdminStates';
+import { SavedScanCard } from '@/components/SavedScanCard';
 
 export function Admin() {
   const { user } = useAuth();
