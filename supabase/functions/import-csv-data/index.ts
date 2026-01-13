@@ -333,114 +333,72 @@ Deno.serve(async (req) => {
       },
     };
 
-    // **SIMPLIFIED BATCH PROCESSING: Use individual lookups to avoid complex OR queries**
-    const BATCH_SIZE = 10; // Smaller batches for stability
-    console.log(`Processing ${rows.length} rows in batches of ${BATCH_SIZE}...`);
+    // **OPTIMIZED: Use upsert to handle both inserts and updates in one operation**
+    console.log(`Using upsert strategy for ${rows.length} rows...`);
+    
+    const BATCH_SIZE = 50; // Process in batches to avoid overwhelming the database
     
     for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
       const batchEnd = Math.min(batchStart + BATCH_SIZE, rows.length);
       const batch = rows.slice(batchStart, batchEnd);
-      console.log(`Processing batch ${batchStart / BATCH_SIZE + 1} (rows ${batchStart + 1}-${batchEnd})...`);
+      console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rows.length / BATCH_SIZE)} (rows ${batchStart + 1}-${batchEnd})...`);
       
-      // Process each row individually to avoid complex queries that trigger 502 errors
-      for (let i = 0; i < batch.length; i++) {
-        const row = batch[i];
-        const rowIndex = batchStart + i;
+      try {
+        // Prepare batch for upsert
+        const upsertData = batch.map(row => ({
+          game_number: row.game_number,
+          game_name: row.game_name,
+          state: row.state,
+          price: row.price,
+          top_prize: row.top_prize,
+          top_prizes_remaining: row.top_prizes_remaining,
+          total_top_prizes: row.total_top_prizes,
+          overall_odds: row.overall_odds || null,
+          start_date: row.start_date || null,
+          end_date: row.end_date || null,
+          image_url: row.image_url || null,
+          source: row.source || null,
+          source_url: row.source_url || null,
+          updated_at: new Date().toISOString(),
+        }));
         
-        try {
-          // Check if game exists (simple query with 3 exact matches)
-          const { data: existingGames, error: checkError } = await supabaseAdmin
-            .from('games')
-            .select('id, image_converted, source, source_url')
-            .eq('game_number', row.game_number)
-            .eq('state', row.state)
-            .eq('top_prize', row.top_prize)
-            .limit(1);
-            
-          if (checkError) {
-            console.error(`Error checking game ${row.game_number}:`, checkError);
+        // Upsert batch (insert new, update existing based on unique constraint)
+        const { data: upsertedGames, error: upsertError } = await supabaseAdmin
+          .from('games')
+          .upsert(upsertData, {
+            onConflict: 'game_number,state,top_prize',
+            ignoreDuplicates: false, // Update existing records
+          })
+          .select('game_number');
+        
+        if (upsertError) {
+          console.error(`Batch upsert error:`, upsertError);
+          // Mark entire batch as failed
+          batch.forEach((row, idx) => {
             result.records_failed++;
-            result.details.failed.push({ row: rowIndex + 2, error: checkError.message });
-            continue;
-          }
-          
-          const existing = existingGames && existingGames.length > 0 ? existingGames[0] : null;
-          
-          if (existing) {
-            // Build update object
-            const updateObj: any = {
-              top_prizes_remaining: row.top_prizes_remaining,
-              total_top_prizes: row.total_top_prizes,
-              end_date: row.end_date || null,
-              updated_at: new Date().toISOString(),
-            };
-
-            // Only update image_url if image hasn't been converted AND new image_url exists
-            if ((!existing.image_converted || existing.image_converted === false) && row.image_url) {
-              updateObj.image_url = row.image_url;
-            }
-
-            // Only update source and source_url if current fields are blank/null
-            if ((!existing.source || existing.source.trim() === '') && row.source) {
-              updateObj.source = row.source;
-            }
-
-            if ((!existing.source_url || existing.source_url.trim() === '') && row.source_url) {
-              updateObj.source_url = row.source_url;
-            }
-            
-            // Update existing game
-            const { error: updateError } = await supabaseAdmin
-              .from('games')
-              .update(updateObj)
-              .eq('id', existing.id);
-              
-            if (updateError) {
-              console.error(`Update error for ${row.game_name}:`, updateError);
-              result.records_failed++;
-              result.details.failed.push({ row: rowIndex + 2, error: updateError.message });
-            } else {
-              result.records_updated++;
-              result.details.updated.push(row.game_name);
-            }
-          } else {
-            // Insert new game
-            const { error: insertError } = await supabaseAdmin
-              .from('games')
-              .insert({
-                game_number: row.game_number,
-                game_name: row.game_name,
-                state: row.state,
-                price: row.price,
-                top_prize: row.top_prize,
-                top_prizes_remaining: row.top_prizes_remaining,
-                total_top_prizes: row.total_top_prizes,
-                overall_odds: row.overall_odds || null,
-                start_date: row.start_date || null,
-                end_date: row.end_date || null,
-                image_url: row.image_url || null,
-                source: row.source || null,
-                source_url: row.source_url || null,
-                rank: 0,
-              });
-              
-            if (insertError) {
-              console.error(`Insert error for ${row.game_name}:`, insertError);
-              result.records_failed++;
-              result.details.failed.push({ row: rowIndex + 2, error: insertError.message });
-            } else {
-              result.records_inserted++;
-              result.details.inserted.push(`${row.game_name} (${row.game_number})`);
-            }
-          }
-        } catch (rowError: any) {
-          console.error(`Error processing row ${rowIndex + 2}:`, rowError);
-          result.records_failed++;
-          result.details.failed.push({ row: rowIndex + 2, error: rowError.message });
+            result.details.failed.push({ 
+              row: batchStart + idx + 2, 
+              error: upsertError.message 
+            });
+          });
+        } else {
+          // All records in batch succeeded
+          batch.forEach(row => {
+            result.records_inserted++; // Using inserted as a general "processed" count
+            result.details.inserted.push(`${row.game_name} (${row.game_number})`);
+          });
+          console.log(`✓ Batch upserted ${batch.length} records`);
         }
+      } catch (batchError: any) {
+        console.error(`Error processing batch:`, batchError);
+        batch.forEach((row, idx) => {
+          result.records_failed++;
+          result.details.failed.push({ 
+            row: batchStart + idx + 2, 
+            error: batchError.message 
+          });
+        });
       }
-      
-      console.log(`✓ Batch ${batchStart / BATCH_SIZE + 1} complete`);
     }
 
     // Update result status
