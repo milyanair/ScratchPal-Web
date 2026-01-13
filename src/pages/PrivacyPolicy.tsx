@@ -1,7 +1,10 @@
 import { Layout } from '@/components/layout/Layout';
 import { Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function PrivacyPolicy() {
+  const navigate = useNavigate();
+  
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -134,12 +137,12 @@ export function PrivacyPolicy() {
                 <p className="text-sm mb-3">
                   If you wish to permanently delete your account and all associated data, you can submit a deletion request through our automated system.
                 </p>
-                <a 
-                  href="/delete-account" 
-                  className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm"
+                <button
+                  onClick={() => navigate('/delete-account')}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm"
                 >
                   Request Account Deletion
-                </a>
+                </button>
               </div>
             </section>
 
