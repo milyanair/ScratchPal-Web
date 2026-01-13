@@ -269,7 +269,9 @@ export function Games() {
                 }`}
                 title="Sort by Rank"
               >
-                <span className="text-xl">🏅</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-xl">🏅</span>
+                </div>
               </button>
               <button
                 onClick={() => setSortBy('prizes')}
@@ -278,7 +280,9 @@ export function Games() {
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <span className="text-xl">🎁</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-xl">🎁</span>
+                </div>
               </button>
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
@@ -287,7 +291,9 @@ export function Games() {
                 }`}
                 title="Favorites Only"
               >
-                <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+                </div>
               </button>
             </div>
           </div>
@@ -320,7 +326,9 @@ export function Games() {
                 }`}
                 title="Sort by Rank"
               >
-                <span className="text-xl mx-auto block">🏅</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-xl">🏅</span>
+                </div>
               </button>
               <button
                 onClick={() => setSortBy('prizes')}
@@ -329,7 +337,9 @@ export function Games() {
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <span className="text-xl mx-auto block">🎁</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-xl">🎁</span>
+                </div>
               </button>
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
@@ -338,7 +348,9 @@ export function Games() {
                 }`}
                 title="Favorites Only"
               >
-                <span className="text-xl mx-auto block">{favoritesOnly ? '❤️' : '🩶'}</span>
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+                </div>
               </button>
             </div>
           </div>
