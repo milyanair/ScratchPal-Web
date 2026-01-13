@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { SliderMessage, Game } from '@/types';
 import { FunctionsHttpError } from '@supabase/supabase-js';
-import { Pencil, Trash2, Plus, Search, ChevronLeft, ChevronRight, Send, Upload, Download, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AdminRewards } from './AdminRewards';
@@ -344,6 +344,16 @@ export function Admin() {
     }
   };
 
+  if (isLoadingProfile) {
+    return (
+      <Layout hideNav>
+        <div className="max-w-screen-xl mx-auto px-4 py-6">
+          <p className="text-center text-gray-500">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
   const uploadCsvFile = async (file: File) => {
     setIsUploadingCsv(true);
     try {
@@ -374,131 +384,6 @@ export function Admin() {
       setIsUploadingCsv(false);
     }
   };
-
-  const handleDownloadCsv = async () => {
-    setIsDownloadingCsv(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('download-csv', {
-        body: { csvUrl },
-      });
-
-      if (error) {
-        if (error instanceof FunctionsHttpError) {
-          const errorText = await error.context?.text();
-          throw new Error(errorText || error.message);
-        }
-        throw error;
-      }
-
-      setUploadedCsvUrl(data.localUrl);
-      toast.success('CSV downloaded and saved to storage!');
-    } catch (error: any) {
-      console.error('Download error:', error);
-      toast.error(error.message || 'Failed to download CSV');
-    } finally {
-      setIsDownloadingCsv(false);
-    }
-  };
-
-  const handleDetectColumns = async () => {
-    const url = uploadedCsvUrl || csvUrl;
-    if (!url) {
-      toast.error('Please provide a CSV URL first');
-      return;
-    }
-
-    setIsDetectingColumns(true);
-    try {
-      const response = await fetch(url);
-      const text = await response.text();
-      const lines = text.trim().split('\n');
-      if (lines.length === 0) {
-        throw new Error('CSV file is empty');
-      }
-
-      const delimiter = lines[0].includes('\t') ? '\t' : ',';
-      const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
-      
-      setAvailableColumns(headers);
-      toast.success(`Detected ${headers.length} columns from CSV`);
-    } catch (error: any) {
-      console.error('Column detection error:', error);
-      toast.error(error.message || 'Failed to detect columns');
-    } finally {
-      setIsDetectingColumns(false);
-    }
-  };
-
-  const handleSaveColumnMapping = () => {
-    localStorage.setItem('csv_column_mapping', JSON.stringify(columnMapping));
-    toast.success('Column mapping saved!');
-  };
-
-  const handleImportCsv = async () => {
-    const url = uploadedCsvUrl || csvUrl;
-    if (!url) {
-      toast.error('Please provide a CSV URL');
-      return;
-    }
-
-    setIsImporting(true);
-    setImportProgress('Starting import...');
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('import-csv-data', {
-        body: { 
-          csvUrl: url,
-          offset: importOffset,
-          columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : undefined,
-        },
-      });
-
-      if (error) {
-        if (error instanceof FunctionsHttpError) {
-          const errorText = await error.context?.text();
-          throw new Error(errorText || error.message);
-        }
-        throw error;
-      }
-
-      setLastImportResult(data);
-      
-      if (data.has_more) {
-        setImportOffset(data.next_offset);
-        toast.success(
-          `Processed ${data.processed_up_to}/${data.total_rows} rows. ` +
-          `Inserted: ${data.records_inserted}, Updated: ${data.records_updated}. ` +
-          `Click Import again to continue.`
-        );
-      } else {
-        setImportOffset(0);
-        toast.success(
-          `Import complete! ` +
-          `Inserted: ${data.records_inserted}, Updated: ${data.records_updated}, Failed: ${data.records_failed}`
-        );
-      }
-
-      refetchGames();
-      refetchImportLogs();
-    } catch (error: any) {
-      console.error('Import error:', error);
-      toast.error(error.message || 'Failed to import CSV');
-      setImportOffset(0);
-    } finally {
-      setIsImporting(false);
-      setImportProgress('');
-    }
-  };
-
-  if (isLoadingProfile) {
-    return (
-      <Layout hideNav>
-        <div className="max-w-screen-xl mx-auto px-4 py-6">
-          <p className="text-center text-gray-500">Loading...</p>
-        </div>
-      </Layout>
-    );
-  }
 
   if (!user || !isAdmin) {
     return (
@@ -550,329 +435,6 @@ export function Admin() {
             <button onClick={() => setMemberServicesSubTab('announcements')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'announcements' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Announcements</button>
             <button onClick={() => setMemberServicesSubTab('users')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'users' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Users</button>
             <button onClick={() => setMemberServicesSubTab('rewards')} className={`px-4 py-2 text-sm font-semibold transition-colors ${memberServicesSubTab === 'rewards' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Rewards</button>
-          </div>
-        )}
-
-        {/* GAMES - IMPORTS */}
-        {activeMainTab === 'games' && gamesSubTab === 'imports' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* LEFT COLUMN */}
-            <div className="space-y-6">
-              {/* CSV Data Import */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold mb-4">CSV Data Import</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">CSV URL</label>
-                    <input
-                      type="text"
-                      value={uploadedCsvUrl || csvUrl}
-                      onChange={(e) => setCsvUrl(e.target.value)}
-                      placeholder="Enter CSV URL..."
-                      className="w-full border rounded-lg px-4 py-2 text-sm"
-                      disabled={!!uploadedCsvUrl}
-                    />
-                    {uploadedCsvUrl && (
-                      <p className="text-xs text-gray-500 mt-1">Using uploaded CSV file</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleDownloadCsv}
-                      disabled={isDownloadingCsv || !csvUrl}
-                      className="flex-1 border border-blue-500 text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      <Download className="w-4 h-4" />
-                      {isDownloadingCsv ? 'Downloading...' : 'Download First'}
-                    </button>
-                    
-                    <button
-                      onClick={handleImportCsv}
-                      disabled={isImporting || (!csvUrl && !uploadedCsvUrl)}
-                      className="flex-1 gradient-teal text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isImporting ? 'Importing...' : (importOffset > 0 ? 'Continue Import' : 'Import CSV')}
-                    </button>
-                  </div>
-
-                  {importProgress && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm text-blue-800">{importProgress}</p>
-                    </div>
-                  )}
-
-                  {lastImportResult && (
-                    <div className={`border rounded-lg p-4 ${lastImportResult.status === 'success' ? 'bg-green-50 border-green-200' : lastImportResult.status === 'partial' ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
-                      <h4 className="font-semibold mb-2">Last Import Result</h4>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>Processed: {lastImportResult.records_processed}</div>
-                        <div>Inserted: {lastImportResult.records_inserted}</div>
-                        <div>Updated: {lastImportResult.records_updated}</div>
-                        <div>Failed: {lastImportResult.records_failed}</div>
-                      </div>
-                      {lastImportResult.has_more && (
-                        <p className="mt-2 text-sm font-semibold text-orange-600">
-                          {lastImportResult.total_rows - lastImportResult.processed_up_to} rows remaining - click Import again
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Recent Import History */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold mb-4">Recent Import History</h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {importLogs.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">No import history yet</p>
-                  ) : (
-                    importLogs.map((log: any) => (
-                      <div key={log.id} className={`border rounded-lg p-3 text-sm ${log.status === 'success' ? 'border-green-200 bg-green-50' : log.status === 'partial' ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'}`}>
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-semibold">{log.source_url.split('/').pop()}</span>
-                          <span className="text-xs text-gray-500">{new Date(log.import_date).toLocaleString()}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-1 text-xs">
-                          <div>Inserted: {log.records_inserted}</div>
-                          <div>Updated: {log.records_updated}</div>
-                          <div>Failed: {log.records_failed}</div>
-                          <div>Total: {log.records_processed}</div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Upload CSV File */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold mb-4">Upload CSV File</h3>
-                <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center ${isDragging ? 'border-teal bg-teal/10' : 'border-gray-300'}`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    const file = e.dataTransfer.files[0];
-                    if (file && file.name.endsWith('.csv')) {
-                      uploadCsvFile(file);
-                    } else {
-                      toast.error('Please upload a CSV file');
-                    }
-                  }}
-                >
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600 mb-2">Drag and drop CSV file here, or</p>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) uploadCsvFile(file);
-                    }}
-                    className="hidden"
-                    id="csv-upload"
-                  />
-                  <label
-                    htmlFor="csv-upload"
-                    className="cursor-pointer gradient-teal text-white px-4 py-2 rounded-lg inline-block font-semibold hover:opacity-90"
-                  >
-                    {isUploadingCsv ? 'Uploading...' : 'Choose File'}
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN */}
-            <div className="space-y-6">
-              {/* Image Conversion Tools */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold mb-4">Image Conversion Tools</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2 text-sm">Server-Side Batch Conversion</h4>
-                    <p className="text-xs text-gray-600 mb-3">Convert multiple game images to local storage using server-side processing</p>
-                    <button
-                      onClick={async () => {
-                        setIsConvertingImages(true);
-                        setConversionProgress('Starting conversion...');
-                        try {
-                          const { data, error } = await supabase.functions.invoke('batch-convert-images', { body: {} });
-                          if (error) {
-                            if (error instanceof FunctionsHttpError) {
-                              const errorText = await error.context?.text();
-                              throw new Error(errorText || error.message);
-                            }
-                            throw error;
-                          }
-                          toast.success(`Converted ${data.converted} images!`);
-                          refetchGames();
-                        } catch (error: any) {
-                          console.error('Conversion error:', error);
-                          toast.error(error.message || 'Failed to convert images');
-                        } finally {
-                          setIsConvertingImages(false);
-                          setConversionProgress('');
-                        }
-                      }}
-                      disabled={isConvertingImages}
-                      className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isConvertingImages ? 'Converting...' : 'Start Batch Conversion'}
-                    </button>
-                    {conversionProgress && <p className="text-xs text-gray-600 mt-2">{conversionProgress}</p>}
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <h4 className="font-semibold mb-2 text-sm">Client-Side Sequential Conversion</h4>
-                    <p className="text-xs text-gray-600 mb-3">Convert images one-by-one from the browser (slower but more reliable)</p>
-                    <button
-                      onClick={async () => {
-                        const unconverted = allGames.filter(g => g.image_url && !g.image_converted);
-                        if (unconverted.length === 0) {
-                          toast.info('All games already have converted images');
-                          return;
-                        }
-
-                        setIsClientConverting(true);
-                        setClientConversionStats({ converted: 0, failed: 0, total: unconverted.length });
-
-                        for (let i = 0; i < unconverted.length; i++) {
-                          const game = unconverted[i];
-                          setClientConversionProgress(`Converting ${i + 1}/${unconverted.length}: ${game.game_name}`);
-
-                          try {
-                            const { data, error } = await supabase.functions.invoke('convert-game-images', {
-                              body: { gameId: game.id, imageUrl: game.image_url },
-                            });
-
-                            if (error) throw error;
-
-                            setClientConversionStats(prev => ({ ...prev, converted: prev.converted + 1 }));
-                          } catch (error: any) {
-                            console.error(`Failed to convert ${game.game_name}:`, error);
-                            setClientConversionStats(prev => ({ ...prev, failed: prev.failed + 1 }));
-                          }
-
-                          await new Promise(resolve => setTimeout(resolve, 500));
-                        }
-
-                        toast.success(`Conversion complete! Converted: ${clientConversionStats.converted}, Failed: ${clientConversionStats.failed}`);
-                        refetchGames();
-                        setIsClientConverting(false);
-                        setClientConversionProgress('');
-                      }}
-                      disabled={isClientConverting}
-                      className="w-full bg-purple-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isClientConverting ? 'Converting...' : 'Start Client Conversion'}
-                    </button>
-                    {isClientConverting && (
-                      <div className="mt-2 text-xs">
-                        <p className="text-gray-600">{clientConversionProgress}</p>
-                        <p className="text-green-600">Converted: {clientConversionStats.converted} / {clientConversionStats.total}</p>
-                        {clientConversionStats.failed > 0 && <p className="text-red-600">Failed: {clientConversionStats.failed}</p>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Danger Zone */}
-              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5" />
-                  Danger Zone
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-red-700 mb-2">Delete all games for a specific state</p>
-                    <select
-                      className="w-full border border-red-300 rounded-lg px-3 py-2 mb-2 text-sm"
-                      onChange={async (e) => {
-                        const state = e.target.value;
-                        if (!state) return;
-                        if (!confirm(`Are you sure you want to delete ALL games for ${state}? This cannot be undone!`)) {
-                          e.target.value = '';
-                          return;
-                        }
-                        try {
-                          const { error } = await supabase.rpc('delete_games_by_state', { p_state: state });
-                          if (error) throw error;
-                          toast.success(`All games for ${state} deleted`);
-                          refetchGames();
-                          e.target.value = '';
-                        } catch (error: any) {
-                          console.error('Delete error:', error);
-                          toast.error('Failed to delete games');
-                        }
-                      }}
-                    >
-                      <option value="">Select state to delete...</option>
-                      {availableStates.map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* CSV Column Mapping */}
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold mb-4">CSV Column Mapping</h3>
-                <p className="text-sm text-gray-600 mb-4">Map CSV columns to database fields</p>
-                
-                <button
-                  onClick={handleDetectColumns}
-                  disabled={isDetectingColumns}
-                  className="w-full mb-4 border border-teal text-teal px-4 py-2 rounded-lg font-semibold hover:bg-teal/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isDetectingColumns ? 'Detecting...' : 'Detect Columns from CSV'}
-                </button>
-
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {Object.entries({
-                    game_number: 'Game Number',
-                    game_name: 'Game Name',
-                    state: 'State',
-                    price: 'Price',
-                    top_prize: 'Top Prize',
-                    top_prizes_remaining: 'Prizes Remaining',
-                    total_top_prizes: 'Total Prizes',
-                    overall_odds: 'Overall Odds',
-                    start_date: 'Start Date',
-                    end_date: 'End Date',
-                    image_url: 'Image URL',
-                    source: 'Source',
-                    source_url: 'Source URL',
-                  }).map(([dbField, label]) => (
-                    <div key={dbField}>
-                      <label className="block text-xs font-medium mb-1">{label}</label>
-                      <select
-                        value={columnMapping[dbField] || ''}
-                        onChange={(e) => setColumnMapping({ ...columnMapping, [dbField]: e.target.value })}
-                        className="w-full border rounded-lg px-3 py-2 text-sm"
-                      >
-                        <option value="">-- Not Mapped --</option>
-                        {availableColumns.map(col => (
-                          <option key={col} value={col}>{col}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={handleSaveColumnMapping}
-                  className="w-full mt-4 gradient-teal text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90"
-                >
-                  Save Mapping
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1305,7 +867,7 @@ export function Admin() {
           </div>
         )}
 
-        {/* GAMES - GAME MANAGER */}
+        {/* GAMES - GAME MANAGER (TABLE ONLY) */}
         {activeMainTab === 'games' && gamesSubTab === 'manager' && (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -1394,6 +956,497 @@ export function Admin() {
                 </div>
               </div>
             </div>
+
+          </div>
+        )}
+
+        {/* GAMES - IMPORTS */}
+        {activeMainTab === 'games' && gamesSubTab === 'imports' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT COLUMN */}
+            <div className="space-y-6">
+              {/* CSV Data Import Widget */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">CSV Data Import</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">CSV URL</label>
+                    <input
+                      type="text"
+                      value={csvUrl}
+                      onChange={(e) => setCsvUrl(e.target.value)}
+                      placeholder="https://example.com/data.csv"
+                      className="w-full border rounded-lg px-4 py-2 text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setIsImporting(true);
+                      setImportProgress('Starting import...');
+                      setLastImportResult(null);
+                      
+                      try {
+                        const { data, error } = await supabase.functions.invoke('import-csv-data', {
+                          body: {
+                            csvUrl: uploadedCsvUrl || csvUrl,
+                            offset: importOffset,
+                            columnMapping: Object.keys(columnMapping).length > 0 ? columnMapping : undefined,
+                          },
+                        });
+
+                        if (error) {
+                          if (error instanceof FunctionsHttpError) {
+                            const errorText = await error.context?.text();
+                            throw new Error(errorText || error.message);
+                          }
+                          throw error;
+                        }
+
+                        setLastImportResult(data);
+                        setImportProgress(`Completed: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
+                        
+                        if (data.has_more) {
+                          setImportOffset(data.next_offset);
+                          toast.success(`Processed ${data.processed_up_to}/${data.total_rows} rows. Click Import again to continue.`);
+                        } else {
+                          setImportOffset(0);
+                          toast.success('Import completed!');
+                          refetchGames();
+                          refetchImportLogs();
+                        }
+                      } catch (error: any) {
+                        console.error('Import error:', error);
+                        setImportProgress('Import failed');
+                        toast.error(error.message || 'Failed to import CSV');
+                      } finally {
+                        setIsImporting(false);
+                      }
+                    }}
+                    disabled={isImporting || (!csvUrl && !uploadedCsvUrl)}
+                    className="w-full gradient-teal text-white py-2 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isImporting ? 'Importing...' : importOffset > 0 ? `Continue Import (from row ${importOffset + 1})` : 'Import CSV Data'}
+                  </button>
+                  {importProgress && (
+                    <p className="text-sm text-gray-600 mt-2">{importProgress}</p>
+                  )}
+                  {lastImportResult && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div><strong>Processed:</strong> {lastImportResult.records_processed}</div>
+                        <div><strong>Inserted:</strong> <span className="text-green-600">{lastImportResult.records_inserted}</span></div>
+                        <div><strong>Updated:</strong> <span className="text-blue-600">{lastImportResult.records_updated}</span></div>
+                        <div><strong>Failed:</strong> <span className="text-red-600">{lastImportResult.records_failed}</span></div>
+                      </div>
+                      {lastImportResult.has_more && (
+                        <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                          <p className="text-yellow-800 text-xs">⚠️ More rows to process: {lastImportResult.total_rows - lastImportResult.processed_up_to} remaining. Click Import again.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Recent Import History Widget */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">Recent Import History</h3>
+                <div className="space-y-3">
+                  {importLogs.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No import history yet</p>
+                  ) : (
+                    importLogs.map((log: any) => (
+                      <div key={log.id} className="border rounded-lg p-3 text-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-medium">{new Date(log.import_date).toLocaleString()}</span>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            log.status === 'success' ? 'bg-green-100 text-green-800' :
+                            log.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {log.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                          <div>Inserted: {log.records_inserted}</div>
+                          <div>Updated: {log.records_updated}</div>
+                          <div>Failed: {log.records_failed}</div>
+                        </div>
+                        {log.error_message && (
+                          <p className="text-xs text-red-600 mt-2">{log.error_message}</p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Upload CSV File Widget */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">Upload CSV File</h3>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    isDragging ? 'border-teal bg-teal/5' : 'border-gray-300'
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.name.endsWith('.csv')) {
+                      uploadCsvFile(file);
+                    } else {
+                      toast.error('Please upload a CSV file');
+                    }
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadCsvFile(file);
+                    }}
+                    className="hidden"
+                    id="csv-upload"
+                    disabled={isUploadingCsv}
+                  />
+                  <label
+                    htmlFor="csv-upload"
+                    className={`cursor-pointer ${
+                      isUploadingCsv ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <div className="text-gray-600 mb-2">
+                      {isUploadingCsv ? 'Uploading...' : 'Drag and drop CSV file here, or click to browse'}
+                    </div>
+                    <div className="text-sm text-gray-500">Supported: .csv files</div>
+                  </label>
+                </div>
+                {uploadedCsvUrl && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800 font-medium mb-1">✓ CSV Uploaded Successfully</p>
+                    <p className="text-xs text-green-600 break-all">{uploadedCsvUrl}</p>
+                    <button
+                      onClick={() => {
+                        setCsvUrl(uploadedCsvUrl);
+                        toast.success('CSV URL set for import');
+                      }}
+                      className="mt-2 text-xs text-green-700 hover:text-green-900 font-medium"
+                    >
+                      Use this file for import →
+                    </button>
+                  </div>
+                )}
+                
+                <div className="mt-4 pt-4 border-t">
+                  <button
+                    onClick={async () => {
+                      setIsDownloadingCsv(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke('download-csv', {
+                          body: { csvUrl },
+                        });
+
+                        if (error) {
+                          if (error instanceof FunctionsHttpError) {
+                            const errorText = await error.context?.text();
+                            throw new Error(errorText || error.message);
+                          }
+                          throw error;
+                        }
+
+                        setUploadedCsvUrl(data.localUrl);
+                        setCsvUrl(data.localUrl);
+                        toast.success('CSV downloaded to storage');
+                      } catch (error: any) {
+                        console.error('Download error:', error);
+                        toast.error(error.message || 'Failed to download CSV');
+                      } finally {
+                        setIsDownloadingCsv(false);
+                      }
+                    }}
+                    disabled={isDownloadingCsv || !csvUrl}
+                    className="w-full border border-teal text-teal py-2 rounded-lg font-semibold hover:bg-teal/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDownloadingCsv ? 'Downloading...' : 'Download First'}
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2 text-center">Download external CSV to Supabase Storage before importing</p>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6">
+              {/* Image Conversion Tools Widget */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">Image Conversion Tools</h3>
+                <p className="text-sm text-gray-600 mb-4">Convert game images from external URLs to Supabase Storage</p>
+                
+                <button
+                  onClick={async () => {
+                    setIsConvertingImages(true);
+                    setConversionProgress('Starting batch conversion...');
+                    
+                    try {
+                      const { data, error } = await supabase.functions.invoke('batch-convert-images', {
+                        body: { limit: 50 },
+                      });
+
+                      if (error) {
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context?.text();
+                          throw new Error(errorText || error.message);
+                        }
+                        throw error;
+                      }
+
+                      setConversionProgress(`Converted ${data.converted} images, ${data.failed} failed`);
+                      toast.success(`Batch conversion complete: ${data.converted} images`);
+                      refetchGames();
+                    } catch (error: any) {
+                      console.error('Conversion error:', error);
+                      setConversionProgress('Conversion failed');
+                      toast.error(error.message || 'Failed to convert images');
+                    } finally {
+                      setIsConvertingImages(false);
+                    }
+                  }}
+                  disabled={isConvertingImages}
+                  className="w-full bg-blue-500 text-white py-2 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isConvertingImages ? 'Converting...' : 'Batch Convert Images (50)'}
+                </button>
+                
+                {conversionProgress && (
+                  <p className="text-sm text-gray-600 mt-3">{conversionProgress}</p>
+                )}
+
+                <div className="mt-6 pt-6 border-t">
+                  <h4 className="font-semibold mb-3 text-sm">Client-Side Conversion (Slower, More Reliable)</h4>
+                  <button
+                    onClick={async () => {
+                      setIsClientConverting(true);
+                      setClientConversionProgress('Fetching unconverted games...');
+                      
+                      try {
+                        const { data: unconvertedGames, error: fetchError } = await supabase
+                          .from('games')
+                          .select('id, image_url, game_name')
+                          .eq('image_converted', false)
+                          .not('image_url', 'is', null)
+                          .limit(20);
+
+                        if (fetchError) throw fetchError;
+
+                        if (!unconvertedGames || unconvertedGames.length === 0) {
+                          toast.info('No unconverted images found');
+                          setIsClientConverting(false);
+                          return;
+                        }
+
+                        setClientConversionStats({ converted: 0, failed: 0, total: unconvertedGames.length });
+
+                        let converted = 0;
+                        let failed = 0;
+
+                        for (const game of unconvertedGames) {
+                          setClientConversionProgress(`Converting ${converted + failed + 1}/${unconvertedGames.length}: ${game.game_name}`);
+                          
+                          try {
+                            const response = await fetch(game.image_url);
+                            if (!response.ok) throw new Error('Failed to fetch image');
+
+                            const blob = await response.blob();
+                            const timestamp = Date.now();
+                            const filename = `game_${game.id}_${timestamp}.jpg`;
+
+                            const { error: uploadError } = await supabase.storage
+                              .from('game-images')
+                              .upload(filename, blob, { contentType: 'image/jpeg', upsert: false });
+
+                            if (uploadError) throw uploadError;
+
+                            const { data: publicUrlData } = supabase.storage
+                              .from('game-images')
+                              .getPublicUrl(filename);
+
+                            const { error: updateError } = await supabase
+                              .from('games')
+                              .update({
+                                original_image_url: game.image_url,
+                                image_url: publicUrlData.publicUrl,
+                                image_converted: true,
+                              })
+                              .eq('id', game.id);
+
+                            if (updateError) throw updateError;
+
+                            converted++;
+                            setClientConversionStats({ converted, failed, total: unconvertedGames.length });
+                          } catch (error) {
+                            console.error(`Failed to convert ${game.game_name}:`, error);
+                            failed++;
+                            setClientConversionStats({ converted, failed, total: unconvertedGames.length });
+                          }
+                        }
+
+                        setClientConversionProgress(`Complete: ${converted} converted, ${failed} failed`);
+                        toast.success(`Client conversion complete: ${converted} images`);
+                        refetchGames();
+                      } catch (error: any) {
+                        console.error('Client conversion error:', error);
+                        setClientConversionProgress('Conversion failed');
+                        toast.error(error.message || 'Failed to convert images');
+                      } finally {
+                        setIsClientConverting(false);
+                      }
+                    }}
+                    disabled={isClientConverting}
+                    className="w-full border border-blue-500 text-blue-600 py-2 rounded-lg font-semibold hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isClientConverting ? 'Converting...' : 'Client-Side Convert (20)'}
+                  </button>
+                  
+                  {clientConversionProgress && (
+                    <div className="mt-3 text-sm text-gray-600">
+                      <p>{clientConversionProgress}</p>
+                      {clientConversionStats.total > 0 && (
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                          <div>Total: {clientConversionStats.total}</div>
+                          <div className="text-green-600">✓ {clientConversionStats.converted}</div>
+                          <div className="text-red-600">✗ {clientConversionStats.failed}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* CSV Column Mapping Widget */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">CSV Column Mapping</h3>
+                <p className="text-sm text-gray-600 mb-4">Map CSV columns to database fields</p>
+                
+                <button
+                  onClick={async () => {
+                    setIsDetectingColumns(true);
+                    try {
+                      const response = await fetch(uploadedCsvUrl || csvUrl);
+                      const csvText = await response.text();
+                      const lines = csvText.trim().split('\n');
+                      if (lines.length > 0) {
+                        let delimiter = ',';
+                        const firstLine = lines[0];
+                        if (firstLine.split('\t').length > firstLine.split(',').length) delimiter = '\t';
+                        else if (firstLine.split(';').length > firstLine.split(',').length) delimiter = ';';
+                        else if (firstLine.split('|').length > firstLine.split(',').length) delimiter = '|';
+                        
+                        const headers = firstLine.split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+                        setAvailableColumns(headers);
+                        toast.success(`Detected ${headers.length} columns`);
+                      }
+                    } catch (error: any) {
+                      console.error('Column detection error:', error);
+                      toast.error('Failed to detect columns');
+                    } finally {
+                      setIsDetectingColumns(false);
+                    }
+                  }}
+                  disabled={isDetectingColumns || (!csvUrl && !uploadedCsvUrl)}
+                  className="w-full border border-gray-300 py-2 rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+                >
+                  {isDetectingColumns ? 'Detecting...' : 'Detect Columns from CSV'}
+                </button>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {[
+                    { db: 'game_number', label: 'Game Number' },
+                    { db: 'game_name', label: 'Game Name' },
+                    { db: 'state', label: 'State' },
+                    { db: 'price', label: 'Price' },
+                    { db: 'top_prize', label: 'Top Prize' },
+                    { db: 'top_prizes_remaining', label: 'Top Prizes Remaining' },
+                    { db: 'total_top_prizes', label: 'Total Top Prizes' },
+                    { db: 'overall_odds', label: 'Overall Odds' },
+                    { db: 'start_date', label: 'Start Date' },
+                    { db: 'end_date', label: 'End Date' },
+                    { db: 'image_url', label: 'Image URL' },
+                    { db: 'source', label: 'Source' },
+                    { db: 'source_url', label: 'Source URL' },
+                  ].map(({ db, label }) => (
+                    <div key={db}>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        {label} <span className="text-gray-400">({db})</span>
+                      </label>
+                      <select
+                        value={columnMapping[db] || ''}
+                        onChange={(e) => {
+                          const newMapping = { ...columnMapping, [db]: e.target.value };
+                          setColumnMapping(newMapping);
+                          localStorage.setItem('csv_column_mapping', JSON.stringify(newMapping));
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                      >
+                        <option value="">-- Select CSV Column --</option>
+                        {availableColumns.length > 0 ? (
+                          availableColumns.map((col) => (
+                            <option key={col} value={col}>
+                              {col}
+                            </option>
+                          ))
+                        ) : (
+                          <option value={db}>{db} (default)</option>
+                        )}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-4 border-t flex gap-2">
+                  <button
+                    onClick={() => {
+                      const defaultMapping = {
+                        game_number: 'game_number',
+                        game_name: 'game_name',
+                        state: 'state_code',
+                        price: 'ticket_price',
+                        top_prize: 'top_prize_amount',
+                        top_prizes_remaining: 'top_prizes_remaining',
+                        total_top_prizes: 'top_prizes_total_original',
+                        overall_odds: 'overall_odds',
+                        start_date: 'game_added_date',
+                        end_date: 'end_date',
+                        image_url: 'image_url',
+                        source: 'source',
+                        source_url: 'source_url',
+                      };
+                      setColumnMapping(defaultMapping);
+                      localStorage.setItem('csv_column_mapping', JSON.stringify(defaultMapping));
+                      toast.success('Reset to default mapping');
+                    }}
+                    className="flex-1 border border-gray-300 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                  >
+                    Reset to Default
+                  </button>
+                  <button
+                    onClick={() => {
+                      const emptyMapping = {};
+                      setColumnMapping(emptyMapping);
+                      localStorage.setItem('csv_column_mapping', JSON.stringify(emptyMapping));
+                      toast.success('Cleared all mappings');
+                    }}
+                    className="flex-1 border border-red-300 text-red-600 py-2 rounded-lg text-sm font-semibold hover:bg-red-50"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1403,18 +1456,81 @@ export function Admin() {
             <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
               <h2 className="text-2xl font-bold mb-6">Edit Game</h2>
               <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                <div><label className="block text-sm font-medium mb-2">Game Name</label><input type="text" value={editingGame.game_name} onChange={(e) => setEditingGame({ ...editingGame, game_name: e.target.value })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Game Number</label><input type="text" value={editingGame.game_number} onChange={(e) => setEditingGame({ ...editingGame, game_number: e.target.value })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">State</label><input type="text" value={editingGame.state} onChange={(e) => setEditingGame({ ...editingGame, state: e.target.value })} className="w-full border rounded-lg px-4 py-2" maxLength={2} /></div>
-                <div><label className="block text-sm font-medium mb-2">Price ($)</label><input type="number" value={editingGame.price} onChange={(e) => setEditingGame({ ...editingGame, price: parseFloat(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" step="0.01" /></div>
-                <div><label className="block text-sm font-medium mb-2">Top Prize ($)</label><input type="number" value={editingGame.top_prize} onChange={(e) => setEditingGame({ ...editingGame, top_prize: parseFloat(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Top Prizes Remaining</label><input type="number" value={editingGame.top_prizes_remaining} onChange={(e) => setEditingGame({ ...editingGame, top_prizes_remaining: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Total Top Prizes</label><input type="number" value={editingGame.total_top_prizes} onChange={(e) => setEditingGame({ ...editingGame, total_top_prizes: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Overall Odds</label><input type="text" value={editingGame.overall_odds || ''} onChange={(e) => setEditingGame({ ...editingGame, overall_odds: e.target.value })} className="w-full border rounded-lg px-4 py-2" placeholder="e.g., 1 in 4.5" /></div>
-                <div><label className="block text-sm font-medium mb-2">Start Date</label><input type="date" value={editingGame.start_date || ''} onChange={(e) => setEditingGame({ ...editingGame, start_date: e.target.value })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">End Date</label><input type="date" value={editingGame.end_date || ''} onChange={(e) => setEditingGame({ ...editingGame, end_date: e.target.value })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Image URL</label><input type="text" value={editingGame.image_url || ''} onChange={(e) => setEditingGame({ ...editingGame, image_url: e.target.value })} className="w-full border rounded-lg px-4 py-2" />{editingGame.image_url && (<img src={editingGame.image_url} alt={editingGame.game_name} className="mt-2 max-w-xs rounded-lg border" onError={(e) => { e.currentTarget.style.display = 'none'; }} />)}</div>
-                <div><label className="block text-sm font-medium mb-2">Upload New Image</label><input type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; setIsUploadingImage(true); try { const timestamp = Date.now(); const fileExt = file.name.split('.').pop(); const filename = `game_${editingGame.id}_${timestamp}.${fileExt}`; const { data: uploadData, error: uploadError } = await supabase.storage.from('game-images').upload(filename, file, { contentType: file.type, upsert: false, }); if (uploadError) throw uploadError; const { data: publicUrlData } = supabase.storage.from('game-images').getPublicUrl(filename); setEditingGame({ ...editingGame, original_image_url: editingGame.image_url, image_url: publicUrlData.publicUrl, image_converted: true, }); toast.success('Image uploaded successfully'); } catch (error: any) { console.error('Upload error:', error); toast.error('Failed to upload image'); } finally { setIsUploadingImage(false); } }} className="w-full border rounded-lg px-4 py-2" disabled={isUploadingImage} />{isUploadingImage && (<p className="text-sm text-gray-500 mt-2">Uploading...</p>)}</div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Game Name</label>
+                  <input type="text" value={editingGame.game_name} onChange={(e) => setEditingGame({ ...editingGame, game_name: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Game Number</label>
+                  <input type="text" value={editingGame.game_number} onChange={(e) => setEditingGame({ ...editingGame, game_number: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">State</label>
+                  <input type="text" value={editingGame.state} onChange={(e) => setEditingGame({ ...editingGame, state: e.target.value })} className="w-full border rounded-lg px-4 py-2" maxLength={2} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Price ($)</label>
+                  <input type="number" value={editingGame.price} onChange={(e) => setEditingGame({ ...editingGame, price: parseFloat(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" step="0.01" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Top Prize ($)</label>
+                  <input type="number" value={editingGame.top_prize} onChange={(e) => setEditingGame({ ...editingGame, top_prize: parseFloat(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Top Prizes Remaining</label>
+                  <input type="number" value={editingGame.top_prizes_remaining} onChange={(e) => setEditingGame({ ...editingGame, top_prizes_remaining: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Total Top Prizes</label>
+                  <input type="number" value={editingGame.total_top_prizes} onChange={(e) => setEditingGame({ ...editingGame, total_top_prizes: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Overall Odds</label>
+                  <input type="text" value={editingGame.overall_odds || ''} onChange={(e) => setEditingGame({ ...editingGame, overall_odds: e.target.value })} className="w-full border rounded-lg px-4 py-2" placeholder="e.g., 1 in 4.5" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Start Date</label>
+                  <input type="date" value={editingGame.start_date || ''} onChange={(e) => setEditingGame({ ...editingGame, start_date: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">End Date</label>
+                  <input type="date" value={editingGame.end_date || ''} onChange={(e) => setEditingGame({ ...editingGame, end_date: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Image URL</label>
+                  <input type="text" value={editingGame.image_url || ''} onChange={(e) => setEditingGame({ ...editingGame, image_url: e.target.value })} className="w-full border rounded-lg px-4 py-2" />
+                  {editingGame.image_url && (
+                    <img src={editingGame.image_url} alt={editingGame.game_name} className="mt-2 max-w-xs rounded-lg border" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Upload New Image</label>
+                  <input type="file" accept="image/*" onChange={async (e) => { const file = e.target.files?.[0]; if (!file) return; setIsUploadingImage(true); try { const timestamp = Date.now(); const fileExt = file.name.split('.').pop(); const filename = `game_${editingGame.id}_${timestamp}.${fileExt}`; const { data: uploadData, error: uploadError } = await supabase.storage.from('game-images').upload(filename, file, { contentType: file.type, upsert: false, }); if (uploadError) throw uploadError; const { data: publicUrlData } = supabase.storage.from('game-images').getPublicUrl(filename); setEditingGame({ ...editingGame, original_image_url: editingGame.image_url, image_url: publicUrlData.publicUrl, image_converted: true, }); toast.success('Image uploaded successfully'); } catch (error: any) { console.error('Upload error:', error); toast.error('Failed to upload image'); } finally { setIsUploadingImage(false); } }} className="w-full border rounded-lg px-4 py-2" disabled={isUploadingImage} />
+                  {isUploadingImage && (
+                    <p className="text-sm text-gray-500 mt-2">Uploading...</p>
+                  )}
+                </div>
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium">Image Conversion Status</label>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      editingGame.image_converted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {editingGame.image_converted ? 'Converted' : 'Not Converted'}
+                    </span>
+                  </div>
+                  {editingGame.original_image_url && (
+                    <p className="text-sm text-gray-600 mb-2">Original URL: {editingGame.original_image_url.substring(0, 50)}...</p>
+                  )}
+                  <div className="flex gap-2">
+                    {editingGame.image_url && !editingGame.image_converted && (
+                      <button onClick={async () => { try { const { data, error } = await supabase.functions.invoke('convert-game-images', { body: { gameId: editingGame.id, imageUrl: editingGame.image_url, }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } toast.success('Image converted successfully'); setEditingGame({ ...editingGame, original_image_url: editingGame.image_url, image_url: data.localUrl, image_converted: true, }); } catch (error: any) { console.error('Conversion error:', error); toast.error(error.message || 'Failed to convert image'); } }} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-600">Convert to Local Storage</button>
+                    )}
+                    {editingGame.image_converted && (
+                      <button onClick={() => { if (confirm('Reset conversion flag? This will allow the image to be re-downloaded on next import.')) { setEditingGame({ ...editingGame, image_converted: false, }); toast.success('Conversion flag reset'); } }} className="border border-orange-500 text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-50">Reset Conversion Flag</button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="flex gap-4 mt-6 border-t pt-4">
                 <button onClick={async () => { try { const { error } = await supabase.from('games').update({ game_name: editingGame.game_name, game_number: editingGame.game_number, state: editingGame.state, price: editingGame.price, top_prize: editingGame.top_prize, top_prizes_remaining: editingGame.top_prizes_remaining, total_top_prizes: editingGame.total_top_prizes, overall_odds: editingGame.overall_odds, start_date: editingGame.start_date, end_date: editingGame.end_date, image_url: editingGame.image_url, image_converted: editingGame.image_converted, original_image_url: editingGame.original_image_url, updated_at: new Date().toISOString(), }).eq('id', editingGame.id); if (error) throw error; toast.success('Game updated successfully'); setIsEditModalOpen(false); setEditingGame(null); refetchGames(); } catch (error: any) { console.error('Update error:', error); toast.error('Failed to update game'); } }} className="flex-1 gradient-teal text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90">Save Changes</button>
@@ -1424,17 +1540,37 @@ export function Admin() {
           </div>
         )}
 
-        {/* Slider Message Modal */}
+        {/* Edit Message Modal */}
         {isMessageModalOpen && editingMessage && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-lg w-full p-6">
+            <div className="bg-white rounded-lg max-w-xl w-full p-6">
               <h2 className="text-2xl font-bold mb-6">{editingMessage.id ? 'Edit Message' : 'Add Message'}</h2>
               <div className="space-y-4">
-                <div><label className="block text-sm font-medium mb-2">Message</label><input type="text" value={editingMessage.message} onChange={(e) => setEditingMessage({ ...editingMessage, message: e.target.value })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Transition Type</label><select value={editingMessage.transition_type} onChange={(e) => setEditingMessage({ ...editingMessage, transition_type: e.target.value })} className="w-full border rounded-lg px-4 py-2"><option value="fade">Fade</option><option value="slide">Slide</option><option value="zoom">Zoom</option></select></div>
-                <div><label className="block text-sm font-medium mb-2">Duration (ms)</label><input type="number" value={editingMessage.duration} onChange={(e) => setEditingMessage({ ...editingMessage, duration: parseInt(e.target.value) || 5000 })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div><label className="block text-sm font-medium mb-2">Display Order</label><input type="number" value={editingMessage.display_order} onChange={(e) => setEditingMessage({ ...editingMessage, display_order: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" /></div>
-                <div className="flex items-center gap-2"><input type="checkbox" checked={editingMessage.is_active} onChange={(e) => setEditingMessage({ ...editingMessage, is_active: e.target.checked })} className="w-4 h-4" /><label className="text-sm font-medium">Active</label></div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Message</label>
+                  <textarea value={editingMessage.message} onChange={(e) => setEditingMessage({ ...editingMessage, message: e.target.value })} className="w-full border rounded-lg px-4 py-2 min-h-[100px]" placeholder="Enter message text..." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Transition Type</label>
+                  <select value={editingMessage.transition_type} onChange={(e) => setEditingMessage({ ...editingMessage, transition_type: e.target.value as any })} className="w-full border rounded-lg px-4 py-2">
+                    <option value="fade">Fade</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="flip">Flip</option>
+                    <option value="slide">Slide</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Duration (ms)</label>
+                  <input type="number" value={editingMessage.duration} onChange={(e) => setEditingMessage({ ...editingMessage, duration: parseInt(e.target.value) || 5000 })} className="w-full border rounded-lg px-4 py-2" step="1000" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Display Order</label>
+                  <input type="number" value={editingMessage.display_order} onChange={(e) => setEditingMessage({ ...editingMessage, display_order: parseInt(e.target.value) || 0 })} className="w-full border rounded-lg px-4 py-2" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="is-active" checked={editingMessage.is_active} onChange={(e) => setEditingMessage({ ...editingMessage, is_active: e.target.checked })} className="w-4 h-4" />
+                  <label htmlFor="is-active" className="text-sm font-medium">Active</label>
+                </div>
               </div>
               <div className="flex gap-4 mt-6">
                 <button onClick={async () => { try { if (editingMessage.id) { const { error } = await supabase.from('slider_messages').update({ message: editingMessage.message, transition_type: editingMessage.transition_type, duration: editingMessage.duration, is_active: editingMessage.is_active, display_order: editingMessage.display_order, updated_at: new Date().toISOString(), }).eq('id', editingMessage.id); if (error) throw error; toast.success('Message updated'); } else { const { error } = await supabase.from('slider_messages').insert({ message: editingMessage.message, transition_type: editingMessage.transition_type, duration: editingMessage.duration, is_active: editingMessage.is_active, display_order: editingMessage.display_order, }); if (error) throw error; toast.success('Message added'); } setIsMessageModalOpen(false); setEditingMessage(null); refetchMessages(); } catch (error: any) { console.error('Save error:', error); toast.error('Failed to save message'); } }} className="flex-1 gradient-teal text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90">Save</button>
@@ -1443,6 +1579,7 @@ export function Admin() {
             </div>
           </div>
         )}
+        
       </div>
     </Layout>
   );
