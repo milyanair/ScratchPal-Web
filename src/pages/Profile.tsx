@@ -20,6 +20,8 @@ export function Profile() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstallPWA, setCanInstallPWA] = useState(false);
 
   // WebView detection info
   const webViewDetected = isWebView();
@@ -170,6 +172,22 @@ export function Profile() {
     enabled: !!user,
   });
 
+  // Listen for PWA install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstallPWA(true);
+      console.log('PWA install prompt captured');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
   // Get referral stats
   const { data: referralStats } = useQuery({
     queryKey: ['referralStats', user?.id],
@@ -189,6 +207,36 @@ export function Profile() {
     },
     enabled: !!user,
   });
+
+  const handleAddToHomeScreen = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+
+    if (isIOS) {
+      // iOS requires manual steps - show instructions
+      toast.info('Tap the Share button, then "Add to Home Screen"', { duration: 5000 });
+    } else if (canInstallPWA && deferredPrompt) {
+      // Android/Desktop PWA install
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+          toast.success('App installed successfully!');
+        }
+        
+        setDeferredPrompt(null);
+        setCanInstallPWA(false);
+      } catch (error) {
+        console.error('Install error:', error);
+        toast.error('Installation cancelled or failed');
+      }
+    } else {
+      // Fallback - open web app in new tab
+      toast.info('Opening web app...', { duration: 2000 });
+      window.open('https://play.scratchpal.com', '_blank');
+    }
+  };
 
   const handleGoogleLogin = async () => {
     // If WebView is detected and user is not logged in, show "Coming Soon" modal
@@ -1117,29 +1165,20 @@ export function Profile() {
 
               <p className="font-semibold text-gray-800 mb-4">Please choose one of the following options:</p>
 
-              {/* Option 1: Save Shortcut */}
+              {/* Option 1: Add to Home Screen */}
               <div className="bg-teal/5 border-2 border-teal rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <div className="text-2xl font-bold text-teal">1)</div>
                   <div className="flex-1">
-                    <p className="text-gray-700 mb-3">
-                      <a 
-                        href="https://play.scratchpal.com" 
-                        className="text-teal font-bold hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Click to save a shortcut
-                      </a>{' '}
-                      to our Web App, which you can use in the interim, and we will notify you when "native" Sign-in with Google is available.
-                    </p>
-                    <div className="flex justify-center">
-                      <img 
-                        src="https://cdn-ai.onspace.ai/onspace/files/2Ymh4CnrMi4B4gvXSBVTTK/scratchpalthumbnailwide512.png" 
-                        alt="ScratchPal Web Shortcut" 
-                        className="max-w-full h-auto rounded-lg shadow-md"
-                      />
-                    </div>
+                    <button
+                      onClick={() => {
+                        handleAddToHomeScreen();
+                        setShowComingSoonModal(false);
+                      }}
+                      className="text-teal font-bold hover:underline text-left"
+                    >
+                      Click to save a shortcut to our Web App
+                    </button>
                   </div>
                 </div>
               </div>
