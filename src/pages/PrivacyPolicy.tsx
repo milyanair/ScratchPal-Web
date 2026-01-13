@@ -128,6 +128,19 @@ export function PrivacyPolicy() {
               <p className="mt-3">
                 To exercise these rights, please contact us at <a href="mailto:info@scratchpal.com" className="text-teal hover:underline">info@scratchpal.com</a>
               </p>
+              
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-bold mb-2">Account Deletion</h3>
+                <p className="text-sm mb-3">
+                  If you wish to permanently delete your account and all associated data, you can submit a deletion request through our automated system.
+                </p>
+                <a 
+                  href="/delete-account" 
+                  className="inline-block bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-sm"
+                >
+                  Request Account Deletion
+                </a>
+              </div>
             </section>
 
             <section>

@@ -147,6 +147,7 @@ import { OAuthCallback } from '@/pages/OAuthCallback';
 import { Sitemap } from '@/pages/Sitemap';
 import { PrivacyPolicy } from '@/pages/PrivacyPolicy';
 import { TermsOfService } from '@/pages/TermsOfService';
+import { DeleteAccount } from '@/pages/DeleteAccount';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -303,6 +304,7 @@ function AppRoutes() {
         <Route path="/sitemap" element={<Sitemap />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/delete-account" element={<DeleteAccount />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
