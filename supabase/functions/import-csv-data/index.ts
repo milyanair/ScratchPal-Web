@@ -389,51 +389,161 @@ Deno.serve(async (req) => {
       console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (chunk rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
-        // Prepare batch for upsert
-        const upsertData = batch.map(row => ({
-          game_number: row.game_number,
-          game_name: row.game_name,
+        // **STEP 1: Check which records already exist using composite key (state, game_number, price, top_prize)**
+        const compositeKeys = batch.map(row => ({
           state: row.state,
+          game_number: row.game_number,
           price: row.price,
           top_prize: row.top_prize,
-          top_prizes_remaining: row.top_prizes_remaining,
-          total_top_prizes: row.total_top_prizes,
-          overall_odds: row.overall_odds || null,
-          start_date: row.start_date || null,
-          end_date: row.end_date || null,
-          image_url: row.image_url || null,
-          source: row.source || null,
-          source_url: row.source_url || null,
-          updated_at: new Date().toISOString(),
         }));
         
-        // Upsert batch (insert new, update existing based on unique constraint)
-        const { data: upsertedGames, error: upsertError } = await supabaseAdmin
-          .from('games')
-          .upsert(upsertData, {
-            onConflict: 'game_number,state,top_prize',
-            ignoreDuplicates: false, // Update existing records
-          })
-          .select('game_number');
+        // Build OR query to find existing records
+        const orConditions = compositeKeys.map(key => 
+          `and(state.eq.${key.state},game_number.eq.${key.game_number},price.eq.${key.price},top_prize.eq.${key.top_prize})`
+        ).join(',');
         
-        if (upsertError) {
-          console.error(`Batch upsert error:`, upsertError);
-          // Mark entire batch as failed
-          batch.forEach((row, idx) => {
-            result.records_failed++;
-            result.details.failed.push({ 
-              row: startRow + batchStart + idx + 2, 
-              error: upsertError.message 
-            });
-          });
-        } else {
-          // All records in batch succeeded
-          batch.forEach(row => {
-            result.records_inserted++; // Using inserted as a general "processed" count
-            result.details.inserted.push(`${row.game_name} (${row.game_number})`);
-          });
-          console.log(`✓ Batch upserted ${batch.length} records`);
+        const { data: existingGames, error: fetchError } = await supabaseAdmin
+          .from('games')
+          .select('id, state, game_number, price, top_prize, start_date, total_top_prizes, end_date, source, source_url, top_prizes_remaining')
+          .or(orConditions);
+        
+        if (fetchError) {
+          throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
         }
+        
+        // Create lookup map for existing games
+        const existingMap = new Map();
+        existingGames?.forEach(game => {
+          const key = `${game.state}|${game.game_number}|${game.price}|${game.top_prize}`;
+          existingMap.set(key, game);
+        });
+        
+        // **STEP 2: Separate batch into inserts and updates**
+        const toInsert: any[] = [];
+        const toUpdate: Array<{ id: string; updates: any; row: CSVRow }> = [];
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        batch.forEach(row => {
+          const key = `${row.state}|${row.game_number}|${row.price}|${row.top_prize}`;
+          const existing = existingMap.get(key);
+          
+          if (!existing) {
+            // **NEW RECORD - INSERT**
+            toInsert.push({
+              game_number: row.game_number,
+              game_name: row.game_name,
+              state: row.state,
+              price: row.price,
+              top_prize: row.top_prize,
+              top_prizes_remaining: row.top_prizes_remaining,
+              total_top_prizes: row.total_top_prizes,
+              overall_odds: row.overall_odds || null,
+              start_date: row.start_date || today, // Use CSV date or today
+              end_date: row.end_date || null,
+              image_url: row.image_url || null,
+              source: row.source || null,
+              source_url: row.source_url || null,
+              updated_at: new Date().toISOString(),
+            });
+          } else {
+            // **EXISTING RECORD - CONDITIONAL UPDATE**
+            const updates: any = {
+              updated_at: new Date().toISOString(),
+            };
+            
+            // If start_date (game_added_date) is empty, use today's date
+            if (!existing.start_date && row.start_date) {
+              updates.start_date = row.start_date;
+            } else if (!existing.start_date) {
+              updates.start_date = today;
+            }
+            
+            // If total_top_prizes is empty, update it
+            if (!existing.total_top_prizes && row.total_top_prizes) {
+              updates.total_top_prizes = row.total_top_prizes;
+            }
+            
+            // If end_date is different, update it
+            if (row.end_date && existing.end_date !== row.end_date) {
+              updates.end_date = row.end_date;
+            }
+            
+            // If source is empty, update it
+            if ((!existing.source || existing.source.trim() === '') && row.source) {
+              updates.source = row.source;
+            }
+            
+            // If source_url is empty, update it
+            if ((!existing.source_url || existing.source_url.trim() === '') && row.source_url) {
+              updates.source_url = row.source_url;
+            }
+            
+            // If top_prizes_remaining is different, update it
+            if (existing.top_prizes_remaining !== row.top_prizes_remaining) {
+              updates.top_prizes_remaining = row.top_prizes_remaining;
+            }
+            
+            // Only add to update queue if there are actual changes (beyond updated_at)
+            if (Object.keys(updates).length > 1) {
+              toUpdate.push({ id: existing.id, updates, row });
+            }
+          }
+        });
+        
+        console.log(`  Batch split: ${toInsert.length} to insert, ${toUpdate.length} to update`);
+        
+        // **STEP 3: Execute inserts**
+        if (toInsert.length > 0) {
+          const { data: insertedGames, error: insertError } = await supabaseAdmin
+            .from('games')
+            .insert(toInsert)
+            .select('game_number');
+          
+          if (insertError) {
+            console.error(`Insert error:`, insertError);
+            toInsert.forEach((row, idx) => {
+              result.records_failed++;
+              result.details.failed.push({
+                row: startRow + batchStart + idx + 2,
+                error: insertError.message,
+              });
+            });
+          } else {
+            result.records_inserted += toInsert.length;
+            toInsert.forEach(row => {
+              result.details.inserted.push(`${row.game_name} (${row.game_number})`);
+            });
+            console.log(`  ✓ Inserted ${toInsert.length} new records`);
+          }
+        }
+        
+        // **STEP 4: Execute updates (one by one for conditional logic)**
+        if (toUpdate.length > 0) {
+          for (const { id, updates, row } of toUpdate) {
+            try {
+              const { error: updateError } = await supabaseAdmin
+                .from('games')
+                .update(updates)
+                .eq('id', id);
+              
+              if (updateError) {
+                throw updateError;
+              }
+              
+              result.records_updated++;
+              result.details.updated.push(`${row.game_name} (${row.game_number})`);
+            } catch (updateError: any) {
+              console.error(`Update error for game ${row.game_number}:`, updateError);
+              result.records_failed++;
+              result.details.failed.push({
+                row: startRow + batchStart + toUpdate.indexOf({ id, updates, row }) + 2,
+                error: updateError.message,
+              });
+            }
+          }
+          console.log(`  ✓ Updated ${toUpdate.length} existing records`);
+        }
+        
       } catch (batchError: any) {
         console.error(`Error processing batch:`, batchError);
         batch.forEach((row, idx) => {
