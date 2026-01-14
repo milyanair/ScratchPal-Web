@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.scratchpal.play",
+      "sha256_cert_fingerprints": [
+        "C8:82:39:9D:6F:16:A7:38:E7:B4:8B:F9:66:C3:82:D1:DD:1C:B6:48:91:E3:46:EF:85:42:5C:15:B6:AA:5D:51"
+      ]
+    }
+  }
+]
