@@ -43,15 +43,46 @@ export function SavedScanCard({ scan, autoOpen = false, onDelete, showAdminActio
     queryKey: ['scanGames', scan.id],
     queryFn: async () => {
       const gameIds = scan.ticket_matches.map(m => m.game_id);
+      console.log('Fetching games for scan:', scan.id, 'Game IDs:', gameIds);
+      
       const { data, error } = await supabase
         .from('games')
         .select('*')
         .in('id', gameIds);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching games:', error);
+        throw error;
+      }
+      
+      console.log('Fetched games:', data?.length || 0, 'games');
+      console.log('Ticket matches:', scan.ticket_matches.length, 'matches');
       return data as Game[];
     },
   });
+
+  // Debug: Log when dots should be rendered
+  useEffect(() => {
+    if (showOverlay && scan.ticket_matches.length > 0) {
+      console.log('=== SavedScanCard Overlay Debug ===');
+      console.log('Scan ID:', scan.id);
+      console.log('Ticket matches count:', scan.ticket_matches.length);
+      console.log('Games loaded count:', games.length);
+      console.log('Matches:', scan.ticket_matches);
+      
+      // Check if positions are valid
+      scan.ticket_matches.forEach((match, idx) => {
+        const game = games.find(g => g.id === match.game_id);
+        console.log(`Match ${idx}:`, {
+          game_id: match.game_id,
+          game_found: !!game,
+          game_name: game?.game_name,
+          position: match.position,
+          confidence: match.confidence,
+        });
+      });
+    }
+  }, [showOverlay, scan.ticket_matches, games]);
 
   // Calculate dot color based on rank (6-tier system)
   const getDotColor = (rank: number) => {

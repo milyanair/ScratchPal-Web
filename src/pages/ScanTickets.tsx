@@ -293,12 +293,24 @@ export function ScanTickets() {
 
       // Process results
       if (data.matches && data.matches.length > 0) {
+        console.log('=== Ticket Analysis Results ===');
+        console.log('Total matches:', data.matches.length);
+        data.matches.forEach((match, idx) => {
+          console.log(`Match ${idx}:`, {
+            game: match.game?.game_name,
+            game_id: match.game?.id,
+            position: match.position,
+            confidence: match.confidence,
+          });
+        });
+        
         setTicketMatches(data.matches);
         toast.success(`Found ${data.matches.length} tickets!`);
         
         // Auto-save scan after successful analysis
         await autoSaveScan(data.matches);
       } else {
+        console.log('No matches found in analysis');
         toast.error('No tickets detected. Try a clearer photo.');
       }
     } catch (error: any) {
