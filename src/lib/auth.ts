@@ -142,7 +142,10 @@ export const signInWithGoogle = async () => {
       redirectTo,
       queryParams: { 
         access_type: 'offline', 
-        prompt: 'consent' 
+        prompt: 'consent',
+        // Use production URL for site_url and referrer
+        site_url: 'https://play.scratchpal.com',
+        referrer: 'https://play.scratchpal.com'
       },
       // Always use redirect-based OAuth (skipBrowserRedirect: false)
       // This forces OAuth to open in system browser on webviews
