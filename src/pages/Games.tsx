@@ -210,7 +210,7 @@ export function Games() {
 
   return (
     <Layout>
-      <div className="bg-gray-200 rounded-xl max-w-screen-xl mx-auto px-4 py-4 mb-6">
+      <div className="max-w-screen-xl mx-auto mb-6">
         <MessageSlider />
       </div>
       

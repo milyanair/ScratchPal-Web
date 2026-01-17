@@ -36,7 +36,7 @@ export function MessageSlider() {
   const currentMessage = messages[currentIndex];
 
   return (
-    <div className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 py-[18px] px-4 text-center overflow-hidden">
+    <div className="bg-gray-200 rounded-xl mx-4 py-[18px] px-4 text-center overflow-hidden min-h-[150px] md:min-h-0 flex items-center justify-center">
       <div
         key={currentIndex}
         className={`animate-in ${
@@ -49,7 +49,7 @@ export function MessageSlider() {
             : 'flip-in'
         } duration-500`}
       >
-        <p className="text-sm font-medium">{currentMessage.message}</p>
+        <p className="text-sm font-medium text-gray-800">{currentMessage.message}</p>
       </div>
     </div>
   );

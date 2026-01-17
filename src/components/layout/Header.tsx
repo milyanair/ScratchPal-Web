@@ -120,7 +120,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] bg-white shadow-header grid grid-cols-3 items-center px-4">
+    <header className="sticky top-0 z-50 h-[55px] bg-white grid grid-cols-3 items-center px-4">
       {/* Left: Empty */}
       <div className="flex justify-start">
       </div>
