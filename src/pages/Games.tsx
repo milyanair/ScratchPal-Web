@@ -421,80 +421,104 @@ export function Games() {
         {hotTopics.length > 0 && (
           <div className="mt-12">
             <h2 className="text-xl font-bold mb-4">Hot Topics</h2>
-            <div className="bg-white rounded-lg shadow divide-y">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {hotTopics.map((topic, index) => {
                 const isExpanded = expandedTopics.has(topic.id);
                 const contentSnippet = getContentSnippet(topic.content, isExpanded);
                 
+                // Alternating theme colors (light versions)
+                const colorClasses = [
+                  'bg-green-50 hover:bg-green-100', // Games green
+                  'bg-orange-50 hover:bg-orange-100', // Hot burnt orange
+                  'bg-purple-50 hover:bg-purple-100', // Favs mauve/purple
+                  'bg-violet-50 hover:bg-violet-100', // Wins purple
+                ];
+                const colorClass = colorClasses[index % 4];
+                
                 return (
-                  <div key={topic.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    {/* Header Row */}
+                  <div 
+                    key={topic.id} 
+                    className={`${colorClass} rounded-xl shadow-md transition-all duration-300 hover:shadow-lg`}
+                  >
+                    {/* Card Header */}
                     <div 
-                      className="flex items-center gap-3 cursor-pointer"
+                      className="p-4 cursor-pointer"
                       onClick={() => toggleTopicExpanded(topic.id)}
                     >
-                      {/* Identifier Circle */}
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-                        style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
-                      >
-                        {topic.user_id.substring(0, 2).toUpperCase()}
-                      </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        {/* Identifier Circle */}
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm"
+                          style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                        >
+                          {topic.user_id.substring(0, 2).toUpperCase()}
+                        </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {/* Category Badge */}
-                          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium">
-                            {topic.category}
-                          </span>
+                        {/* Metadata */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Category Badge */}
+                            <span className="bg-white/60 backdrop-blur text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-sm">
+                              {topic.category}
+                            </span>
+                            {/* Upvotes */}
+                            <span className="flex items-center gap-1 text-xs font-semibold text-gray-700">
+                              <ThumbsUp className="w-3 h-3" />
+                              {topic.upvotes}
+                            </span>
+                          </div>
                           {/* Date */}
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-600 mt-1 block">
                             {new Date(topic.created_at).toLocaleDateString()}
                           </span>
-                          {/* Upvotes */}
-                          <span className="flex items-center gap-1 text-xs text-gray-600">
-                            <ThumbsUp className="w-3 h-3" />
-                            {topic.upvotes}
-                          </span>
                         </div>
-                        {/* Topic Title */}
-                        <h3 className="font-semibold text-base line-clamp-1">{topic.title}</h3>
+
+                        {/* Expand/Collapse Icon */}
+                        <div className="flex-shrink-0">
+                          {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-gray-600" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-600" />
+                          )}
+                        </div>
                       </div>
 
-                      {/* Expand/Collapse Icon */}
-                      <div className="flex-shrink-0">
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )}
-                      </div>
+                      {/* Topic Title */}
+                      <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-2">
+                        {topic.title}
+                      </h3>
+
+                      {/* Content Preview (when collapsed) */}
+                      {!isExpanded && (
+                        <p className="text-sm text-gray-700 line-clamp-2">
+                          {topic.content}
+                        </p>
+                      )}
                     </div>
 
                     {/* Expanded Content */}
                     {isExpanded && (
-                      <div className="mt-3 ml-13 pl-3 border-l-2 border-gray-200">
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {contentSnippet}
-                        </p>
+                      <div className="px-4 pb-4">
+                        <div className="bg-white/40 backdrop-blur rounded-lg p-3 mb-3">
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                            {contentSnippet}
+                          </p>
+                        </div>
 
                         {/* View More Button */}
-                        <div className="mt-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (topic.slug) {
-                                navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
-                              } else {
-                                navigate(`/topic/${topic.id}`);
-                              }
-                            }}
-                            className="text-sm text-teal font-semibold hover:underline"
-                          >
-                            View More →
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (topic.slug) {
+                              navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                            } else {
+                              navigate(`/topic/${topic.id}`);
+                            }
+                          }}
+                          className="w-full bg-white/60 hover:bg-white/80 backdrop-blur text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
+                        >
+                          View More →
+                        </button>
                       </div>
                     )}
                   </div>
@@ -503,10 +527,10 @@ export function Games() {
             </div>
 
             {/* View All Topics Link */}
-            <div className="text-center mt-4">
+            <div className="text-center mt-6">
               <button
                 onClick={() => navigate('/hot-topics')}
-                className="text-teal font-semibold hover:underline"
+                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md"
               >
                 View All Topics →
               </button>
