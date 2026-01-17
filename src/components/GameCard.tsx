@@ -115,7 +115,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
   };
 
   return (
-    <div className="relative bg-gray-100/30 rounded-xl p-1.5">
+    <div className="relative bg-gray-300/60 rounded-xl p-1.5">
       <div
         onClick={() => {
           haptics.light(); // Haptic feedback on card tap
