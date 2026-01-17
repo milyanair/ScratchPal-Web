@@ -148,7 +148,7 @@ export function Header() {
           <img
             src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
             alt="ScratchPal"
-            className="min-h-[45px] h-[45px] object-contain"
+            className="h-[62px] md:h-[48px] object-contain"
           />
         </Link>
       </div>
