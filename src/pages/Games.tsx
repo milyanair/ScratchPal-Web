@@ -264,35 +264,35 @@ export function Games() {
             <div className="flex gap-2">
               <button
                 onClick={() => setSortBy('rank')}
-                className={`p-3 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Rank"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                  <span className="text-xl">🏅</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-lg">🏅</span>
                 </div>
               </button>
               <button
                 onClick={() => setSortBy('prizes')}
-                className={`p-3 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                  <span className="text-xl">🎁</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-lg">🎁</span>
                 </div>
               </button>
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
-                className={`p-3 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors ${
                   favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
                 }`}
                 title="Favorites Only"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                  <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
+                  <span className="text-lg">{favoritesOnly ? '❤️' : '🩶'}</span>
                 </div>
               </button>
             </div>
@@ -321,35 +321,35 @@ export function Games() {
             <div className="flex gap-2">
               <button
                 onClick={() => setSortBy('rank')}
-                className={`flex-1 p-3 rounded-lg transition-colors ${
+                className={`flex-1 p-2 rounded-lg transition-colors ${
                   sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Rank"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
-                  <span className="text-xl">🏅</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-lg">🏅</span>
                 </div>
               </button>
               <button
                 onClick={() => setSortBy('prizes')}
-                className={`flex-1 p-3 rounded-lg transition-colors ${
+                className={`flex-1 p-2 rounded-lg transition-colors ${
                   sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Prizes Remaining"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
-                  <span className="text-xl">🎁</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-lg">🎁</span>
                 </div>
               </button>
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
-                className={`flex-1 p-3 rounded-lg transition-colors ${
+                className={`flex-1 p-2 rounded-lg transition-colors ${
                   favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
                 }`}
                 title="Favorites Only"
               >
-                <div className="w-10 h-10 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
-                  <span className="text-xl">{favoritesOnly ? '❤️' : '🩶'}</span>
+                <div className="w-8 h-8 flex-shrink-0 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center mx-auto">
+                  <span className="text-lg">{favoritesOnly ? '❤️' : '🩶'}</span>
                 </div>
               </button>
             </div>

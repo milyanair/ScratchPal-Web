@@ -125,8 +125,9 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
           navigate(`/games/${game.id}`);
         }
       }}
-      className="relative rounded-t-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4] bg-gray-200"
+      className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4]"
       style={{
+        backgroundColor: 'rgba(229, 231, 235, 0.8)',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), -2px 6px 8px rgba(0, 0, 0, 0.15), 2px 6px 8px rgba(0, 0, 0, 0.15)'
       }}
     >
@@ -154,8 +155,9 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         </p>
       </div>
 
-      {/* Badges - Right Side */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
+      {/* Badges - Right Side with White Background Pad */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+        <div className="bg-white/30 backdrop-blur-sm rounded-lg p-2 flex flex-col gap-0.5">
         {/* Rank and Favorite Badges - Same Row */}
         <div className="flex gap-1">
           <button
@@ -195,6 +197,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         >
           <span className="text-xs font-semibold">Talk About It📢</span>
         </button>
+        </div>
       </div>
 
       {/* Game Info - Bottom */}
