@@ -120,12 +120,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] gradient-teal shadow-header grid grid-cols-3 items-center px-4">
+    <header className="sticky top-0 z-50 h-[55px] bg-white shadow-header grid grid-cols-3 items-center px-4">
       {/* Left: Empty */}
       <div className="flex justify-start">
       </div>
 
-      {/* Center: Coin Icon + Logo */}
+      {/* Center: Coin Icon Only */}
       <div className="flex items-center justify-center">
         {isAdmin ? (
           <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
@@ -136,21 +136,14 @@ export function Header() {
             />
           </Link>
         ) : (
-          <div className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
               className="w-full h-full object-contain"
             />
-          </div>
+          </Link>
         )}
-        <Link to="/" onClick={() => haptics.light()} className="flex items-center mr-[25px] md:mr-[30px]">
-          <img
-            src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
-            alt="ScratchPal"
-            className="min-h-[45px] h-[45px] min-w-[200px] max-w-[280px] object-contain"
-          />
-        </Link>
       </div>
 
       {/* Right: Scan, Notifications, Points & State */}
@@ -159,10 +152,10 @@ export function Header() {
         <Link
           to="/scan-tickets"
           onClick={() => haptics.light()}
-          className="p-2 rounded-full bg-white/20 backdrop-blur hover:bg-white/30 transition-all"
+          className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
           title="Scan Tickets"
         >
-          <ScanLine className="w-5 h-5 text-white" />
+          <ScanLine className="w-5 h-5 text-gray-700" />
         </Link>
         {/* Notification Bell - Desktop Only */}
         {user && (
@@ -172,9 +165,9 @@ export function Header() {
                 haptics.light();
                 setShowNotifications(!showNotifications);
               }}
-              className="relative p-2 rounded-full bg-white/20 backdrop-blur hover:bg-white/30 transition-all"
+              className="relative p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
             >
-              <Bell className="w-5 h-5 text-white" />
+              <Bell className="w-5 h-5 text-gray-700" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -253,10 +246,10 @@ export function Header() {
               haptics.light();
               navigate('/favorites');
             }}
-            className="hidden md:flex items-center gap-1 px-3 py-1 rounded-full bg-white/20 backdrop-blur hover:bg-white/30 transition-all"
+            className="hidden md:flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
           >
-            <Trophy className="w-4 h-4 text-yellow-300" />
-            <span className="text-white font-bold text-sm">{totalPoints.toLocaleString()}</span>
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <span className="text-gray-700 font-bold text-sm">{totalPoints.toLocaleString()}</span>
           </button>
         )}
 
@@ -277,13 +270,9 @@ export function Header() {
                 navigate('/select-state');
               }
             }}
-            className={`w-[38px] h-[38px] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 transition-all ${
-              user ? 'ring-2 ring-white' : ''
+            className={`w-[38px] h-[38px] rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm flex-shrink-0 transition-all hover:bg-gray-300 ${
+              user ? 'ring-2 ring-teal' : ''
             }`}
-            style={{ 
-              background: 'radial-gradient(circle, rgba(77, 208, 225, 0.2) 0%, rgba(77, 208, 225, 0.2) 100%)',
-              backdropFilter: 'blur(8px)'
-            }}
           >
             {user ? (userPref?.selected_state || '?') : anonymousState}
           </button>

@@ -210,9 +210,11 @@ export function Games() {
 
   return (
     <Layout>
-      <MessageSlider />
+      <div className="bg-gray-200 rounded-xl max-w-screen-xl mx-auto px-4 py-4 mb-6">
+        <MessageSlider />
+      </div>
       
-      <div className="max-w-screen-xl mx-auto px-4 py-6">
+      <div className="max-w-screen-xl mx-auto px-4 pb-6">
         {/* Filters */}
         <div className="mb-6 space-y-4">
           {/* Search Field - Mobile: Full Width Row */}
