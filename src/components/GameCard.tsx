@@ -115,22 +115,21 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
   };
 
   return (
-    <div className="relative bg-gray-300/60 rounded-xl p-1.5">
-      <div
-        onClick={() => {
-          haptics.light(); // Haptic feedback on card tap
-          // Use SEO-friendly URL if slug exists, otherwise fallback to ID
-          if (game.slug) {
-            navigate(`/games/${game.state.toLowerCase()}/${game.price}/${game.slug}`);
-          } else {
-            navigate(`/games/${game.id}`);
-          }
-        }}
-        className="relative rounded-t-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4] bg-gray-200"
-        style={{
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), -2px 6px 8px rgba(0, 0, 0, 0.15), 2px 6px 8px rgba(0, 0, 0, 0.15)'
-        }}
-      >
+    <div
+      onClick={() => {
+        haptics.light(); // Haptic feedback on card tap
+        // Use SEO-friendly URL if slug exists, otherwise fallback to ID
+        if (game.slug) {
+          navigate(`/games/${game.state.toLowerCase()}/${game.price}/${game.slug}`);
+        } else {
+          navigate(`/games/${game.id}`);
+        }
+      }}
+      className="relative rounded-t-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4] bg-gray-200"
+      style={{
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), -2px 6px 8px rgba(0, 0, 0, 0.15), 2px 6px 8px rgba(0, 0, 0, 0.15)'
+      }}
+    >
       {/* Background Image with Caching */}
       <img
         src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=400&h=600&fit=crop&q=80'}
@@ -155,8 +154,8 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         </p>
       </div>
 
-      {/* Badges - Right Side with white semi-transparent background pad */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/30 backdrop-blur-sm rounded-xl p-2 flex flex-col gap-0.5 shadow-lg">
+      {/* Badges - Right Side */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-0.5">
         {/* Rank and Favorite Badges - Same Row */}
         <div className="flex gap-1">
           <button
@@ -198,11 +197,10 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         </button>
       </div>
 
-        {/* Game Info - Bottom */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <div className="bg-gray-800/40 backdrop-blur p-2 w-full">
-            <h3 className="text-white font-bold text-sm truncate">${game.price}•{game.game_name}</h3>
-          </div>
+      {/* Game Info - Bottom */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <div className="bg-gray-800/40 backdrop-blur p-2 w-full">
+          <h3 className="text-white font-bold text-sm truncate">${game.price}•{game.game_name}</h3>
         </div>
       </div>
     </div>
