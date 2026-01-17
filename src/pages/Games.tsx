@@ -393,9 +393,9 @@ export function Games() {
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setShowAll(true)}
-                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-64"
+                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-72"
                 >
-                  View More ({filteredGames.length - 20} more games)
+                  View More Games ({filteredGames.length - 20})
                 </button>
               </div>
             )}
@@ -408,7 +408,7 @@ export function Games() {
                     setShowAll(false);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors w-64"
+                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors w-72"
                 >
                   Show Less
                 </button>
@@ -530,7 +530,7 @@ export function Games() {
             <div className="text-center mt-6">
               <button
                 onClick={() => navigate('/hot-topics')}
-                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md w-64"
+                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md w-72"
               >
                 View More Topics
               </button>

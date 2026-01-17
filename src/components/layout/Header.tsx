@@ -144,11 +144,11 @@ export function Header() {
             />
           </div>
         )}
-        <Link to="/" onClick={() => haptics.light()} className="flex items-center mr-[5px]">
+        <Link to="/" onClick={() => haptics.light()} className="flex items-center mr-[30px]">
           <img
             src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
             alt="ScratchPal"
-            className="min-h-[45px] h-[45px] min-w-[200px] object-contain"
+            className="min-h-[45px] h-[45px] min-w-[200px] max-w-[280px] object-contain"
           />
         </Link>
       </div>
