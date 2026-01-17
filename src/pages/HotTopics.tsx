@@ -480,217 +480,275 @@ export function HotTopics() {
         <hr className="border-t border-gray-300 mb-6" />
 
         {/* Topics List */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredTopics.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg">
+            <div className="col-span-full text-center py-12 bg-white rounded-lg">
               <p className="text-gray-500">No topics found</p>
             </div>
           ) : (
-            filteredTopics.map((topic, index) => (
+            filteredTopics.map((topic, index) => {
+              // Alternating theme colors (light versions)
+              const colorClasses = [
+                'bg-green-50 hover:bg-green-100', // Games green
+                'bg-orange-50 hover:bg-orange-100', // Hot burnt orange
+                'bg-purple-50 hover:bg-purple-100', // Favs mauve/purple
+                'bg-violet-50 hover:bg-violet-100', // Wins purple
+              ];
+              const colorClass = colorClasses[index % 4];
+              
+              return (
               <div
                 key={topic.id}
-                className={`rounded-lg shadow p-4 hover:shadow-md transition-shadow ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                }`}
+                className={`${colorClass} rounded-xl shadow-md transition-all duration-300 hover:shadow-lg overflow-hidden`}
               >
                 {/* Desktop Layout */}
-                <div className="hidden md:flex items-start gap-4">
-                  {/* User Avatar */}
+                <div className="hidden md:block">
+                  {/* Card Content */}
                   <div 
-                    className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
-                    style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                    className="p-4 cursor-pointer"
+                    onClick={() => {
+                      if (topic.slug) {
+                        navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                      } else {
+                        navigate(`/topic/${topic.id}`);
+                      }
+                    }}
                   >
-                    {getUserInitials(topic.user_id)}
-                  </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      {/* User Avatar */}
+                      <div 
+                        className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
+                        style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                      >
+                        {getUserInitials(topic.user_id)}
+                      </div>
 
-                  <div className="flex-1 cursor-pointer" onClick={() => {
-                    if (topic.slug) {
-                      navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
-                    } else {
-                      navigate(`/topic/${topic.id}`);
-                    }
-                  }}>
-                    <div className="flex items-center gap-2 mb-2">
-                      {topic.is_pinned && (
-                        <Pin className="w-4 h-4 text-teal fill-teal" />
-                      )}
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {topic.category}
-                      </span>
-                      {topic.game && (
+                      {/* Metadata */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {topic.is_pinned && (
+                            <Pin className="w-3 h-3 text-teal fill-teal" />
+                          )}
+                          {/* Category Badge */}
+                          <span className="bg-white/60 backdrop-blur text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-sm">
+                            {topic.category}
+                          </span>
+                          {/* Upvotes */}
+                          <span className="flex items-center gap-1 text-xs font-semibold text-gray-700">
+                            <ThumbsUp className="w-3 h-3" />
+                            {topic.upvotes}
+                          </span>
+                        </div>
+                        {/* Date */}
+                        <span className="text-xs text-gray-600 mt-1 block">
+                          {new Date(topic.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Game Badge */}
+                    {topic.game && (
+                      <div className="mb-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/games/${topic.game_id}`);
                           }}
-                          className="text-xs bg-teal/10 text-teal px-2 py-1 rounded hover:bg-teal/20"
+                          className="bg-white/60 backdrop-blur text-teal px-2 py-1 rounded-full text-xs font-semibold hover:bg-white/80 transition-colors shadow-sm"
                         >
                           {topic.game.state} - {topic.game.game_name}
                         </button>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg font-bold mb-2">{topic.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2 whitespace-pre-line">
-                      {topic.content}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{topic.upvotes}</span>
                       </div>
-                      <span>
-                        {new Date(topic.created_at).toLocaleDateString()}
-                      </span>
+                    )}
+
+                    {/* Topic Title */}
+                    <h3 className="font-bold text-base text-gray-900 line-clamp-2 mb-2">
+                      {topic.title}
+                    </h3>
+
+                    {/* Content Preview */}
+                    <div className="bg-white/40 backdrop-blur rounded-lg p-3 mb-3">
+                      <p className="text-sm text-gray-800 line-clamp-3 whitespace-pre-wrap">
+                        {topic.content}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Favorite & Admin Actions */}
-                  <div className="flex gap-2 flex-shrink-0">
+                  {/* Favorite & Admin Actions - Bottom Bar */}
+                  <div className="px-4 pb-4 flex gap-2">
                     {/* Favorite Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleToggleFavorite(topic.id);
                       }}
-                      className="p-2 hover:bg-gray-100 rounded transition-colors"
+                      className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur text-gray-900 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
                       title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
                     >
                       <Heart
-                        className={`w-5 h-5 ${
-                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'
+                        className={`w-4 h-4 ${
+                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
                         }`}
                       />
+                      {isFavorited(topic.id) ? 'Saved' : 'Save'}
                     </button>
                     
                     {/* Admin Actions */}
                     {isAdmin && (
-                      <>
-                      <button
-                        onClick={() => handleEditTopic(topic)}
-                        className="p-2 hover:bg-gray-100 rounded"
-                        title="Edit topic"
-                      >
-                        <Pencil className="w-4 h-4 text-gray-600" />
-                      </button>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => handleDeleteTopic(topic.id)}
-                          className="p-2 hover:bg-red-100 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTopic(topic);
+                          }}
+                          className="bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                          title="Edit topic"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-700" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTopic(topic.id);
+                          }}
+                          className="bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
                           title="Delete topic"
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
 
                 {/* Mobile Layout */}
-                <div className="md:hidden">
-                  {/* Top Row: Category + Favorite + Admin Buttons */}
-                  <div className="flex items-center gap-2 mb-2">
-                    {topic.is_pinned && (
-                      <Pin className="w-4 h-4 text-teal fill-teal" />
-                    )}
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {topic.category}
-                    </span>
-                    <div className="flex-1" />
-                    
-                    {/* Favorite Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(topic.id);
-                      }}
-                      className="p-1 hover:bg-gray-100 rounded transition-colors"
-                      title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
+                <div className="md:hidden p-4">
+                  {/* User Avatar + Metadata Row */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div 
+                      className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0 shadow-sm"
+                      style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
                     >
-                      <Heart
-                        className={`w-5 h-5 ${
-                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'
-                        }`}
-                      />
-                    </button>
-                    
-                    {/* Admin Actions */}
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => handleEditTopic(topic)}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Edit topic"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTopic(topic.id)}
-                          className="p-1 hover:bg-red-100 rounded"
-                          title="Delete topic"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </>
-                    )}
+                      {getUserInitials(topic.user_id)}
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {topic.is_pinned && (
+                          <Pin className="w-3 h-3 text-teal fill-teal" />
+                        )}
+                        {/* Category Badge */}
+                        <span className="bg-white/60 backdrop-blur text-gray-800 px-2 py-1 rounded-full text-xs font-semibold shadow-sm">
+                          {topic.category}
+                        </span>
+                        {/* Upvotes */}
+                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-700">
+                          <ThumbsUp className="w-3 h-3" />
+                          {topic.upvotes}
+                        </span>
+                      </div>
+                      {/* Date */}
+                      <span className="text-xs text-gray-600 mt-1 block">
+                        {new Date(topic.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Second Row: Game Badge (if applicable) */}
+                  {/* Game Badge (if applicable) */}
                   {topic.game && (
-                    <div className="mb-2">
+                    <div className="mb-3">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/games/${topic.game_id}`);
                         }}
-                        className="text-xs bg-teal/10 text-teal px-2 py-1 rounded hover:bg-teal/20"
+                        className="bg-white/60 backdrop-blur text-teal px-2 py-1 rounded-full text-xs font-semibold hover:bg-white/80 transition-colors shadow-sm"
                       >
                         {topic.game.state} - {topic.game.game_name}
                       </button>
                     </div>
                   )}
 
-                  {/* Third Row: User Avatar + Topic Title */}
-                  <div className="flex items-start gap-3 mb-2 cursor-pointer" onClick={() => {
-                    if (topic.slug) {
-                      navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
-                    } else {
-                      navigate(`/topic/${topic.id}`);
-                    }
-                  }}>
-                    <div 
-                      className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
-                      style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
-                    >
-                      {getUserInitials(topic.user_id)}
-                    </div>
-                    <h3 className="text-base font-bold flex-1">{topic.title}</h3>
+                  {/* Topic Title */}
+                  <h3 
+                    className="font-bold text-base text-gray-900 line-clamp-2 mb-2 cursor-pointer"
+                    onClick={() => {
+                      if (topic.slug) {
+                        navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                      } else {
+                        navigate(`/topic/${topic.id}`);
+                      }
+                    }}
+                  >
+                    {topic.title}
+                  </h3>
+
+                  {/* Content Preview */}
+                  <div 
+                    className="bg-white/40 backdrop-blur rounded-lg p-3 mb-3 cursor-pointer"
+                    onClick={() => {
+                      if (topic.slug) {
+                        navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                      } else {
+                        navigate(`/topic/${topic.id}`);
+                      }
+                    }}
+                  >
+                    <p className="text-sm text-gray-800 line-clamp-3 whitespace-pre-wrap">
+                      {topic.content}
+                    </p>
                   </div>
 
-                  {/* Fourth Row: Message Snippet */}
-                  <p className="text-gray-600 text-sm mb-2 line-clamp-2 whitespace-pre-line cursor-pointer" onClick={() => {
-                    if (topic.slug) {
-                      navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
-                    } else {
-                      navigate(`/topic/${topic.id}`);
-                    }
-                  }}>
-                    {topic.content}
-                  </p>
-
-                  {/* Fifth Row: Stats */}
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <ThumbsUp className="w-4 h-4" />
-                      <span>{topic.upvotes}</span>
-                    </div>
-                    <span>
-                      {new Date(topic.created_at).toLocaleDateString()}
-                    </span>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    {/* Favorite Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(topic.id);
+                      }}
+                      className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur text-gray-900 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
+                      title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                        }`}
+                      />
+                      {isFavorited(topic.id) ? 'Saved' : 'Save'}
+                    </button>
+                    
+                    {/* Admin Actions */}
+                    {isAdmin && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTopic(topic);
+                          }}
+                          className="bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                          title="Edit topic"
+                        >
+                          <Pencil className="w-4 h-4 text-gray-700" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTopic(topic.id);
+                          }}
+                          className="bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                          title="Delete topic"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </div>
