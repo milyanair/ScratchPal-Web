@@ -505,7 +505,7 @@ export function HotTopics() {
                 <div className="hidden md:block">
                   {/* Card Content */}
                   <div 
-                    className="p-4 cursor-pointer"
+                    className="p-4 cursor-pointer relative"
                     onClick={() => {
                       if (topic.slug) {
                         navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
@@ -514,6 +514,22 @@ export function HotTopics() {
                       }
                     }}
                   >
+                    {/* Favorite Button - Upper Right */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(topic.id);
+                      }}
+                      className="absolute top-3 right-3 bg-white/80 hover:bg-white backdrop-blur p-2 rounded-full shadow-md transition-all z-10"
+                      title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart
+                        className={`w-5 h-5 ${
+                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                        }`}
+                      />
+                    </button>
+
                     <div className="flex items-center gap-3 mb-3">
                       {/* User Avatar */}
                       <div 
@@ -574,55 +590,51 @@ export function HotTopics() {
                     </div>
                   </div>
 
-                  {/* Favorite & Admin Actions - Bottom Bar */}
-                  <div className="px-4 pb-4 flex gap-2">
-                    {/* Favorite Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(topic.id);
-                      }}
-                      className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur text-gray-900 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
-                      title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                        }`}
-                      />
-                      {isFavorited(topic.id) ? 'Saved' : 'Save'}
-                    </button>
-                    
-                    {/* Admin Actions */}
-                    {isAdmin && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTopic(topic);
-                          }}
-                          className="bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
-                          title="Edit topic"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-700" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTopic(topic.id);
-                          }}
-                          className="bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
-                          title="Delete topic"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* Admin Actions - Bottom Bar */}
+                  {isAdmin && (
+                    <div className="px-4 pb-4 flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTopic(topic);
+                        }}
+                        className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                        title="Edit topic"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-700" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTopic(topic.id);
+                        }}
+                        className="flex-1 bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                        title="Delete topic"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile Layout */}
-                <div className="md:hidden p-4">
+                <div className="md:hidden p-4 relative">
+                  {/* Favorite Button - Upper Right */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(topic.id);
+                    }}
+                    className="absolute top-3 right-3 bg-white/80 hover:bg-white backdrop-blur p-2 rounded-full shadow-md transition-all z-10"
+                    title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${
+                        isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                      }`}
+                    />
+                  </button>
+
                   {/* User Avatar + Metadata Row */}
                   <div className="flex items-center gap-3 mb-3">
                     <div 
@@ -700,51 +712,31 @@ export function HotTopics() {
                     </p>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    {/* Favorite Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(topic.id);
-                      }}
-                      className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur text-gray-900 px-3 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2"
-                      title={isFavorited(topic.id) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Heart
-                        className={`w-4 h-4 ${
-                          isFavorited(topic.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
-                        }`}
-                      />
-                      {isFavorited(topic.id) ? 'Saved' : 'Save'}
-                    </button>
-                    
-                    {/* Admin Actions */}
-                    {isAdmin && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditTopic(topic);
-                          }}
-                          className="bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
-                          title="Edit topic"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-700" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTopic(topic.id);
-                          }}
-                          className="bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
-                          title="Delete topic"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  {/* Admin Actions */}
+                  {isAdmin && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTopic(topic);
+                        }}
+                        className="flex-1 bg-white/60 hover:bg-white/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                        title="Edit topic"
+                      >
+                        <Pencil className="w-4 h-4 text-gray-700" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTopic(topic.id);
+                        }}
+                        className="flex-1 bg-red-100/60 hover:bg-red-100/80 backdrop-blur p-2 rounded-lg transition-colors shadow-sm"
+                        title="Delete topic"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
