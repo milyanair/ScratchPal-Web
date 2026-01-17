@@ -301,12 +301,12 @@ export function Games() {
           {/* Mobile: Price Buttons + Sort Buttons */}
           <div className="md:hidden flex flex-col gap-3">
             {/* Price Filter Buttons */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2">
               {Object.entries(priceRanges).map(([key, { label }]) => (
                 <button
                   key={key}
                   onClick={() => setSelectedPriceRange(key)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedPriceRange === key
                       ? 'bg-teal text-white'
                       : 'bg-gray-200 hover:bg-gray-300'
@@ -393,7 +393,7 @@ export function Games() {
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setShowAll(true)}
-                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-64"
                 >
                   View More ({filteredGames.length - 20} more games)
                 </button>
@@ -408,7 +408,7 @@ export function Games() {
                     setShowAll(false);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors"
+                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors w-64"
                 >
                   Show Less
                 </button>
@@ -526,13 +526,13 @@ export function Games() {
               })}
             </div>
 
-            {/* View All Topics Link */}
+            {/* View More Topics Link */}
             <div className="text-center mt-6">
               <button
                 onClick={() => navigate('/hot-topics')}
-                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md"
+                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md w-64"
               >
-                View All Topics →
+                View More Topics
               </button>
             </div>
           </div>
