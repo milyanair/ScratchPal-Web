@@ -120,15 +120,15 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] gradient-teal shadow-header grid grid-cols-3 items-center px-4">
+    <header className="sticky top-0 z-50 h-[55px] gradient-teal shadow-header grid grid-cols-3 items-center px-2 md:px-4">
       {/* Left: Empty */}
       <div className="flex justify-start">
       </div>
 
       {/* Center: Coin Icon + Logo */}
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center overflow-hidden">
         {isAdmin ? (
-          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/admin" className="w-[46px] h-[46px] md:w-[56px] md:h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="Admin"
@@ -136,7 +136,7 @@ export function Header() {
             />
           </Link>
         ) : (
-          <div className="w-[56px] h-[56px] flex-shrink-0">
+          <div className="w-[46px] h-[46px] md:w-[56px] md:h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
@@ -144,25 +144,25 @@ export function Header() {
             />
           </div>
         )}
-        <Link to="/" onClick={() => haptics.light()} className="flex items-center mr-[5px]">
+        <Link to="/" onClick={() => haptics.light()} className="flex items-center mr-[5px] min-w-0 flex-shrink">
           <img
             src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
             alt="ScratchPal"
-            className="min-h-[45px] h-[45px] min-w-[200px] object-contain"
+            className="min-h-[45px] h-[45px] min-w-[120px] md:min-w-[200px] object-contain"
           />
         </Link>
       </div>
 
       {/* Right: Scan, Notifications, Points & State */}
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-1 md:gap-2">
         {/* Ticket Scanner - Available to All */}
         <Link
           to="/scan-tickets"
           onClick={() => haptics.light()}
-          className="p-2 rounded-full bg-white/20 backdrop-blur hover:bg-white/30 transition-all"
+          className="p-1.5 md:p-2 rounded-full bg-white/20 backdrop-blur hover:bg-white/30 transition-all flex-shrink-0"
           title="Scan Tickets"
         >
-          <ScanLine className="w-5 h-5 text-white" />
+          <ScanLine className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </Link>
         {/* Notification Bell - Desktop Only */}
         {user && (
@@ -261,7 +261,7 @@ export function Header() {
         )}
 
         {/* State Circle */}
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <button
             onClick={() => {
               haptics.light();
@@ -277,7 +277,7 @@ export function Header() {
                 navigate('/select-state');
               }
             }}
-            className={`w-[38px] h-[38px] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 transition-all ${
+            className={`w-[34px] h-[34px] md:w-[38px] md:h-[38px] rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm flex-shrink-0 transition-all ${
               user ? 'ring-2 ring-white' : ''
             }`}
             style={{ 
