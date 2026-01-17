@@ -36,7 +36,7 @@ export function MessageSlider() {
   const currentMessage = messages[currentIndex];
 
   return (
-    <div className="bg-gray-200 rounded-xl mx-4 py-[18px] px-4 text-center overflow-hidden min-h-[150px] md:min-h-0 flex items-center justify-center">
+    <div className="bg-gray-200 rounded-xl mx-4 py-[18px] px-4 text-center overflow-hidden min-h-[100px] md:min-h-0 flex items-center justify-center">
       <div
         key={currentIndex}
         className={`animate-in ${
