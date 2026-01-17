@@ -121,10 +121,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 h-[55px] gradient-teal shadow-header grid grid-cols-3 items-center px-4">
-      {/* Left: Coin Icon */}
+      {/* Left: Empty */}
       <div className="flex justify-start">
+      </div>
+
+      {/* Center: Coin Icon + Logo */}
+      <div className="flex items-center justify-center">
         {isAdmin ? (
-          <Link to="/admin" className="w-[46px] h-[46px] flex-shrink-0">
+          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="Admin"
@@ -132,7 +136,7 @@ export function Header() {
             />
           </Link>
         ) : (
-          <div className="w-[46px] h-[46px] flex-shrink-0">
+          <div className="w-[56px] h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
@@ -140,16 +144,14 @@ export function Header() {
             />
           </div>
         )}
+        <Link to="/" onClick={() => haptics.light()} className="flex items-center">
+          <img
+            src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
+            alt="ScratchPal"
+            className="h-[62px] md:h-[48px] object-contain"
+          />
+        </Link>
       </div>
-
-      {/* Center: Logo */}
-      <Link to="/" onClick={() => haptics.light()} className="flex justify-center">
-        <img
-          src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
-          alt="ScratchPal"
-          className="h-[62px] md:h-[48px] object-contain"
-        />
-      </Link>
 
       {/* Right: Scan, Notifications, Points & State */}
       <div className="flex items-center justify-end gap-2">
