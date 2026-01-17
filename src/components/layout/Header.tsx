@@ -126,7 +126,7 @@ export function Header() {
       </div>
 
       {/* Center: Coin Icon + Logo */}
-      <div className="flex items-center justify-center mr-[-15px] md:mr-0">
+      <div className="flex items-center justify-center">
         {isAdmin ? (
           <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
             <img
