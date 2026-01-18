@@ -21,8 +21,15 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[60px] bg-white/80 backdrop-blur-md border-t border-gray-200 z-40" style={{ boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-      <div className="max-w-screen-xl mx-auto flex justify-center items-center gap-8 px-4 h-full">
+    <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-50" style={{ boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+      {/* Smile Curve Background - Lower in center, higher on sides */}
+      <div 
+        className="absolute inset-0 bg-white/80 backdrop-blur-md border-t border-gray-200"
+        style={{
+          clipPath: 'polygon(0 30%, 10% 20%, 20% 15%, 30% 12%, 40% 10%, 50% 10%, 60% 10%, 70% 12%, 80% 15%, 90% 20%, 100% 30%, 100% 100%, 0 100%)'
+        }}
+      />
+      <div className="relative max-w-screen-xl mx-auto flex justify-center items-center gap-8 px-4 h-full z-10">
         {navItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -39,7 +46,7 @@ export function BottomNav() {
                 className="flex flex-col items-center justify-center gap-1"
               >
                 <div
-                  className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-white transition-all duration-300 ${
+                  className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-white transition-all duration-300 relative z-20 ${
                     item.gradient
                   } ${
                     isActive || isAnimating

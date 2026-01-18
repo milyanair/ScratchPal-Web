@@ -125,22 +125,22 @@ export function Header() {
       <div className="flex justify-start">
       </div>
 
-      {/* Center: Coin Icon Only */}
-      <div className="flex items-center justify-center">
+      {/* Center: Coin Icon Only - Overflows header */}
+      <div className="flex items-center justify-center relative">
         {isAdmin ? (
-          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/admin" className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="Admin"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain drop-shadow-lg"
             />
           </Link>
         ) : (
-          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/" onClick={() => haptics.light()} className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain drop-shadow-lg"
             />
           </Link>
         )}
