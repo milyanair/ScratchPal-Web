@@ -1,3 +1,4 @@
+
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -448,7 +449,22 @@ export function ScanTickets() {
   if (!user) {
     return (
       <Layout>
-        <div className="max-w-screen-xl mx-auto px-3 py-6">
+        {/* Background Image Container */}
+        <div 
+          className="min-h-screen relative"
+          style={{
+            backgroundImage: 'url(https://cdn-ai.onspace.ai/onspace/files/UpzBfP2E3qfRT3drQovGgt/2.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          {/* Opacity Overlay */}
+          <div className="absolute inset-0 bg-white/70" />
+          
+          {/* Content */}
+          <div className="relative max-w-screen-xl mx-auto px-3 py-6">
+            {/* Alternative background image: https://cdn-ai.onspace.ai/onspace/files/ZAXNmf9T6fgT7srne7MXE4/1.jpg */}
           <div className="mb-3 text-center">
             <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2 sm:gap-3">
               <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
@@ -475,17 +491,19 @@ export function ScanTickets() {
             </div>
 
             {/* Sign In Required Block */}
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-3 text-center">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In Required</h2>
-              <p className="text-gray-600 mb-4">
-                Please sign in to use the Scanalyzer
-              </p>
-              <button
-                onClick={() => navigate('/profile')}
-                className="gradient-teal text-white px-6 py-2 rounded-lg font-semibold"
-              >
-                Sign In
-              </button>
+            <div className="max-w-md mx-auto px-2">
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-3 text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In Required</h2>
+                <p className="text-gray-600 mb-4">
+                  Please sign in to use the Scanalyzer
+                </p>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="gradient-teal text-white px-6 py-2 rounded-lg font-semibold"
+                >
+                  Sign In
+                </button>
+              </div>
             </div>
 
             {/* View Sample Scan Button */}
@@ -505,7 +523,7 @@ export function ScanTickets() {
             )}
           </div>
         </div>
-
+          </div>
         {/* Sample Scan Modal */}
         {showSampleScan && sampleScan && (
           <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
@@ -604,7 +622,7 @@ export function ScanTickets() {
               <button
                 onClick={() => {
                   haptics.medium();
-                  fileInputRef.current?.click();
+                  startCamera(); // Changed fileInputRef.current?.click() to startCamera()
                 }}
                 className="gradient-teal text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold flex items-center justify-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity text-sm sm:text-base"
               >
