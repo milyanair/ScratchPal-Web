@@ -24,9 +24,10 @@ interface SavedScanCardProps {
   autoOpen?: boolean;
   onDelete?: () => void;
   showAdminActions?: boolean;
+  onClose?: () => void;
 }
 
-export function SavedScanCard({ scan, autoOpen = false, onDelete, showAdminActions = false }: SavedScanCardProps) {
+export function SavedScanCard({ scan, autoOpen = false, onDelete, showAdminActions = false, onClose }: SavedScanCardProps) {
   const navigate = useNavigate();
   const [showOverlay, setShowOverlay] = useState(autoOpen);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -209,7 +210,10 @@ export function SavedScanCard({ scan, autoOpen = false, onDelete, showAdminActio
 
               {/* Close Button with white circle outline */}
               <button
-                onClick={() => setShowOverlay(false)}
+                onClick={() => {
+                  setShowOverlay(false);
+                  if (onClose) onClose();
+                }}
                 className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-white hover:bg-white/10 transition-colors"
               >
                 <X className="w-6 h-6" />

@@ -527,22 +527,12 @@ export function ScanTickets() {
           </div>
         {/* Sample Scan Modal */}
         {showSampleScan && sampleScan && (
-          <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
-            <div className="min-h-screen flex items-center justify-center p-4">
-              <div className="relative max-w-6xl w-full">
-                <button
-                  onClick={() => setShowSampleScan(false)}
-                  className="absolute top-0 right-0 w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-                <SavedScanCard 
-                  scan={sampleScan}
-                  autoOpen={true}
-                />
-              </div>
-            </div>
-          </div>
+          <SavedScanCard 
+            key={showSampleScan ? 'open' : 'closed'}
+            scan={sampleScan}
+            autoOpen={true}
+            onClose={() => setShowSampleScan(false)}
+          />
         )}
       </Layout>
     );
@@ -884,22 +874,12 @@ export function ScanTickets() {
 
       {/* Sample Scan Modal */}
       {showSampleScan && sampleScan && (
-        <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
-          <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="relative max-w-6xl w-full">
-              <button
-                onClick={() => setShowSampleScan(false)}
-                className="absolute top-0 right-0 w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <SavedScanCard 
-                scan={sampleScan}
-                autoOpen={true}
-              />
-            </div>
-          </div>
-        </div>
+        <SavedScanCard 
+          key={showSampleScan ? 'open' : 'closed'}
+          scan={sampleScan}
+          autoOpen={true}
+          onClose={() => setShowSampleScan(false)}
+        />
       )}
     </Layout>
   );
