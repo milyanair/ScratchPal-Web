@@ -21,7 +21,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[60px] bg-white/80 backdrop-blur-md border-t border-gray-200 z-40" style={{ boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 h-[60px] bg-white/80 backdrop-blur-md z-40 overflow-hidden" style={{ boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)', borderTopLeftRadius: '50% 20px', borderTopRightRadius: '50% 20px' }}>
       <div className="max-w-screen-xl mx-auto flex justify-center items-center gap-8 px-4 h-full">
         {navItems.map((item, index) => {
           const Icon = item.icon;
