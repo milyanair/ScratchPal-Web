@@ -103,7 +103,7 @@ export function StateSelection() {
             />
           </div>
           <p className="text-gray-600 text-lg">
-            Your Scratch-off companion and community.
+            Your scratch-off companion and community.
           </p>
         </div>
 
