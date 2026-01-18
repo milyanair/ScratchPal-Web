@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { useQuery } from '@tantml:query';
+import { useQuery } from '@tanstack/react-query';
 import { UserPreference } from '@/types';
 import { useState, useEffect } from 'react';
 import { usePoints } from '@/hooks/usePoints';
