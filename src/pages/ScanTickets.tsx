@@ -63,7 +63,7 @@ export function ScanTickets() {
 
   const selectedState = userPref?.selected_state;
 
-  // Fetch sample scan
+  // Fetch sample scan (most recent one)
   const { data: sampleScan } = useQuery({
     queryKey: ['sampleScan'],
     queryFn: async () => {
@@ -71,10 +71,11 @@ export function ScanTickets() {
         .from('scanned_images')
         .select('*')
         .eq('is_sample', true)
+        .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
   });
