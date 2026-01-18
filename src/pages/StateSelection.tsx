@@ -95,9 +95,15 @@ export function StateSelection() {
     <Layout>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome to ScratchPal!</h1>
+          <div className="flex justify-center mb-4">
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/LWw94XGQuTANDUw5vLoJHH/scratchpallogonew2-300.png"
+              alt="ScratchPal"
+              className="h-16 object-contain"
+            />
+          </div>
           <p className="text-gray-600 text-lg">
-            Track scratch-off lottery tickets and join the community
+            Your Scratch-off companion and community.
           </p>
         </div>
 
