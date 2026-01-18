@@ -56,6 +56,23 @@ export function Games() {
 
   const selectedState = stateSetFromUrl || (user ? userPref?.selected_state : anonymousState);
 
+  // Check if selected state is visible
+  const { data: stateConfig, isLoading: isStateConfigLoading } = useQuery({
+    queryKey: ['stateConfig', selectedState],
+    queryFn: async () => {
+      if (!selectedState) return null;
+      const { data, error } = await supabase
+        .from('state_config')
+        .select('*')
+        .eq('state_code', selectedState)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedState,
+  });
+
   // Redirect to state selection if no state selected (only after loading completes)
   useEffect(() => {
     // Don't redirect while user preferences are still loading
@@ -198,11 +215,36 @@ export function Games() {
   const hasMoreGames = filteredGames.length > displayCount;
 
   // Show loading state while checking for selected state
-  if ((user && isPrefLoading) || !selectedState) {
+  if ((user && isPrefLoading) || !selectedState || isStateConfigLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center py-12">
           <div className="text-gray-500">Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show message if state is disabled
+  if (stateConfig && stateConfig.is_visible === false) {
+    return (
+      <Layout>
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              {selectedState} Temporarily Unavailable
+            </h2>
+            <p className="text-gray-700 mb-6">
+              We're currently experiencing issues with {stateConfig.state_name} game data. 
+              Please check back later or select a different state.
+            </p>
+            <button
+              onClick={() => navigate('/select-state')}
+              className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+            >
+              Select Different State
+            </button>
+          </div>
         </div>
       </Layout>
     );

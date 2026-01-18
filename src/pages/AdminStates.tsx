@@ -52,6 +52,7 @@ export function AdminStates() {
       emoji: '',
       country: 'US',
       display_order: stateConfigs.length,
+      is_visible: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -88,6 +89,7 @@ export function AdminStates() {
             emoji: editingState.emoji,
             country: editingState.country,
             display_order: editingState.display_order,
+            is_visible: editingState.is_visible ?? true,
           });
 
         if (error) throw error;
@@ -100,6 +102,7 @@ export function AdminStates() {
             emoji: editingState.emoji,
             country: editingState.country,
             display_order: editingState.display_order,
+            is_visible: editingState.is_visible ?? true,
             updated_at: new Date().toISOString(),
           })
           .eq('state_code', editingState.state_code);
@@ -214,13 +217,13 @@ export function AdminStates() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {isVisible ? (
+                      {state.is_visible !== false ? (
                         <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                          Yes
+                          Enabled
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
-                          No
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                          Disabled
                         </span>
                       )}
                     </td>
@@ -361,6 +364,28 @@ export function AdminStates() {
                 <p className="text-xs text-gray-500 mt-1">
                   Lower numbers appear first
                 </p>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={editingState.is_visible !== false}
+                    onChange={(e) =>
+                      setEditingState({
+                        ...editingState,
+                        is_visible: e.target.checked,
+                      })
+                    }
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                  <div>
+                    <span className="text-sm font-medium">State Visibility</span>
+                    <p className="text-xs text-gray-500">
+                      Uncheck to temporarily disable this state and hide it from users
+                    </p>
+                  </div>
+                </label>
               </div>
             </div>
 

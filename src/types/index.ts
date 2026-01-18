@@ -175,6 +175,7 @@ export interface StateConfig {
   emoji: string;
   country: string;
   display_order: number;
+  is_visible?: boolean;
   created_at: string;
   updated_at: string;
 }
