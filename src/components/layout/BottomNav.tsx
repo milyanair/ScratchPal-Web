@@ -21,12 +21,13 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-50" style={{ boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-50">
       {/* Smile Curve Background - Lower in center, higher on sides */}
       <div 
         className="absolute inset-0 bg-white/80 backdrop-blur-md border-t border-gray-200"
         style={{
-          clipPath: 'polygon(0 30%, 10% 20%, 20% 15%, 30% 12%, 40% 10%, 50% 10%, 60% 10%, 70% 12%, 80% 15%, 90% 20%, 100% 30%, 100% 100%, 0 100%)'
+          clipPath: 'polygon(0 30%, 10% 20%, 20% 15%, 30% 12%, 40% 10%, 50% 10%, 60% 10%, 70% 12%, 80% 15%, 90% 20%, 100% 30%, 100% 100%, 0 100%)',
+          filter: 'drop-shadow(0 -4px 6px rgba(0, 0, 0, 0.1)) drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.06))'
         }}
       />
       <div className="relative max-w-screen-xl mx-auto flex justify-center items-center gap-8 px-4 h-full z-10">
