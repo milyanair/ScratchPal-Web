@@ -139,7 +139,7 @@ export function Header() {
               haptics.light();
               navigate('/favorites');
             }}
-            className="w-11 h-11 rounded-full bg-gray-200 hover:bg-gray-300 transition-all flex items-center justify-center gap-1 flex-shrink-0"
+            className="w-11 h-11 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all flex items-center justify-center gap-1 flex-shrink-0"
           >
             <Trophy className="w-4 h-4 text-yellow-500" />
             <span className="text-gray-700 font-bold text-xs">{totalPoints > 999 ? '999+' : totalPoints}</span>
@@ -154,7 +154,7 @@ export function Header() {
                 haptics.light();
                 setShowNotifications(!showNotifications);
               }}
-              className="relative w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-all flex items-center justify-center"
+              className="relative w-10 h-10 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all flex items-center justify-center"
             >
               <Bell className="w-5 h-5 text-gray-700" />
               {unreadCount > 0 && (
@@ -257,7 +257,7 @@ export function Header() {
         <Link
           to="/scan-tickets"
           onClick={() => haptics.light()}
-          className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
+          className="p-2 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all"
           title="Scan Tickets"
         >
           <ScanLine className="w-5 h-5 text-gray-700" />
@@ -280,7 +280,7 @@ export function Header() {
                 navigate('/select-state');
               }
             }}
-            className={`w-[38px] h-[38px] rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm flex-shrink-0 transition-all hover:bg-gray-300 ${
+            className={`w-[38px] h-[38px] rounded-full bg-gray-200/30 flex items-center justify-center text-gray-700 font-bold text-sm flex-shrink-0 transition-all hover:bg-gray-300/30 ${
               user ? 'ring-2 ring-teal' : ''
             }`}
           >
