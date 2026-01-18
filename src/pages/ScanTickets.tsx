@@ -457,7 +457,6 @@ export function ScanTickets() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed',
           }}
         >
           {/* Opacity Overlay */}
@@ -558,7 +557,6 @@ export function ScanTickets() {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
         }}
       >
         {/* Opacity Overlay */}
