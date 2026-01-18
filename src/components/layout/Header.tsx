@@ -128,7 +128,7 @@ export function Header() {
       {/* Center: Coin Icon Only */}
       <div className="flex items-center justify-center">
         {isAdmin ? (
-          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0 rounded-full shadow-lg">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="Admin"
@@ -136,7 +136,7 @@ export function Header() {
             />
           </Link>
         ) : (
-          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0">
+          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0 rounded-full shadow-lg">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
