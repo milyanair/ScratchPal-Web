@@ -451,7 +451,7 @@ export function ScanTickets() {
       <Layout>
         {/* Background Image Container */}
         <div 
-          className="min-h-screen relative"
+          className="min-h-[calc(100vh-115px)] relative"
           style={{
             backgroundImage: 'url(https://cdn-ai.onspace.ai/onspace/files/UpzBfP2E3qfRT3drQovGgt/2.jpg)',
             backgroundSize: 'cover',
@@ -475,7 +475,7 @@ export function ScanTickets() {
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-2">
+          <div className="bg-transparent rounded-lg p-2">
             <div className="text-center mb-2 flex justify-center">
               <div className="w-full max-w-md aspect-video">
                 <video
@@ -549,7 +549,22 @@ export function ScanTickets() {
 
   return (
     <Layout>
-      <div className="max-w-screen-xl mx-auto px-3 py-6">
+      {/* Background Image Container */}
+      <div 
+        className="min-h-[calc(100vh-115px)] relative"
+        style={{
+          backgroundImage: 'url(https://cdn-ai.onspace.ai/onspace/files/UpzBfP2E3qfRT3drQovGgt/2.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Opacity Overlay */}
+        <div className="absolute inset-0 bg-white/70" />
+        
+        {/* Content */}
+        <div className="relative max-w-screen-xl mx-auto px-3 py-6">
+        {/* Alternative background image: https://cdn-ai.onspace.ai/onspace/files/ZAXNmf9T6fgT7srne7MXE4/1.jpg */}
         <div className="mb-3 text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2 sm:gap-3">
             <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
@@ -603,7 +618,7 @@ export function ScanTickets() {
 
         {/* No Image State */}
         {!capturedImage && !showCamera && (
-          <div className="bg-white rounded-lg shadow-lg p-2">
+          <div className="bg-transparent rounded-lg p-2">
             <div className="text-center mb-2 flex justify-center">
               <div className="w-full max-w-md aspect-video">
                 <video
@@ -691,7 +706,7 @@ export function ScanTickets() {
 
         {/* Captured Image View */}
         {capturedImage && !showCamera && (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg overflow-hidden">
             {/* Action Buttons - Above Image */}
             {!analyzing && (
               <div className="p-6 border-b bg-gray-50">
@@ -862,6 +877,7 @@ export function ScanTickets() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Sample Scan Modal */}
