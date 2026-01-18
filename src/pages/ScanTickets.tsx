@@ -491,7 +491,7 @@ export function ScanTickets() {
             </div>
 
             {/* Sign In Required Block */}
-            <div className="max-w-md mx-auto px-2">
+            <div className="max-w-md mx-auto">
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-3 text-center">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In Required</h2>
                 <p className="text-gray-600 mb-4">
@@ -508,7 +508,7 @@ export function ScanTickets() {
 
             {/* View Sample Scan Button */}
             {sampleScan && (
-              <div className="flex flex-col gap-3 max-w-md mx-auto px-2">
+              <div className="flex flex-col gap-3 max-w-md mx-auto">
                 <button
                   onClick={() => {
                     haptics.light();
@@ -633,7 +633,7 @@ export function ScanTickets() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 max-w-md mx-auto px-2">
+            <div className="flex flex-col gap-3 max-w-md mx-auto">
               <button
                 onClick={() => {
                   haptics.medium();
