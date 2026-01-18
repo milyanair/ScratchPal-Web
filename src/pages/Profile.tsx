@@ -145,11 +145,12 @@ export function Profile() {
       // Get unique states
       const uniqueStates = Array.from(new Set(games.map(g => g.state)));
 
-      // Fetch state configs for these states
+      // Fetch state configs for these states - only visible ones
       const { data: stateConfigs, error: configError } = await supabase
         .from('state_config')
         .select('*')
         .in('state_code', uniqueStates)
+        .eq('is_visible', true)
         .order('display_order');
       
       if (configError) throw configError;
