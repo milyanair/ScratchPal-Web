@@ -120,13 +120,13 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] bg-white/80 backdrop-blur-md grid grid-cols-3 items-center px-4 relative">
+    <header className="sticky top-0 z-50 h-[55px] grid grid-cols-3 items-center px-4 relative">
       {/* Frown Curve at Bottom (high on sides, low in center - opposite of footer smile) */}
       <div
         className="absolute inset-0 bg-white/80 backdrop-blur-md pointer-events-none"
         style={{
           clipPath: 'ellipse(150% 50% at 50% 100%)',
-          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
         }}
       />
 
