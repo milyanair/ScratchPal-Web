@@ -443,24 +443,87 @@ export function ScanTickets() {
     };
   }, []);
 
-  // Require user to be logged in
+  // Show limited UI for non-logged in users
   if (!user) {
     return (
-      <Layout hideNav>
-        <div className="max-w-screen-xl mx-auto px-4 py-6 text-center">
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-8 inline-block">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In Required</h2>
-            <p className="text-gray-600 mb-4">
-              Please sign in to use the Scanalyzer
+      <Layout>
+        <div className="max-w-screen-xl mx-auto px-3 py-6">
+          <div className="mb-3 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2 sm:gap-3">
+              <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
+              Scanalyzer
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 px-2">
+              Take a photo of a scratchoff ticket-board or lottery machine to get our AI recommendations. Click the View Sample Scan button to see an example of how it works.
             </p>
-            <button
-              onClick={() => navigate('/profile')}
-              className="gradient-teal text-white px-6 py-2 rounded-lg font-semibold"
-            >
-              Sign In
-            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-2">
+            <div className="text-center mb-2 flex justify-center">
+              <div className="w-full max-w-md aspect-video">
+                <video
+                  ref={demoVideoRef}
+                  src="https://scratchpal.com/scratchwin.mp4"
+                  className="w-full h-full object-cover rounded-2xl"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              </div>
+            </div>
+
+            {/* Sign In Required Block */}
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-3 text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Sign In Required</h2>
+              <p className="text-gray-600 mb-4">
+                Please sign in to use the Scanalyzer
+              </p>
+              <button
+                onClick={() => navigate('/profile')}
+                className="gradient-teal text-white px-6 py-2 rounded-lg font-semibold"
+              >
+                Sign In
+              </button>
+            </div>
+
+            {/* View Sample Scan Button */}
+            {sampleScan && (
+              <div className="flex flex-col gap-3 max-w-md mx-auto px-2">
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    setShowSampleScan(true);
+                  }}
+                  className="border-2 border-gray-300 text-gray-700 px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold flex items-center justify-center gap-2 sm:gap-3 hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                >
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                  View Sample Scan
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Sample Scan Modal */}
+        {showSampleScan && sampleScan && (
+          <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <div className="relative max-w-6xl w-full">
+                <button
+                  onClick={() => setShowSampleScan(false)}
+                  className="absolute top-0 right-0 w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/30 transition-colors z-10"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <SavedScanCard 
+                  scan={sampleScan}
+                  autoOpen={true}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </Layout>
     );
   }

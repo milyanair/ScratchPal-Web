@@ -398,7 +398,7 @@ export function GameDetail() {
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-6">
-        {/* Floating Return to Scan Button */}
+        {/* Floating Return to Scan Button - Only show if returnToScanId is provided */}
         {returnToScanId && (
           <div
             className="fixed z-50 w-16 h-16 cursor-move touch-none"
