@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tantml:query';
 import { UserPreference } from '@/types';
 import { useState, useEffect } from 'react';
 import { usePoints } from '@/hooks/usePoints';
@@ -121,17 +121,31 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 h-[55px] bg-white/80 backdrop-blur-md grid grid-cols-3 items-center px-4 relative">
-      {/* Inverted Curve Shape (high on sides, low in center - opposite of footer) */}
+      {/* Frown Curve at Bottom (high on sides, low in center - opposite of footer smile) */}
       <div
         className="absolute inset-0 bg-white/80 backdrop-blur-md pointer-events-none"
         style={{
-          clipPath: 'ellipse(200% 100% at 50% 0%)',
+          clipPath: 'ellipse(150% 50% at 50% 100%)',
           filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
         }}
       />
 
-      {/* Left: Notification Bell & Rewards Counter */}
+      {/* Left: Rewards Counter & Notification Bell */}
       <div className="flex justify-start items-center gap-2 relative z-10">
+        {/* Points Display - Perfect Circle - Visible on all devices */}
+        {user && totalPoints > 0 && (
+          <button
+            onClick={() => {
+              haptics.light();
+              navigate('/favorites');
+            }}
+            className="w-11 h-11 rounded-full bg-gray-200 hover:bg-gray-300 transition-all flex items-center justify-center gap-1 flex-shrink-0"
+          >
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <span className="text-gray-700 font-bold text-xs">{totalPoints > 999 ? '999+' : totalPoints}</span>
+          </button>
+        )}
+        
         {/* Notification Bell - Visible on all devices */}
         {user && (
           <div className="relative">
@@ -140,7 +154,7 @@ export function Header() {
                 haptics.light();
                 setShowNotifications(!showNotifications);
               }}
-              className="relative p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
+              className="relative w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-all flex items-center justify-center"
             >
               <Bell className="w-5 h-5 text-gray-700" />
               {unreadCount > 0 && (
@@ -213,19 +227,6 @@ export function Header() {
               </>
             )}
           </div>
-        )}
-        {/* Points Display - Visible on all devices */}
-        {user && totalPoints > 0 && (
-          <button
-            onClick={() => {
-              haptics.light();
-              navigate('/favorites');
-            }}
-            className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
-          >
-            <Trophy className="w-4 h-4 text-yellow-500" />
-            <span className="text-gray-700 font-bold text-sm">{totalPoints.toLocaleString()}</span>
-          </button>
         )}
       </div>
 
