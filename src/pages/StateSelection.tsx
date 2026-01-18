@@ -95,7 +95,7 @@ export function StateSelection() {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <div className="text-center mb-8">
+        <div className="bg-purple-100 border-2 border-purple-400 rounded-lg p-4 text-center mb-6">
           <div className="flex justify-center mb-4">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
@@ -103,7 +103,7 @@ export function StateSelection() {
               className="h-16 object-contain"
             />
           </div>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-700 text-lg">
             Your scratch-off companion and community.
           </p>
         </div>
