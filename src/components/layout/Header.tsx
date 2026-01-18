@@ -120,7 +120,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] bg-white/80 backdrop-blur-md grid grid-cols-3 items-center px-4">
+    <header className="sticky top-0 z-50 h-[55px] bg-white grid grid-cols-3 items-center px-4">
       {/* Left: Empty */}
       <div className="flex justify-start">
       </div>
@@ -128,7 +128,7 @@ export function Header() {
       {/* Center: Coin Icon Only */}
       <div className="flex items-center justify-center">
         {isAdmin ? (
-          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0 rounded-full shadow-lg">
+          <Link to="/admin" className="w-[56px] h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="Admin"
@@ -136,7 +136,7 @@ export function Header() {
             />
           </Link>
         ) : (
-          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0 rounded-full shadow-lg">
+          <Link to="/" onClick={() => haptics.light()} className="w-[56px] h-[56px] flex-shrink-0">
             <img
               src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
               alt="ScratchPal"
