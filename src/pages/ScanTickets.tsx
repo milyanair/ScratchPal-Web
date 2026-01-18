@@ -451,12 +451,13 @@ export function ScanTickets() {
       <Layout>
         {/* Background Image Container */}
         <div 
-          className="min-h-[calc(100vh-115px)] relative"
+          className="min-h-screen relative"
           style={{
             backgroundImage: 'url(https://cdn-ai.onspace.ai/onspace/files/UpzBfP2E3qfRT3drQovGgt/2.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
           }}
         >
           {/* Opacity Overlay */}
@@ -551,12 +552,13 @@ export function ScanTickets() {
     <Layout>
       {/* Background Image Container */}
       <div 
-        className="min-h-[calc(100vh-115px)] relative"
+        className="min-h-screen relative"
         style={{
           backgroundImage: 'url(https://cdn-ai.onspace.ai/onspace/files/ZAXNmf9T6fgT7srne7MXE4/1.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
         }}
       >
         {/* Opacity Overlay */}
