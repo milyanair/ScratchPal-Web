@@ -120,46 +120,21 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-[55px] bg-white/80 backdrop-blur-md grid grid-cols-3 items-center px-4">
-      {/* Left: Empty */}
-      <div className="flex justify-start">
-      </div>
+    <header className="sticky top-0 z-50 h-[55px] bg-white/80 backdrop-blur-md grid grid-cols-3 items-center px-4 relative">
+      {/* Inverted Curve Shape (high on sides, low in center - opposite of footer) */}
+      <div
+        className="absolute inset-0 bg-white/80 backdrop-blur-md pointer-events-none"
+        style={{
+          clipPath: 'ellipse(200% 100% at 50% 0%)',
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+        }}
+      />
 
-      {/* Center: Coin Icon Only - Overflows header */}
-      <div className="flex items-center justify-center relative">
-        {isAdmin ? (
-          <Link to="/admin" className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
-            <img
-              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
-              alt="Admin"
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
-          </Link>
-        ) : (
-          <Link to="/" onClick={() => haptics.light()} className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
-            <img
-              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
-              alt="ScratchPal"
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
-          </Link>
-        )}
-      </div>
-
-      {/* Right: Scan, Notifications, Points & State */}
-      <div className="flex items-center justify-end gap-2">
-        {/* Ticket Scanner - Available to All */}
-        <Link
-          to="/scan-tickets"
-          onClick={() => haptics.light()}
-          className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
-          title="Scan Tickets"
-        >
-          <ScanLine className="w-5 h-5 text-gray-700" />
-        </Link>
-        {/* Notification Bell - Desktop Only */}
+      {/* Left: Notification Bell & Rewards Counter */}
+      <div className="flex justify-start items-center gap-2 relative z-10">
+        {/* Notification Bell - Visible on all devices */}
         {user && (
-          <div className="relative hidden md:block">
+          <div className="relative">
             <button
               onClick={() => {
                 haptics.light();
@@ -182,7 +157,7 @@ export function Header() {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifications(false)}
                 />
-                <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl z-50">
+                <div className="absolute left-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl z-50">
                   <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
                     <h3 className="font-bold">Notifications</h3>
                     {unreadCount > 0 && (
@@ -239,19 +214,53 @@ export function Header() {
             )}
           </div>
         )}
-        {/* Points Display - Desktop Only */}
+        {/* Points Display - Visible on all devices */}
         {user && totalPoints > 0 && (
           <button
             onClick={() => {
               haptics.light();
               navigate('/favorites');
             }}
-            className="hidden md:flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
           >
             <Trophy className="w-4 h-4 text-yellow-500" />
             <span className="text-gray-700 font-bold text-sm">{totalPoints.toLocaleString()}</span>
           </button>
         )}
+      </div>
+
+      {/* Center: Coin Icon Only - Overflows header */}
+      <div className="flex items-center justify-center relative z-10">
+        {isAdmin ? (
+          <Link to="/admin" className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
+              alt="Admin"
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </Link>
+        ) : (
+          <Link to="/" onClick={() => haptics.light()} className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
+              alt="ScratchPal"
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </Link>
+        )}
+      </div>
+
+      {/* Right: Scan & State */}
+      <div className="flex items-center justify-end gap-2 relative z-10">
+        {/* Ticket Scanner - Available to All */}
+        <Link
+          to="/scan-tickets"
+          onClick={() => haptics.light()}
+          className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-all"
+          title="Scan Tickets"
+        >
+          <ScanLine className="w-5 h-5 text-gray-700" />
+        </Link>
 
         {/* State Circle */}
         <div className="relative">
@@ -285,38 +294,6 @@ export function Header() {
                 onClick={() => setShowStateMenu(false)}
               />
               <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl z-50 overflow-hidden md:hidden">
-                {/* Notifications */}
-                <button
-                  onClick={() => {
-                    setShowStateMenu(false);
-                    setShowNotifications(!showNotifications);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b relative"
-                >
-                  <Bell className="w-5 h-5 text-gray-700" />
-                  <span className="font-semibold text-gray-800">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Points */}
-                {totalPoints > 0 && (
-                  <button
-                    onClick={() => {
-                      setShowStateMenu(false);
-                      navigate('/favorites');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b"
-                  >
-                    <Trophy className="w-5 h-5 text-yellow-500" />
-                    <span className="font-semibold text-gray-800">Points</span>
-                    <span className="ml-auto text-teal font-bold">{totalPoints.toLocaleString()}</span>
-                  </button>
-                )}
-
                 {/* My Profile */}
                 <button
                   onClick={() => {
@@ -329,66 +306,6 @@ export function Header() {
                   <span className="font-semibold text-gray-800">My Profile</span>
                 </button>
               </div>
-
-              {/* Notification Dropdown - Mobile */}
-              {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl z-50">
-                  <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
-                    <h3 className="font-bold">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMarkAllAsRead();
-                        }}
-                        className="text-xs text-teal hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-
-                  {notifications.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
-                      No notifications yet
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {notifications.map((notification) => (
-                        <button
-                          key={notification.id}
-                          onClick={() => {
-                            handleNotificationClick(notification);
-                            setShowStateMenu(false);
-                          }}
-                          className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-                            !notification.read ? 'bg-teal/5' : ''
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                                !notification.read ? 'bg-teal' : 'bg-gray-300'
-                              }`}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-sm mb-1">
-                                {notification.title}
-                              </div>
-                              <div className="text-xs text-gray-600 mb-1">
-                                {notification.message}
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                {new Date(notification.created_at).toLocaleString()}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
