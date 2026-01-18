@@ -100,11 +100,11 @@ export function OAuthCallback() {
           const returnPath = localStorage.getItem('oauth_return_path') || '/';
           localStorage.removeItem('oauth_return_path');
 
-          console.log('🔄 Redirecting to:', returnPath);
+          console.log('🔄 Redirecting to games page');
 
-          // Redirect to original page
+          // Redirect to games page
           // Auth state will be updated by onAuthStateChange
-          navigate(returnPath, { replace: true });
+          navigate('/', { replace: true });
           return;
         }
 
@@ -173,7 +173,7 @@ export function OAuthCallback() {
         setStatus('success');
         toast.success('Successfully signed in!');
 
-        // Redirect to home after a short delay
+        // Redirect to games page after a short delay
         setTimeout(() => {
           navigate('/', { replace: true });
         }, 1500);

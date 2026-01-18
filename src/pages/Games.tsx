@@ -20,7 +20,7 @@ export function Games() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'rank' | 'prizes'>('rank');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [displayCount, setDisplayCount] = useState(20);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
 
   // Get user's selected state
@@ -193,9 +193,9 @@ export function Games() {
     return content.substring(0, maxLength) + '...';
   };
 
-  // Determine which games to display (top 20 or all)
-  const displayedGames = showAll ? filteredGames : filteredGames.slice(0, 20);
-  const hasMoreGames = filteredGames.length > 20;
+  // Determine which games to display based on displayCount
+  const displayedGames = filteredGames.slice(0, displayCount);
+  const hasMoreGames = filteredGames.length > displayCount;
 
   // Show loading state while checking for selected state
   if ((user && isPrefLoading) || !selectedState) {
@@ -253,7 +253,7 @@ export function Games() {
                   onClick={() => setSelectedPriceRange(key)}
                   className={`w-20 py-3 rounded-lg text-sm font-medium transition-colors ${
                     selectedPriceRange === key
-                      ? 'bg-teal text-white'
+                      ? 'gradient-games text-white'
                       : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                 >
@@ -267,7 +267,7 @@ export function Games() {
               <button
                 onClick={() => setSortBy('rank')}
                 className={`p-2 rounded-lg transition-colors ${
-                  sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
+                  sortBy === 'rank' ? 'gradient-games text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Rank"
               >
@@ -278,7 +278,7 @@ export function Games() {
               <button
                 onClick={() => setSortBy('prizes')}
                 className={`p-2 rounded-lg transition-colors ${
-                  sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
+                  sortBy === 'prizes' ? 'gradient-games text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Prizes Remaining"
               >
@@ -289,7 +289,7 @@ export function Games() {
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
                 className={`p-2 rounded-lg transition-colors ${
-                  favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
+                  favoritesOnly ? 'gradient-games' : 'bg-gray-200'
                 }`}
                 title="Favorites Only"
               >
@@ -310,7 +310,7 @@ export function Games() {
                   onClick={() => setSelectedPriceRange(key)}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedPriceRange === key
-                      ? 'bg-teal text-white'
+                      ? 'gradient-games text-white'
                       : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                 >
@@ -324,7 +324,7 @@ export function Games() {
               <button
                 onClick={() => setSortBy('rank')}
                 className={`flex-1 p-2 rounded-lg transition-colors ${
-                  sortBy === 'rank' ? 'bg-teal text-white' : 'bg-gray-200'
+                  sortBy === 'rank' ? 'gradient-games text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Rank"
               >
@@ -335,7 +335,7 @@ export function Games() {
               <button
                 onClick={() => setSortBy('prizes')}
                 className={`flex-1 p-2 rounded-lg transition-colors ${
-                  sortBy === 'prizes' ? 'bg-teal text-white' : 'bg-gray-200'
+                  sortBy === 'prizes' ? 'gradient-games text-white' : 'bg-gray-200'
                 }`}
                 title="Sort by Prizes Remaining"
               >
@@ -346,7 +346,7 @@ export function Games() {
               <button
                 onClick={() => setFavoritesOnly(!favoritesOnly)}
                 className={`flex-1 p-2 rounded-lg transition-colors ${
-                  favoritesOnly ? 'bg-gray-200' : 'bg-gray-200'
+                  favoritesOnly ? 'gradient-games' : 'bg-gray-200'
                 }`}
                 title="Favorites Only"
               >
@@ -391,26 +391,26 @@ export function Games() {
             </div>
 
             {/* View More Button */}
-            {!showAll && hasMoreGames && (
+            {hasMoreGames && (
               <div className="flex justify-center mt-8">
                 <button
-                  onClick={() => setShowAll(true)}
-                  className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity w-72"
+                  onClick={() => setDisplayCount(prev => prev + 20)}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors w-72"
                 >
-                  View More Games ({filteredGames.length - 20})
+                  View More Games ({filteredGames.length - displayCount})
                 </button>
               </div>
             )}
 
-            {/* Show Less Button (when all are shown) */}
-            {showAll && hasMoreGames && (
-              <div className="flex justify-center mt-8">
+            {/* Show Less Button (when more than 20 shown) */}
+            {displayCount > 20 && (
+              <div className="flex justify-center mt-4">
                 <button
                   onClick={() => {
-                    setShowAll(false);
+                    setDisplayCount(20);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="border-2 border-teal text-teal px-8 py-3 rounded-lg font-semibold hover:bg-teal/5 transition-colors w-72"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors w-72"
                 >
                   Show Less
                 </button>
@@ -532,7 +532,7 @@ export function Games() {
             <div className="text-center mt-6">
               <button
                 onClick={() => navigate('/hot-topics')}
-                className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity shadow-md w-72"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors w-72"
               >
                 View More Topics
               </button>

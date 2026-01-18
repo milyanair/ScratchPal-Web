@@ -467,7 +467,7 @@ export function HotTopics() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
                 selectedCategory === cat
-                  ? 'gradient-teal text-white'
+                  ? 'gradient-hot text-white'
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
             >
