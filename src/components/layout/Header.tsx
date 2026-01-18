@@ -125,8 +125,8 @@ export function Header() {
       <div
         className="absolute inset-0 bg-white/80 backdrop-blur-md pointer-events-none"
         style={{
-          clipPath: 'ellipse(150% 50% at 50% 100%)',
-          filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
+          clipPath: 'ellipse(150% 50% at 50% 150%)',
+          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
         }}
       />
 
