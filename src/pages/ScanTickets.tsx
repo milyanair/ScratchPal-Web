@@ -471,7 +471,7 @@ export function ScanTickets() {
               <img
                 src="https://cdn-ai.onspace.ai/onspace/files/nCrVMtAwQ4sMLztPZTX5Yy/scanalyzerTM.png"
                 alt="Scanalyzer"
-                className="h-12 sm:h-16 object-contain"
+                className="h-16 sm:h-18 object-contain"
               />
             </div>
             <p className="text-sm sm:text-base text-gray-600 px-2">
