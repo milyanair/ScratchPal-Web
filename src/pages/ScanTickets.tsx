@@ -469,7 +469,7 @@ export function ScanTickets() {
           <div className="mb-3 text-center">
             <div className="flex justify-center mb-2">
               <img
-                src="https://cdn-ai.onspace.ai/onspace/files/G4LDyD9hCsXcmBg3fzuWHd/scanalyzerlogo.png"
+                src="https://cdn-ai.onspace.ai/onspace/files/nCrVMtAwQ4sMLztPZTX5Yy/scanalyzerTM.png"
                 alt="Scanalyzer"
                 className="h-12 sm:h-16 object-contain"
               />
@@ -563,7 +563,7 @@ export function ScanTickets() {
         <div className="mb-3 text-center">
           <div className="flex justify-center mb-2">
             <img
-              src="https://cdn-ai.onspace.ai/onspace/files/G4LDyD9hCsXcmBg3fzuWHd/scanalyzerlogo.png"
+              src="https://cdn-ai.onspace.ai/onspace/files/nCrVMtAwQ4sMLztPZTX5Yy/scanalyzerTM.png"
               alt="Scanalyzer"
               className="h-12 sm:h-16 object-contain"
             />
