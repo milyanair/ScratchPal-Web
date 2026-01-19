@@ -467,10 +467,13 @@ export function ScanTickets() {
           <div className="relative max-w-screen-xl mx-auto px-3 py-6">
             {/* Alternative background image: https://cdn-ai.onspace.ai/onspace/files/ZAXNmf9T6fgT7srne7MXE4/1.jpg */}
           <div className="mb-3 text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2 sm:gap-3">
-              <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
-              Scanalyzer
-            </h1>
+            <div className="flex justify-center mb-2">
+              <img
+                src="https://cdn-ai.onspace.ai/onspace/files/G4LDyD9hCsXcmBg3fzuWHd/scanalyzerlogo.png"
+                alt="Scanalyzer"
+                className="h-12 sm:h-16 object-contain"
+              />
+            </div>
             <p className="text-sm sm:text-base text-gray-600 px-2">
               Take a photo of a scratchoff ticket-board or lottery machine to get our AI recommendations. Click the View Sample Scan button to see an example of how it works.
             </p>
@@ -558,10 +561,13 @@ export function ScanTickets() {
         <div className="relative max-w-screen-xl mx-auto px-3 py-6">
         {/* Alternative background image: https://cdn-ai.onspace.ai/onspace/files/ZAXNmf9T6fgT7srne7MXE4/1.jpg */}
         <div className="mb-3 text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center justify-center gap-2 sm:gap-3">
-            <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
-            Scanalyzer
-          </h1>
+          <div className="flex justify-center mb-2">
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/G4LDyD9hCsXcmBg3fzuWHd/scanalyzerlogo.png"
+              alt="Scanalyzer"
+              className="h-12 sm:h-16 object-contain"
+            />
+          </div>
           <p className="text-sm sm:text-base text-gray-600 px-2">
             Take a photo of a scratchoff ticket-board or lottery machine to get our AI recommendations. Click the View Sample Scan button to see an example of how it works.
           </p>
