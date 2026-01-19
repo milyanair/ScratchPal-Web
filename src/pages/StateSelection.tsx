@@ -98,7 +98,7 @@ export function StateSelection() {
         <div className="bg-purple-100 border-2 border-purple-400 rounded-lg p-4 text-center mb-6">
           <div className="flex justify-center mb-4">
             <img
-              src="https://cdn-ai.onspace.ai/onspace/files/WAxFVTfN6nCgFibtQQ2pbW/scratchpaloldlogo.png"
+              src="https://cdn-ai.onspace.ai/onspace/files/Fiws9FPHh2oTycaFXT9Wk5/scratchpal2026.png"
               alt="ScratchPal"
               className="h-16 object-contain"
             />
