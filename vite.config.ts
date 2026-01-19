@@ -8,8 +8,8 @@ export default defineConfig({
     host: "::",
     port: 8080,
     hmr: {
+      protocol: 'wss',
       clientPort: 443,
-      protocol: 'wss'
     }
   },
   plugins: [
