@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { StateConfig } from '@/types';
 import { useState, useEffect } from 'react';
 import { Share2, Copy, Users, Bell, BellOff, Palette, Code, ChevronDown, ChevronUp, Key } from 'lucide-react';
-import { isWebView, getWebViewType } from '@/lib/utils';
+import { isWebView, getWebViewType, sendMessageToWebView } from '@/lib/utils';
 
 type AuthMode = 'login' | 'signup' | 'verify';
 
@@ -320,6 +320,19 @@ export function Profile() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      
+      // If in WebView, notify the native app to clear session
+      if (isWebView()) {
+        console.log('🔓 User signed out - notifying WebView');
+        sendMessageToWebView({ 
+          type: 'LOGOUT',
+          data: { 
+            timestamp: new Date().toISOString(),
+            message: 'User signed out from web app'
+          }
+        });
+      }
+      
       toast.success('Signed out');
       navigate('/');
     } catch (error) {

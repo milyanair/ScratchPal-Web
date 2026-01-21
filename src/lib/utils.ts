@@ -117,6 +117,38 @@ export const logWebViewInfo = (): void => {
 };
 
 /**
+ * Send a message to the native WebView (Android/iOS app)
+ * This allows the web app to communicate with the native app wrapper
+ */
+export function sendMessageToWebView(message: { type: string; data?: any }) {
+  console.log('📱 Sending message to WebView:', message);
+  
+  // React Native WebView
+  if ((window as any).ReactNativeWebView) {
+    (window as any).ReactNativeWebView.postMessage(JSON.stringify(message));
+    console.log('✅ Message sent via ReactNativeWebView.postMessage');
+    return true;
+  }
+  
+  // Android WebView (native)
+  if ((window as any).Android && typeof (window as any).Android.postMessage === 'function') {
+    (window as any).Android.postMessage(JSON.stringify(message));
+    console.log('✅ Message sent via Android.postMessage');
+    return true;
+  }
+  
+  // iOS WebView (WKWebView)
+  if ((window as any).webkit?.messageHandlers?.nativeApp) {
+    (window as any).webkit.messageHandlers.nativeApp.postMessage(message);
+    console.log('✅ Message sent via webkit.messageHandlers.nativeApp');
+    return true;
+  }
+  
+  console.log('⚠️ No WebView interface found, message not sent');
+  return false;
+}
+
+/**
  * Generate unique slug for a game within a state
  * @param gameName - Game name
  * @param state - State code
