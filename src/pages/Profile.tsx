@@ -1,6 +1,6 @@
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
-import { signInWithGoogle, signOut, sendOtp, verifyOtpAndSetPassword, signInWithPassword } from '@/lib/auth';
+import { signInWithGoogle, signOut, sendOtp, verifyOtpAndSetPassword, signInWithPassword, sendPasswordResetOtp, resetPasswordWithOtp } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Share2, Copy, Users, Bell, BellOff, Palette, Code, ChevronDown, ChevronUp, Key } from 'lucide-react';
 import { isWebView, getWebViewType, sendMessageToWebView } from '@/lib/utils';
 
-type AuthMode = 'login' | 'signup' | 'verify';
+type AuthMode = 'login' | 'signup' | 'verify' | 'forgot-password' | 'reset-verify';
 
 export function Profile() {
   const { user, login: setAuthUser } = useAuth();
@@ -46,6 +46,7 @@ export function Profile() {
 
   // Auth form state
   const [authMode, setAuthMode] = useState<AuthMode>('login');
+  const [resetEmail, setResetEmail] = useState(''); // Separate email for password reset flow
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -428,7 +429,11 @@ export function Profile() {
         {!user ? (
           <div className="bg-white rounded-lg shadow p-8">
             <h2 className="text-2xl font-bold mb-6 text-center">
-              {authMode === 'login' ? 'Sign In' : authMode === 'signup' ? 'Create Account' : 'Verify Email'}
+              {authMode === 'login' ? 'Sign In' : 
+               authMode === 'signup' ? 'Create Account' : 
+               authMode === 'verify' ? 'Verify Email' :
+               authMode === 'forgot-password' ? 'Reset Password' :
+               'Verify & Reset'}
             </h2>
 
             {/* Login Mode */}
@@ -496,7 +501,17 @@ export function Profile() {
                   <span className="font-semibold">Sign in with Google</span>
                 </button>
 
-                <div className="text-center mt-4">
+                <div className="text-center mt-4 space-y-2">
+                  <button
+                    onClick={() => {
+                      setAuthMode('forgot-password');
+                      setResetEmail(email);
+                      setOtp('');
+                    }}
+                    className="text-gray-600 hover:underline text-sm block w-full"
+                  >
+                    Forgot Password?
+                  </button>
                   <button
                     onClick={() => {
                       setAuthMode('signup');
@@ -757,6 +772,150 @@ export function Profile() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Forgot Password Mode - Step 1: Enter Email */}
+            {authMode === 'forgot-password' && (
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    💡 Enter your email address and we'll send you a verification code to reset your password.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full border rounded-lg px-4 py-3"
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!resetEmail) {
+                      toast.error('Please enter your email');
+                      return;
+                    }
+
+                    setIsLoading(true);
+                    try {
+                      await sendPasswordResetOtp(resetEmail);
+                      toast.success('Verification code sent to your email!');
+                      setAuthMode('reset-verify');
+                    } catch (error: any) {
+                      if (error.message.includes('User not found')) {
+                        toast.error('No account found with this email');
+                      } else {
+                        toast.error(error.message || 'Failed to send verification code');
+                      }
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="w-full gradient-teal text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
+                >
+                  {isLoading ? 'Sending...' : 'Send Verification Code'}
+                </button>
+
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => {
+                      setAuthMode('login');
+                      setResetEmail('');
+                      setOtp('');
+                    }}
+                    className="text-teal hover:underline font-medium text-sm"
+                  >
+                    ← Back to login
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Reset Verify Mode - Step 2: Enter OTP and New Password */}
+            {authMode === 'reset-verify' && (
+              <div className="space-y-4">
+                <div className="bg-teal/10 border border-teal rounded-lg p-4 mb-4">
+                  <p className="text-sm text-teal-800">
+                    We sent a verification code to <strong>{resetEmail}</strong>
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Verification Code</label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 4-digit code"
+                    maxLength={4}
+                    className="w-full border rounded-lg px-4 py-3 text-center text-2xl tracking-widest"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">New Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 characters)"
+                    className="w-full border rounded-lg px-4 py-3"
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!resetEmail || !otp || !password) {
+                      toast.error('Please fill in all fields');
+                      return;
+                    }
+
+                    if (password.length < 6) {
+                      toast.error('Password must be at least 6 characters');
+                      return;
+                    }
+
+                    setIsLoading(true);
+                    try {
+                      const user = await resetPasswordWithOtp(resetEmail, otp, password);
+                      const authUser = {
+                        id: user.id,
+                        email: user.email!,
+                        username: user.user_metadata?.username || user.email!.split('@')[0],
+                        avatar: user.user_metadata?.avatar_url,
+                      };
+                      setAuthUser(authUser);
+                      toast.success('Password reset successful!');
+                      navigate('/');
+                    } catch (error: any) {
+                      if (error.message.includes('Invalid') || error.message.includes('expired')) {
+                        toast.error('Invalid or expired verification code');
+                      } else {
+                        toast.error(error.message || 'Password reset failed');
+                      }
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="w-full gradient-teal text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
+                >
+                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                </button>
+
+                <div className="text-center mt-4">
+                  <button
+                    onClick={() => {
+                      setAuthMode('forgot-password');
+                      setOtp('');
+                      setPassword('');
+                    }}
+                    className="text-teal hover:underline font-medium text-sm"
+                  >
+                    ← Back
+                  </button>
                 </div>
               </div>
             )}

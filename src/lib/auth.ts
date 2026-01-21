@@ -229,3 +229,38 @@ export const signInWithPassword = async (
   if (!data.user) throw new Error('Login failed');
   return data.user;
 };
+
+// Forgot Password Functions
+export const sendPasswordResetOtp = async (email: string): Promise<void> => {
+  // Send OTP for password recovery (not signup)
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { 
+      shouldCreateUser: false, // Don't create new user, must be existing
+    },
+  });
+  if (error) throw error;
+};
+
+export const resetPasswordWithOtp = async (
+  email: string,
+  token: string,
+  newPassword: string
+): Promise<User> => {
+  // Verify OTP for password reset
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  });
+  if (error) throw error;
+
+  // Update password
+  const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+  if (updateError) throw updateError;
+
+  if (!updateData.user) throw new Error('Password reset failed');
+  return updateData.user;
+};
