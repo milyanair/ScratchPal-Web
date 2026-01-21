@@ -29,6 +29,7 @@ export function ScanTickets() {
   const [scanLimitReached, setScanLimitReached] = useState(false);
   const [nextScanAvailable, setNextScanAvailable] = useState<Date | null>(null);
   const [showSampleScan, setShowSampleScan] = useState(false);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -322,6 +323,21 @@ export function ScanTickets() {
       setAnalyzing(false);
     }
   };
+
+  // Price range options
+  const priceRanges: Record<string, { label: string; min: number; max: number }> = {
+    all: { label: 'All', min: 0, max: 999 },
+    '1-5': { label: '$1-$5', min: 1, max: 5 },
+    '6-10': { label: '$6-$10', min: 6, max: 10 },
+    '11-20': { label: '$11-$20', min: 11, max: 20 },
+    '21-50': { label: '$21+', min: 21, max: 999 },
+  };
+
+  // Filter matches based on selected price range
+  const filteredMatches = ticketMatches.filter((match) => {
+    const range = priceRanges[selectedPriceRange];
+    return match.game.price >= range.min && match.game.price <= range.max;
+  });
 
   // Calculate dot color based on rank (6-tier system)
   const getDotColor = (rank: number) => {
@@ -724,6 +740,34 @@ export function ScanTickets() {
               </div>
             )}
 
+            {/* Price Filter Buttons - Above Image */}
+            {!analyzing && ticketMatches.length > 0 && (
+              <div className="p-6 bg-gray-50 border-b">
+                <h3 className="font-bold mb-3 text-sm">Filter by Price</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.entries(priceRanges).map(([key, { label }]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        haptics.light();
+                        setSelectedPriceRange(key);
+                      }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedPriceRange === key
+                          ? 'gradient-games text-white'
+                          : 'bg-gray-200 hover:bg-gray-300'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 text-xs text-gray-600">
+                  Showing {filteredMatches.length} of {ticketMatches.length} tickets
+                </div>
+              </div>
+            )}
+
             {/* Color Legend - Top */}
             {!analyzing && ticketMatches.length > 0 && (
               <div className="p-6 bg-gray-50 border-b">
@@ -777,9 +821,9 @@ export function ScanTickets() {
               )}
 
               {/* Ticket Match Dots */}
-              {!analyzing && ticketMatches.length > 0 && (
+              {!analyzing && filteredMatches.length > 0 && (
                 <>
-                  {ticketMatches.map((match, index) => {
+                  {filteredMatches.map((match, index) => {
                     return (
                       <div
                         key={index}
@@ -828,11 +872,11 @@ export function ScanTickets() {
 
             {/* Results Summary */}
             <div className="p-6 border-t bg-gray-50">
-              {ticketMatches.length > 0 && (
+              {filteredMatches.length > 0 && (
                 <div className="p-4 bg-white rounded-lg border">
-                  <h3 className="font-bold mb-3">Detected Tickets ({ticketMatches.length})</h3>
+                  <h3 className="font-bold mb-3">Detected Tickets ({filteredMatches.length})</h3>
                   <div className="space-y-2">
-                    {[...ticketMatches].sort((a, b) => b.game.rank - a.game.rank).map((match, index) => {
+                    {[...filteredMatches].sort((a, b) => b.game.rank - a.game.rank).map((match, index) => {
                       const ratio = match.game.total_top_prizes > 0
                         ? (match.game.top_prizes_remaining / match.game.total_top_prizes * 100).toFixed(0)
                         : 0;
