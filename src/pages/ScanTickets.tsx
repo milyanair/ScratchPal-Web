@@ -82,17 +82,28 @@ export function ScanTickets() {
     },
   });
 
-  // Check scan usage for rate limiting (5 per week)
+  // Helper function to get start of current week (Monday at 00:00)
+  const getStartOfWeek = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days; otherwise go back to Monday
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - daysToMonday);
+    monday.setHours(0, 0, 0, 0);
+    return monday.toISOString();
+  };
+
+  // Check scan usage for rate limiting (5 per week, resets Monday)
   const { data: scanUsage = [], refetch: refetchScanUsage } = useQuery({
     queryKey: ['scanUsage', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const startOfWeek = getStartOfWeek();
       const { data, error } = await supabase
         .from('scan_usage')
         .select('*')
         .eq('user_id', user.id)
-        .gte('scanned_at', oneWeekAgo)
+        .gte('scanned_at', startOfWeek)
         .order('scanned_at', { ascending: false });
       
       if (error) throw error;
@@ -101,14 +112,18 @@ export function ScanTickets() {
     enabled: !!user,
   });
 
-  // Check if user has reached scan limit (5 per week)
+  // Check if user has reached scan limit (5 per week, resets Monday)
   useEffect(() => {
     if (scanUsage.length >= 5) {
       setScanLimitReached(true);
-      // Find the oldest scan and calculate when it expires (1 week from oldest scan)
-      const oldestScan = new Date(scanUsage[scanUsage.length - 1].scanned_at);
-      const expiresAt = new Date(oldestScan.getTime() + 7 * 24 * 60 * 60 * 1000);
-      setNextScanAvailable(expiresAt);
+      // Calculate next Monday at 00:00
+      const now = new Date();
+      const dayOfWeek = now.getDay();
+      const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek; // If Sunday, 1 day; otherwise days until next Monday
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + daysUntilMonday);
+      nextMonday.setHours(0, 0, 0, 0);
+      setNextScanAvailable(nextMonday);
     } else {
       setScanLimitReached(false);
       setNextScanAvailable(null);
@@ -711,7 +726,10 @@ export function ScanTickets() {
               </p>
               <div className="mt-3 pt-3 border-t border-yellow-300">
                 <p className="text-xs text-gray-600">
-                  Scans remaining this week: <span className="font-bold text-teal">{Math.max(0, 5 - scanUsage.length)}</span> / 5
+                  Scans remaining this week: <span className="font-bold text-teal">{5 - scanUsage.length}</span> / 5
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Resets every Monday at 12:00 AM
                 </p>
               </div>
             </div>
@@ -865,8 +883,8 @@ export function ScanTickets() {
               <div className="px-6 pt-6 pb-0">
                 <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
                   <p className="text-sm text-red-800 text-center font-semibold">
-                    ⏱️ You've used all 5 scans for this week. Next scan available on{' '}
-                    <span className="font-bold">{nextScanAvailable?.toLocaleDateString()} at {nextScanAvailable?.toLocaleTimeString()}</span>
+                    ⏱️ You've used all 5 scans for this week. Scans reset on{' '}
+                    <span className="font-bold">{nextScanAvailable?.toLocaleDateString()} at 12:00 AM</span>
                   </p>
                 </div>
               </div>
