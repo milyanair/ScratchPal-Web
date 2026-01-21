@@ -211,7 +211,7 @@ export function ReportWins() {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-0 mb-4">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center">
               <div
