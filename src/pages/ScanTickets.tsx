@@ -790,7 +790,7 @@ export function ScanTickets() {
                         haptics.light();
                         setSelectedPriceRange(key);
                       }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
                         selectedPriceRange === key
                           ? 'gradient-games text-white'
                           : 'bg-gray-200 hover:bg-gray-300'
