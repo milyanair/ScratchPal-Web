@@ -1,4 +1,5 @@
 import { Layout } from '@/components/layout/Layout';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -106,8 +107,16 @@ export function Favorites() {
     }
   }, [returnToScanId, scannedImages.length]);
 
+  // Pull-to-refresh handler
+  const handleRefresh = async () => {
+    console.log('🔄 Pull to refresh triggered');
+    const promises = [refetch(), refetchScans()];
+    await Promise.all(promises);
+  };
+
   return (
     <Layout>
+      <PullToRefresh onRefresh={handleRefresh} enabled={!!user}>
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="mb-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -548,6 +557,7 @@ export function Favorites() {
           </>
         )}
       </div>
+      </PullToRefresh>
     </Layout>
   );
 }

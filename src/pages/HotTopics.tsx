@@ -1,4 +1,5 @@
 import { Layout } from '@/components/layout/Layout';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { ForumTopic, Game } from '@/types';
@@ -415,8 +416,18 @@ export function HotTopics() {
     setEditUploadedImages(editUploadedImages.filter(img => img !== url));
   };
 
+  // Pull-to-refresh handler
+  const handleRefresh = async () => {
+    console.log('🔄 Pull to refresh triggered');
+    await Promise.all([
+      refetchTopics(),
+      refetchFavorites(),
+    ]);
+  };
+
   return (
     <Layout>
+      <PullToRefresh onRefresh={handleRefresh}>
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="mb-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -744,6 +755,7 @@ export function HotTopics() {
           )}
         </div>
       </div>
+      </PullToRefresh>
 
       {/* New Topic Modal */}
       {showNewTopicModal && (

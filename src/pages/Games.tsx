@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { MessageSlider } from '@/components/MessageSlider';
 import { GameCard } from '@/components/GameCard';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { Award, Trophy, Heart, Search, ChevronDown, ChevronUp, ThumbsUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -93,6 +94,15 @@ export function Games() {
       navigate('/select-state');
     }
   }, [selectedState, navigate, user, isPrefLoading, stateSetFromUrl]);
+
+  // Pull-to-refresh handler
+  const handleRefresh = async () => {
+    console.log('🔄 Pull to refresh triggered');
+    await Promise.all([
+      refetchGames(),
+      refetchFavorites(),
+    ]);
+  };
 
   // Fetch games (exclude expired games where end_date is today or earlier)
   const { data: games = [], refetch: refetchGames } = useQuery({
@@ -252,9 +262,10 @@ export function Games() {
 
   return (
     <Layout>
-      <div className="max-w-screen-xl mx-auto mb-6">
-        <MessageSlider />
-      </div>
+      <PullToRefresh onRefresh={handleRefresh} enabled={!!selectedState && !isStateConfigLoading}>
+        <div className="max-w-screen-xl mx-auto mb-6">
+          <MessageSlider />
+        </div>
       
       <div className="max-w-screen-xl mx-auto px-4 pb-6">
         {/* Filters */}
@@ -582,6 +593,7 @@ export function Games() {
           </div>
         )}
       </div>
+      </PullToRefresh>
     </Layout>
   );
 }
