@@ -526,29 +526,33 @@ export function GameDetail() {
                     ${game.top_prize.toLocaleString()}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Prizes Remaining</div>
-                  <div className="text-lg font-bold">
-                    {game.top_prizes_remaining} / {game.total_top_prizes}
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      ({percentage}%)
-                    </span>
+                <div className="col-span-2">
+                  <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="text-sm text-gray-500">Prizes Remaining</div>
+                      <div className="text-lg font-bold">
+                        {game.top_prizes_remaining} / {game.total_top_prizes}
+                        <span className="text-sm font-normal text-gray-500 ml-2">
+                          ({percentage}%)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        <ThumbsUp className="w-4 h-4" />
+                        <span>{game.upvotes}</span>
+                      </button>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        <ThumbsDown className="w-4 h-4" />
+                        <span>{game.downvotes}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-end gap-2 justify-end">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{game.upvotes}</span>
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                    <ThumbsDown className="w-4 h-4" />
-                    <span>{game.downvotes}</span>
-                  </button>
                 </div>
                 <div className="col-span-2">
                   <div className="text-sm text-gray-500">Game Duration</div>
-                  <div className="text-lg font-bold">
-                    Started: {game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'} | Ended: {game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}
+                  <div className="text-lg">
+                    <span className="font-normal">Started:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| Ended:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
                 {game.overall_odds && (
@@ -898,29 +902,33 @@ export function GameDetail() {
                         ${game.top_prize.toLocaleString()}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-gray-500">Prizes Remaining</div>
-                      <div className="text-lg font-bold">
-                        {game.top_prizes_remaining} / {game.total_top_prizes}
-                        <span className="text-sm font-normal text-gray-500 ml-2">
-                          ({percentage}%)
-                        </span>
+                    <div className="col-span-2">
+                      <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="text-sm text-gray-500">Prizes Remaining</div>
+                          <div className="text-lg font-bold">
+                            {game.top_prizes_remaining} / {game.total_top_prizes}
+                            <span className="text-sm font-normal text-gray-500 ml-2">
+                              ({percentage}%)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                            <ThumbsUp className="w-4 h-4" />
+                            <span>{game.upvotes}</span>
+                          </button>
+                          <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                            <ThumbsDown className="w-4 h-4" />
+                            <span>{game.downvotes}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-end gap-2 justify-end">
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{game.upvotes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsDown className="w-4 h-4" />
-                        <span>{game.downvotes}</span>
-                      </button>
                     </div>
                     <div className="col-span-2">
                       <div className="text-sm text-gray-500">Game Duration</div>
-                      <div className="text-lg font-bold">
-                        Started: {game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'} | Ended: {game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}
+                      <div className="text-lg">
+                        <span className="font-normal">Started:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| Ended:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </div>
                     {game.overall_odds && (
