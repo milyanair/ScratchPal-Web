@@ -502,17 +502,23 @@ export function GameDetail() {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={toggleFavorite}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <Heart
-                    className={`w-6 h-6 ${
-                      isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
-                    }`}
-                    strokeWidth={isFavorited ? 0 : 2}
-                  />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleFavorite}
+                    className="p-2 rounded-lg hover:bg-gray-100"
+                  >
+                    <Heart
+                      className={`w-6 h-6 ${
+                        isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
+                      }`}
+                      strokeWidth={isFavorited ? 0 : 2}
+                    />
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <ThumbsUp className="w-4 h-4" />
+                    <span>{game.upvotes}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -520,11 +526,17 @@ export function GameDetail() {
                   <div className="text-sm text-gray-500">Ticket Price</div>
                   <div className="text-xl font-bold text-green-600">${game.price}</div>
                 </div>
-                <div className="border-b pb-4">
-                  <div className="text-sm text-gray-500">Top Prize</div>
-                  <div className="text-xl font-bold text-teal">
-                    ${game.top_prize.toLocaleString()}
+                <div className="border-b pb-4 flex items-start justify-between">
+                  <div>
+                    <div className="text-sm text-gray-500">Top Prize</div>
+                    <div className="text-xl font-bold text-teal">
+                      ${game.top_prize.toLocaleString()}
+                    </div>
                   </div>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <ThumbsDown className="w-4 h-4" />
+                    <span>{game.downvotes}</span>
+                  </button>
                 </div>
                 <div className="col-span-2">
                   <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center gap-2">
@@ -536,16 +548,6 @@ export function GameDetail() {
                           ({percentage}%)
                         </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{game.upvotes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsDown className="w-4 h-4" />
-                        <span>{game.downvotes}</span>
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -878,17 +880,23 @@ export function GameDetail() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={toggleFavorite}
-                      className="p-2 rounded-lg hover:bg-gray-100"
-                    >
-                      <Heart
-                        className={`w-6 h-6 ${
-                          isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
-                        }`}
-                        strokeWidth={isFavorited ? 0 : 2}
-                      />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleFavorite}
+                        className="p-2 rounded-lg hover:bg-gray-100"
+                      >
+                        <Heart
+                          className={`w-6 h-6 ${
+                            isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
+                          }`}
+                          strokeWidth={isFavorited ? 0 : 2}
+                        />
+                      </button>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        <ThumbsUp className="w-4 h-4" />
+                        <span>{game.upvotes}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -896,11 +904,17 @@ export function GameDetail() {
                       <div className="text-sm text-gray-500">Ticket Price</div>
                       <div className="text-xl font-bold text-green-600">${game.price}</div>
                     </div>
-                    <div className="border-b pb-4">
-                      <div className="text-sm text-gray-500">Top Prize</div>
-                      <div className="text-xl font-bold text-teal">
-                        ${game.top_prize.toLocaleString()}
+                    <div className="border-b pb-4 flex items-start justify-between">
+                      <div>
+                        <div className="text-sm text-gray-500">Top Prize</div>
+                        <div className="text-xl font-bold text-teal">
+                          ${game.top_prize.toLocaleString()}
+                        </div>
                       </div>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        <ThumbsDown className="w-4 h-4" />
+                        <span>{game.downvotes}</span>
+                      </button>
                     </div>
                     <div className="col-span-2">
                       <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center gap-2">
@@ -912,16 +926,6 @@ export function GameDetail() {
                               ({percentage}%)
                             </span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                            <ThumbsUp className="w-4 h-4" />
-                            <span>{game.upvotes}</span>
-                          </button>
-                          <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                            <ThumbsDown className="w-4 h-4" />
-                            <span>{game.downvotes}</span>
-                          </button>
                         </div>
                       </div>
                     </div>
