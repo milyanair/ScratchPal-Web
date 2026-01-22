@@ -431,7 +431,7 @@ export function GameDetail() {
 
   return (
     <Layout>
-      <div className="max-w-screen-xl mx-auto px-4 py-6">
+      <div className={`max-w-screen-xl mx-auto ${gameLayout === 'slideover' && isMobile ? 'px-0 py-0' : 'px-4 py-6'}`}>
         {/* Floating Return to Scan Button - Only show if returnToScanId is provided */}
         {returnToScanId && (
           <div
@@ -833,16 +833,16 @@ export function GameDetail() {
 
         {/* SlideOver Layout (mobile only) */}
         {gameLayout === 'slideover' && isMobile && (
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden h-screen">
           <div 
-            className="flex gap-2.5 transition-transform duration-300 ease-in-out"
+            className="flex gap-2.5 transition-transform duration-300 ease-in-out h-full"
             style={{
               transform: imageSlideState === 'peek' ? 'translateX(0)' : 'translateX(calc(-70% - 10px))'
             }}
           >
             {/* Left Side - Content Blocks (70% width) */}
-            <div className="flex-shrink-0" style={{ width: '70%' }}>
-              <div className="space-y-6">
+            <div className="flex-shrink-0 overflow-y-auto" style={{ width: '70%' }}>
+              <div className="space-y-6 px-4 py-6">
                 {/* Back + Title */}
                 <div className="flex items-center gap-3">
                   <button
@@ -1161,7 +1161,7 @@ export function GameDetail() {
 
             {/* Right Side - Game Image (initially ~20% showing, slides to 100%) */}
             <div 
-              className="flex-shrink-0 relative"
+              className="flex-shrink-0 relative h-full flex flex-col"
               style={{ width: '100%' }}
             >
               {/* White Triangle Button (10% opacity) - upper left */}
@@ -1191,7 +1191,7 @@ export function GameDetail() {
                   'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=600&h=900&fit=crop&q=80'
                 }
                 alt={game.game_name}
-                className="w-full h-full object-contain rounded-lg shadow-lg"
+                className="w-full flex-1 object-contain shadow-lg"
               />
               
               <div className="mt-4 text-center space-x-4">
