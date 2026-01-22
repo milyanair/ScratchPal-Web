@@ -872,20 +872,9 @@ export function GameDetail() {
                       <Award className="w-4 h-4 text-white" />
                       <span className="text-sm font-bold text-white">{game.rank}</span>
                     </div>
-                    <button
-                      onClick={toggleFavorite}
-                      className="p-2 rounded-lg hover:bg-gray-100"
-                    >
-                      <Heart
-                        className={`w-6 h-6 ${
-                          isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
-                        }`}
-                        strokeWidth={isFavorited ? 0 : 2}
-                      />
-                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div className="space-y-4 pt-4 border-t">
                     <div>
                       <div className="text-sm text-gray-500">Ticket Price</div>
                       <div className="text-xl font-bold text-green-600">${game.price}</div>
@@ -1168,6 +1157,20 @@ export function GameDetail() {
                   </span>
                 </button>
               ))}
+              
+              {/* Favorite Heart - positioned below first arrow */}
+              <button
+                onClick={toggleFavorite}
+                className="absolute left-4 z-10 p-2 rounded-lg bg-white/40 hover:bg-white/60 backdrop-blur"
+                style={{ top: '95px' }}
+              >
+                <Heart
+                  className={`w-6 h-6 ${
+                    isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
+                  }`}
+                  strokeWidth={isFavorited ? 0 : 2}
+                />
+              </button>
               
               {/* Voting Buttons - positioned between first and second arrow */}
               <div className="absolute left-4 z-10 flex flex-col gap-2" style={{ top: '131px' }}>
