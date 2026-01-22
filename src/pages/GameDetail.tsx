@@ -1161,29 +1161,33 @@ export function GameDetail() {
 
             {/* Right Side - Game Image (initially ~20% showing, slides to 100%) */}
             <div 
-              className="flex-shrink-0 relative h-full flex flex-col"
+              className="flex-shrink-0 relative min-h-screen flex flex-col py-8"
               style={{ width: '100%' }}
             >
-              {/* White Triangle Button (10% opacity) - upper left */}
-              <button
-                onClick={() => {
-                  haptics.light();
-                  setImageSlideState(imageSlideState === 'peek' ? 'full' : 'peek');
-                }}
-                className="absolute top-4 left-4 z-10 bg-white/10 p-3 rounded-lg hover:bg-white/20 transition-colors"
-              >
-                {imageSlideState === 'peek' ? (
-                  // Right-facing triangle when peeking
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  // Left-facing triangle when full
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
+              {/* Multiple Triangle Buttons spaced 200px apart */}
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    haptics.light();
+                    setImageSlideState(imageSlideState === 'peek' ? 'full' : 'peek');
+                  }}
+                  className="absolute left-4 z-10 bg-white/10 p-3 rounded-lg hover:bg-white/20 transition-colors"
+                  style={{ top: `${31 + (index * 200)}px` }}
+                >
+                  {imageSlideState === 'peek' ? (
+                    // Right-facing triangle when peeking
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    // Left-facing triangle when full
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              ))}
               
               <img
                 src={
@@ -1191,7 +1195,7 @@ export function GameDetail() {
                   'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=600&h=900&fit=crop&q=80'
                 }
                 alt={game.game_name}
-                className="w-full flex-1 object-contain shadow-lg"
+                className="w-full h-auto object-contain shadow-lg"
               />
               
               <div className="mt-4 text-center space-x-4">
