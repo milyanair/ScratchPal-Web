@@ -495,11 +495,9 @@ export function GameDetail() {
                   <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
                     {game.state}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4" />
-                    <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
-                      <span className="text-sm font-bold text-white">#{game.rank}</span>
-                    </div>
+                  <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center gap-1`}>
+                    <Award className="w-4 h-4 text-white" />
+                    <span className="text-sm font-bold text-white">{game.rank}</span>
                   </div>
                   <button
                     onClick={toggleFavorite}
@@ -870,11 +868,9 @@ export function GameDetail() {
                     <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
                       {game.state}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <Award className="w-4 h-4" />
-                      <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
-                        <span className="text-sm font-bold text-white">#{game.rank}</span>
-                      </div>
+                    <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center gap-1`}>
+                      <Award className="w-4 h-4 text-white" />
+                      <span className="text-sm font-bold text-white">{game.rank}</span>
                     </div>
                     <button
                       onClick={toggleFavorite}
@@ -901,16 +897,12 @@ export function GameDetail() {
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <div className="flex flex-col min-[400px]:flex-row min-[400px]:items-center gap-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <div className="text-sm text-gray-500">Prizes Remaining</div>
-                          <div className="text-lg font-bold">
-                            {game.top_prizes_remaining} / {game.total_top_prizes}
-                            <span className="text-sm font-normal text-gray-500 ml-2">
-                              ({percentage}%)
-                            </span>
-                          </div>
-                        </div>
+                      <div className="text-sm text-gray-500">Prizes Remaining</div>
+                      <div className="text-lg font-bold">
+                        {game.top_prizes_remaining} / {game.total_top_prizes}
+                        <span className="text-sm font-normal text-gray-500 ml-2">
+                          ({percentage}%)
+                        </span>
                       </div>
                     </div>
                     <div className="col-span-2">
