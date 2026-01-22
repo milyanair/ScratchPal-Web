@@ -137,7 +137,7 @@ export function Header() {
           <button
             onClick={() => {
               haptics.light();
-              navigate('/favorites');
+              navigate('/favorites', { state: { openPointsTab: true } });
             }}
             className="w-11 h-11 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all flex items-center justify-center gap-1 flex-shrink-0"
           >

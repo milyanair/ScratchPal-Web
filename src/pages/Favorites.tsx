@@ -26,6 +26,7 @@ export function Favorites() {
   
   // Get scanId from navigation state (when returning from game detail)
   const returnToScanId = (location.state as any)?.returnToScanId;
+  const openPointsTab = (location.state as any)?.openPointsTab;
 
   const { data: favorites = [], refetch } = useQuery({
     queryKey: ['favorites', user?.id],
@@ -45,19 +46,51 @@ export function Favorites() {
   const gameFavorites = favorites.filter(f => f.favorite_type === 'game');
   const convoFavorites = favorites.filter(f => f.favorite_type === 'topic');
 
-  // Get scanned images
-  const { data: scannedImages = [], refetch: refetchScans } = useQuery({
-    queryKey: ['scannedImages', user?.id],
+  // Get user profile to check if admin
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return null;
       const { data, error } = await supabase
-        .from('scanned_images')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
       
       if (error) throw error;
       return data;
+    },
+    enabled: !!user,
+  });
+
+  const isAdmin = userProfile?.role === 'admin';
+
+  // Get scanned images - include is_sample scans and admin sees all
+  const { data: scannedImages = [], refetch: refetchScans } = useQuery({
+    queryKey: ['scannedImages', user?.id, isAdmin],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // Admin sees all scans, regular users see only their own scans plus sample scans
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from('scanned_images')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data;
+      } else {
+        // Regular users: fetch their own scans (RLS will enforce this)
+        const { data, error } = await supabase
+          .from('scanned_images')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data;
+      }
     },
     enabled: !!user,
   });
@@ -106,6 +139,15 @@ export function Favorites() {
       setCurrentView('all-scans');
     }
   }, [returnToScanId, scannedImages.length]);
+
+  // Auto-switch to points tab if openPointsTab is true
+  useEffect(() => {
+    if (openPointsTab) {
+      setActiveTab('points');
+      // Clear the state to prevent reopening on subsequent navigations
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [openPointsTab, navigate, location.pathname]);
 
   // Pull-to-refresh handler
   const handleRefresh = async () => {
