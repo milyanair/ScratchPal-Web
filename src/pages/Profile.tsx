@@ -1022,6 +1022,51 @@ export function Profile() {
                   Change State
                 </button>
               </div>
+
+              {/* Horizontal Divider */}
+              <hr className="my-6 border-gray-200" />
+
+              {/* Game Layout Setting */}
+              <div>
+                <h3 className="text-lg font-bold mb-3">Game Layout</h3>
+                <select
+                  value={userPref?.game_layout || 'vertical'}
+                  onChange={async (e) => {
+                    if (!user) return;
+                    try {
+                      const { error } = await supabase
+                        .from('user_preferences')
+                        .upsert(
+                          {
+                            user_id: user.id,
+                            selected_state: userPref?.selected_state,
+                            game_layout: e.target.value,
+                          },
+                          {
+                            onConflict: 'user_id'
+                          }
+                        );
+
+                      if (error) throw error;
+
+                      toast.success('Game layout updated');
+                      refetch();
+                    } catch (error: any) {
+                      console.error('Error updating game layout:', error);
+                      toast.error(error.message || 'Failed to update layout');
+                    }
+                  }}
+                  className="w-full px-4 py-3 border rounded-lg text-lg font-semibold bg-white"
+                >
+                  <option value="vertical">Vertical</option>
+                  <option value="slideover">SlideOver</option>
+                </select>
+                <p className="text-sm text-gray-600 mt-2">
+                  {userPref?.game_layout === 'slideover' 
+                    ? 'Game image slides in from the right on mobile'
+                    : 'Traditional layout with game image below details'}
+                </p>
+              </div>
             </div>
 
             {/* Refer a Friend */}
