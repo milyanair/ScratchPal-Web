@@ -57,6 +57,18 @@ export function GameDetail() {
 
   const gameLayout = userPref?.game_layout || 'vertical';
 
+  // Check if mobile (width < 1024px) - MUST be declared before rendering
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const { data: game } = useQuery({
     queryKey: ['game', id, state, price, slug],
     queryFn: async () => {
@@ -416,18 +428,6 @@ export function GameDetail() {
     if (rank >= 15) return 'bg-red-500'; // Poor
     return 'bg-gray-400'; // Just Don't
   };
-
-  // Check if mobile (width < 1024px)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <Layout>
