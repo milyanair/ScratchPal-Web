@@ -1191,7 +1191,7 @@ export function GameDetail() {
                   'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=600&h=900&fit=crop&q=80'
                 }
                 alt={game.game_name}
-                className="w-full h-full object-cover rounded-lg shadow-lg"
+                className="w-full h-full object-contain rounded-lg shadow-lg"
               />
               
               <div className="mt-4 text-center space-x-4">
