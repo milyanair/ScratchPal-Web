@@ -495,7 +495,7 @@ export function GameDetail() {
                   <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
                     {game.state}
                   </span>
-                  <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center gap-1`}>
+                  <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
                     <Award className="w-4 h-4 text-white" />
                     <span className="text-sm font-bold text-white">{game.rank}</span>
                   </div>
@@ -868,7 +868,7 @@ export function GameDetail() {
                     <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
                       {game.state}
                     </span>
-                    <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center gap-1`}>
+                    <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
                       <Award className="w-4 h-4 text-white" />
                       <span className="text-sm font-bold text-white">{game.rank}</span>
                     </div>
