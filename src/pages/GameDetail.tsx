@@ -37,6 +37,10 @@ export function GameDetail() {
   
   // SlideOver state
   const [imageSlideState, setImageSlideState] = useState<'peek' | 'full'>('peek');
+  
+  // Swipe gesture state
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
 
   // Get user's game layout preference
   const { data: userPref } = useQuery({
@@ -207,6 +211,37 @@ export function GameDetail() {
       return () => clearTimeout(timer);
     }
   }, [returnToScanId]);
+  
+  // Handle swipe gestures for SlideOver layout
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+  
+  const handleSwipeMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+  
+  const handleSwipeEnd = () => {
+    if (touchStartX === 0) return;
+    
+    const swipeDistance = touchStartX - touchEndX;
+    const minSwipeDistance = 50; // Minimum distance to trigger swipe
+    
+    // Swipe left (show full image)
+    if (swipeDistance > minSwipeDistance && imageSlideState === 'peek') {
+      haptics.light();
+      setImageSlideState('full');
+    }
+    // Swipe right (show peek view)
+    else if (swipeDistance < -minSwipeDistance && imageSlideState === 'full') {
+      haptics.light();
+      setImageSlideState('peek');
+    }
+    
+    // Reset touch positions
+    setTouchStartX(0);
+    setTouchEndX(0);
+  };
 
   // Check if game is favorited
   useEffect(() => {
@@ -841,6 +876,9 @@ export function GameDetail() {
             style={{
               transform: imageSlideState === 'peek' ? 'translateX(0)' : 'translateX(calc(-70% - 10px))'
             }}
+            onTouchStart={handleSwipeStart}
+            onTouchMove={handleSwipeMove}
+            onTouchEnd={handleSwipeEnd}
           >
             {/* Left Side - Content Blocks (70% width) */}
             <div className="flex-shrink-0 overflow-y-auto" style={{ width: '70%' }}>
