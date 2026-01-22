@@ -551,8 +551,8 @@ export function GameDetail() {
                 </div>
                 <div className="col-span-2">
                   <div className="text-sm text-gray-500">Game Duration</div>
-                  <div className="text-lg">
-                    <span className="font-normal">Started:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| Ended:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
+                  <div className="text-sm">
+                    <span className="font-normal">Start:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| End:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
                 {game.overall_odds && (
@@ -915,8 +915,8 @@ export function GameDetail() {
                     </div>
                     <div className="col-span-2">
                       <div className="text-sm text-gray-500">Game Duration</div>
-                      <div className="text-lg">
-                        <span className="font-normal">Started:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| Ended:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
+                      <div className="text-sm">
+                        <span className="font-normal">Start:</span> <span className="font-bold">{game.start_date ? new Date(game.start_date).toLocaleDateString() : 'N/A'}</span> <span className="font-normal">| End:</span> <span className="font-bold">{game.end_date ? new Date(game.end_date).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </div>
                     {game.overall_odds && (
