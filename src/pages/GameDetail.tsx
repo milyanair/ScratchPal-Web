@@ -214,10 +214,20 @@ export function GameDetail() {
   
   // Handle swipe gestures for SlideOver layout
   const handleSwipeStart = (e: React.TouchEvent) => {
+    // Ignore swipes that start on input/textarea elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return;
+    }
     setTouchStartX(e.touches[0].clientX);
   };
   
   const handleSwipeMove = (e: React.TouchEvent) => {
+    // Ignore swipes on input/textarea elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return;
+    }
     setTouchEndX(e.touches[0].clientX);
   };
   
