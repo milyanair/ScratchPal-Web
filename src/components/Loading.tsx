@@ -8,7 +8,7 @@ export function Loading({ message }: LoadingProps) {
       <div className="flex flex-col items-center gap-4">
         {/* Loading Animation */}
         <img
-          src="http://scratchpal.com/SPLoop.gif"
+          src="https://cdn-ai.onspace.ai/onspace/files/BRvymSnwsufTKGwX2WG8JC/SPLoop.gif"
           alt="Loading..."
           className="w-36 h-36"
           style={{ imageRendering: 'crisp-edges' }}
