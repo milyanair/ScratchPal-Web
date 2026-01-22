@@ -863,42 +863,30 @@ export function GameDetail() {
 
                 {/* Game Info */}
                 <div className="bg-gray-200/50 backdrop-blur rounded-lg shadow p-6 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium">
-                        #{game.game_number}
-                      </span>
-                      <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
-                        {game.state}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Award className="w-4 h-4" />
-                        <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
-                          <span className="text-sm font-bold text-white">#{game.rank}</span>
-                        </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">
+                      #{game.game_number}
+                    </span>
+                    <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">
+                      {game.state}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4" />
+                      <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
+                        <span className="text-sm font-bold text-white">#{game.rank}</span>
                       </div>
-                      <button
-                        onClick={toggleFavorite}
-                        className="p-2 rounded-lg hover:bg-gray-100"
-                      >
-                        <Heart
-                          className={`w-6 h-6 ${
-                            isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
-                          }`}
-                          strokeWidth={isFavorited ? 0 : 2}
-                        />
-                      </button>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsUp className="w-4 h-4" />
-                        <span>{game.upvotes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                        <ThumbsDown className="w-4 h-4" />
-                        <span>{game.downvotes}</span>
-                      </button>
-                    </div>
+                    <button
+                      onClick={toggleFavorite}
+                      className="p-2 rounded-lg hover:bg-gray-100"
+                    >
+                      <Heart
+                        className={`w-6 h-6 ${
+                          isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
+                        }`}
+                        strokeWidth={isFavorited ? 0 : 2}
+                      />
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -1188,6 +1176,18 @@ export function GameDetail() {
                   </span>
                 </button>
               ))}
+              
+              {/* Voting Buttons - positioned between first and second arrow */}
+              <div className="absolute left-4 z-10 flex flex-col gap-2" style={{ top: '131px' }}>
+                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100/90 rounded-lg hover:bg-gray-200 backdrop-blur">
+                  <ThumbsUp className="w-4 h-4" />
+                  <span>{game.upvotes}</span>
+                </button>
+                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100/90 rounded-lg hover:bg-gray-200 backdrop-blur">
+                  <ThumbsDown className="w-4 h-4" />
+                  <span>{game.downvotes}</span>
+                </button>
+              </div>
               
               <img
                 src={
