@@ -835,9 +835,9 @@ export function GameDetail() {
         {gameLayout === 'slideover' && isMobile && (
         <div className="relative overflow-hidden">
           <div 
-            className="flex transition-transform duration-300 ease-in-out"
+            className="flex gap-2.5 transition-transform duration-300 ease-in-out"
             style={{
-              transform: imageSlideState === 'peek' ? 'translateX(0)' : 'translateX(-100%)'
+              transform: imageSlideState === 'peek' ? 'translateX(0)' : 'translateX(calc(-70% - 10px))'
             }}
           >
             {/* Left Side - Content Blocks (70% width) */}
@@ -1159,18 +1159,18 @@ export function GameDetail() {
               </div>
             </div>
 
-            {/* Right Side - Game Image (initially 25% showing, slides to 100%) */}
+            {/* Right Side - Game Image (initially ~20% showing, slides to 100%) */}
             <div 
               className="flex-shrink-0 relative"
-              style={{ width: '130%' }}
+              style={{ width: '100%' }}
             >
-              {/* White Triangle Button (20% opacity) - upper left */}
+              {/* White Triangle Button (10% opacity) - upper left */}
               <button
                 onClick={() => {
                   haptics.light();
                   setImageSlideState(imageSlideState === 'peek' ? 'full' : 'peek');
                 }}
-                className="absolute top-4 left-4 z-10 bg-white/20 p-3 rounded-lg hover:bg-white/30 transition-colors"
+                className="absolute top-4 left-4 z-10 bg-white/10 p-3 rounded-lg hover:bg-white/20 transition-colors"
               >
                 {imageSlideState === 'peek' ? (
                   // Right-facing triangle when peeking
