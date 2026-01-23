@@ -1,7 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tantml:react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { SliderMessage, Game } from '@/types';
 import { FunctionsHttpError } from '@supabase/supabase-js';
