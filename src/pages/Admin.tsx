@@ -16,7 +16,14 @@ export function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeMainTab, setActiveMainTab] = useState<'imports' | 'games' | 'member-services' | 'scanner'>('imports');
-  const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'states' | 'state-games' | 'rankings'>('manager');
+  const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'states' | 'state-games' | 'rankings'>(() => {
+    // Check URL hash for direct linking
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'state-games') return 'state-games';
+    if (hash === 'states') return 'states';
+    if (hash === 'rankings') return 'rankings';
+    return 'manager';
+  });
   const [memberServicesSubTab, setMemberServicesSubTab] = useState<'slider' | 'announcements' | 'users' | 'rewards'>('slider');
   const [scannerSubTab, setScannerSubTab] = useState<'scans' | 'settings'>('scans');
   const [isUpdatingRanks, setIsUpdatingRanks] = useState(false);
@@ -438,10 +445,10 @@ export function Admin() {
         {/* Games Subtabs */}
         {activeMainTab === 'games' && (
           <div className="flex gap-2 mb-6 border-b bg-gray-50 -mx-4 px-4 py-2">
-            <button onClick={() => setGamesSubTab('manager')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'manager' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Game Manager</button>
-            <button onClick={() => setGamesSubTab('states')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'states' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>States</button>
-            <button onClick={() => setGamesSubTab('state-games')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'state-games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>State Games</button>
-            <button onClick={() => setGamesSubTab('rankings')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'rankings' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Ranking System</button>
+            <button onClick={() => { setGamesSubTab('manager'); window.location.hash = 'manager'; }} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'manager' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Game Manager</button>
+            <button onClick={() => { setGamesSubTab('states'); window.location.hash = 'states'; }} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'states' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>States</button>
+            <button onClick={() => { setGamesSubTab('state-games'); window.location.hash = 'state-games'; }} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'state-games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>State Games</button>
+            <button onClick={() => { setGamesSubTab('rankings'); window.location.hash = 'rankings'; }} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'rankings' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Ranking System</button>
           </div>
         )}
 
@@ -628,6 +635,30 @@ export function Admin() {
               // Sort states alphabetically
               const sortedStates = Object.keys(gamesByState).sort();
 
+              // Group games by price within each state
+              const gamesByStateAndPrice: Record<string, Record<string, Game[]>> = {};
+              
+              Object.entries(gamesByState).forEach(([state, games]) => {
+                gamesByStateAndPrice[state] = {
+                  '$1-$5': [],
+                  '$6-$10': [],
+                  '$11-$20': [],
+                  '$21-$50': [],
+                };
+                
+                games.forEach(game => {
+                  if (game.price >= 1 && game.price <= 5) {
+                    gamesByStateAndPrice[state]['$1-$5'].push(game);
+                  } else if (game.price >= 6 && game.price <= 10) {
+                    gamesByStateAndPrice[state]['$6-$10'].push(game);
+                  } else if (game.price >= 11 && game.price <= 20) {
+                    gamesByStateAndPrice[state]['$11-$20'].push(game);
+                  } else if (game.price >= 21 && game.price <= 50) {
+                    gamesByStateAndPrice[state]['$21-$50'].push(game);
+                  }
+                });
+              });
+
               return (
                 <div className="space-y-8">
                   {sortedStates.map(state => (
@@ -637,33 +668,47 @@ export function Admin() {
                         <span className="text-sm text-gray-600">{gamesByState[state].length} active games</span>
                       </div>
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
-                        {gamesByState[state].map(game => (
-                          <button
-                            key={game.id}
-                            onClick={() => {
-                              const slug = game.slug || `${game.game_number}-${game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-                              navigate(`/game/${game.state}/${game.price}/${slug}`);
-                            }}
-                            className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-teal transition-all aspect-[2/3] bg-gray-100"
-                          >
-                            <img
-                              src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=300&h=450&fit=crop&q=80'}
-                              alt={game.game_name}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                              <div className="absolute bottom-0 left-0 right-0 p-2">
-                                <p className="text-white text-xs font-semibold line-clamp-2">{game.game_name}</p>
-                                <p className="text-white/80 text-xs">${game.price}</p>
+                      {/* Price Groups */}
+                      <div className="space-y-6">
+                        {Object.entries(gamesByStateAndPrice[state]).map(([priceRange, games]) => {
+                          if (games.length === 0) return null;
+                          
+                          return (
+                            <div key={priceRange}>
+                              <h4 className="text-md font-semibold mb-3 text-gray-700">{priceRange} ({games.length})</h4>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+                                {games.map(game => (
+                                  <button
+                                    key={game.id}
+                                    onClick={() => {
+                                      const slug = game.slug || `${game.game_number}-${game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                                      navigate(`/games/${game.state}/${game.price}/${slug}`, {
+                                        state: { fromStateGames: true }
+                                      });
+                                    }}
+                                    className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-teal transition-all aspect-[2/3] bg-gray-100"
+                                  >
+                                    <img
+                                      src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=300&h=450&fit=crop&q=80'}
+                                      alt={game.game_name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <div className="absolute bottom-0 left-0 right-0 p-2">
+                                        <p className="text-white text-xs font-semibold line-clamp-2">{game.game_name}</p>
+                                        <p className="text-white/80 text-xs">${game.price}</p>
+                                      </div>
+                                    </div>
+                                    {/* Rank Badge */}
+                                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                                      <span className="text-white text-xs font-bold">#{game.rank}</span>
+                                    </div>
+                                  </button>
+                                ))}
                               </div>
                             </div>
-                            {/* Rank Badge */}
-                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
-                              <span className="text-white text-xs font-bold">#{game.rank}</span>
-                            </div>
-                          </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}

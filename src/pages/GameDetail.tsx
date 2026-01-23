@@ -20,6 +20,7 @@ export function GameDetail() {
   // Get returnToScan from location state if user came from a scan
   const returnToScanId = (location.state as any)?.returnToScan;
   const isSampleScan = (location.state as any)?.isSampleScan;
+  const fromStateGames = (location.state as any)?.fromStateGames;
   
   // Share Your Win state
   const [winAmount, setWinAmount] = useState('');
@@ -521,7 +522,11 @@ export function GameDetail() {
               <button
                 onClick={() => {
                   haptics.light();
-                  navigate(-1);
+                  if (fromStateGames) {
+                    navigate('/admin#state-games');
+                  } else {
+                    navigate(-1);
+                  }
                 }}
                 className="p-2 hover:bg-gray-100 rounded-lg"
               >
@@ -898,7 +903,11 @@ export function GameDetail() {
                   <button
                     onClick={() => {
                       haptics.light();
-                      navigate(-1);
+                      if (fromStateGames) {
+                        navigate('/admin#state-games');
+                      } else {
+                        navigate(-1);
+                      }
                     }}
                     className="p-2 hover:bg-gray-100 rounded-lg"
                   >
