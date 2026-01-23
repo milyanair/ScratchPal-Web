@@ -16,7 +16,7 @@ export function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeMainTab, setActiveMainTab] = useState<'imports' | 'games' | 'member-services' | 'scanner'>('imports');
-  const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'states' | 'rankings'>('manager');
+  const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'states' | 'state-games' | 'rankings'>('manager');
   const [memberServicesSubTab, setMemberServicesSubTab] = useState<'slider' | 'announcements' | 'users' | 'rewards'>('slider');
   const [scannerSubTab, setScannerSubTab] = useState<'scans' | 'settings'>('scans');
   const [isUpdatingRanks, setIsUpdatingRanks] = useState(false);
@@ -440,6 +440,7 @@ export function Admin() {
           <div className="flex gap-2 mb-6 border-b bg-gray-50 -mx-4 px-4 py-2">
             <button onClick={() => setGamesSubTab('manager')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'manager' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Game Manager</button>
             <button onClick={() => setGamesSubTab('states')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'states' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>States</button>
+            <button onClick={() => setGamesSubTab('state-games')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'state-games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>State Games</button>
             <button onClick={() => setGamesSubTab('rankings')} className={`px-4 py-2 text-sm font-semibold transition-colors ${gamesSubTab === 'rankings' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Ranking System</button>
           </div>
         )}
@@ -594,6 +595,89 @@ export function Admin() {
 
         {/* GAMES - STATES */}
         {activeMainTab === 'games' && gamesSubTab === 'states' && <AdminStates />}
+
+        {/* GAMES - STATE GAMES */}
+        {activeMainTab === 'games' && gamesSubTab === 'state-games' && (
+          <div>
+            <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Active Games by State</h2>
+              <p className="opacity-90">View all active games (no end date or end date in the future) grouped by state</p>
+            </div>
+
+            {(() => {
+              // Filter active games
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              
+              const activeGames = allGames.filter(game => {
+                if (!game.end_date) return true; // No end date = active
+                const endDate = new Date(game.end_date);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate >= today; // End date hasn't passed
+              });
+
+              // Group by state
+              const gamesByState: Record<string, Game[]> = {};
+              activeGames.forEach(game => {
+                if (!gamesByState[game.state]) {
+                  gamesByState[game.state] = [];
+                }
+                gamesByState[game.state].push(game);
+              });
+
+              // Sort states alphabetically
+              const sortedStates = Object.keys(gamesByState).sort();
+
+              return (
+                <div className="space-y-8">
+                  {sortedStates.map(state => (
+                    <div key={state} className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold">{state}</h3>
+                        <span className="text-sm text-gray-600">{gamesByState[state].length} active games</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
+                        {gamesByState[state].map(game => (
+                          <button
+                            key={game.id}
+                            onClick={() => {
+                              const slug = game.slug || `${game.game_number}-${game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                              navigate(`/game/${game.state}/${game.price}/${slug}`);
+                            }}
+                            className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-teal transition-all aspect-[2/3] bg-gray-100"
+                          >
+                            <img
+                              src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=300&h=450&fit=crop&q=80'}
+                              alt={game.game_name}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute bottom-0 left-0 right-0 p-2">
+                                <p className="text-white text-xs font-semibold line-clamp-2">{game.game_name}</p>
+                                <p className="text-white/80 text-xs">${game.price}</p>
+                              </div>
+                            </div>
+                            {/* Rank Badge */}
+                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                              <span className="text-white text-xs font-bold">#{game.rank}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {sortedStates.length === 0 && (
+                    <div className="text-center py-12 bg-white rounded-lg">
+                      <p className="text-gray-500">No active games found</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* IMPORTS - MAIN TAB */}
         {activeMainTab === 'imports' && (
