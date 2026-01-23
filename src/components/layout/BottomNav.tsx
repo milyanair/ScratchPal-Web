@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Zap, Megaphone, Heart, Trophy } from 'lucide-react';
+import { Zap, Megaphone, ScanLine, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { haptics } from '@/lib/haptics';
 
 const navItems = [
   { path: '/', label: 'Games', icon: Zap, gradient: 'gradient-games' },
   { path: '/hot-topics', label: 'Hot', icon: Megaphone, gradient: 'gradient-hot' },
-  { path: '/favorites', label: 'Favs', icon: Heart, gradient: 'gradient-favs' },
+  { path: '/scan-tickets', label: 'Scan', icon: ScanLine, gradient: 'gradient-favs' },
   { path: '/report-wins', label: 'Wins', icon: Trophy, gradient: 'gradient-wins' },
 ];
 

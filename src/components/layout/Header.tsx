@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserPreference } from '@/types';
 import { useState, useEffect } from 'react';
 import { usePoints } from '@/hooks/usePoints';
-import { Trophy, Bell, ScanLine, User } from 'lucide-react';
+import { Trophy, Bell, Heart, User } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 
 export function Header() {
@@ -251,16 +251,16 @@ export function Header() {
         )}
       </div>
 
-      {/* Right: Scan & State */}
+      {/* Right: Favorites & State */}
       <div className="flex items-center justify-end gap-2 relative z-10">
-        {/* Ticket Scanner - Available to All */}
+        {/* My Favorites - Available to All */}
         <Link
-          to="/scan-tickets"
+          to="/favorites"
           onClick={() => haptics.light()}
           className="p-2 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all"
-          title="Scan Tickets"
+          title="My Favorites"
         >
-          <ScanLine className="w-5 h-5 text-gray-700" />
+          <Heart className="w-5 h-5 text-gray-700" />
         </Link>
 
         {/* State Circle */}
