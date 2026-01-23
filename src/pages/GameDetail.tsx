@@ -74,11 +74,12 @@ export function GameDetail() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: game } = useQuery({
+  const { data: game, isLoading: isGameLoading } = useQuery({
     queryKey: ['game', id, state, price, slug],
     queryFn: async () => {
       // Try new SEO-friendly URL format first
       if (state && slug) {
+        console.log('🔍 Loading game by SEO URL:', { state, slug });
         const { data, error } = await supabase
           .from('games')
           .select('*')
@@ -86,21 +87,32 @@ export function GameDetail() {
           .eq('slug', slug)
           .maybeSingle();
         
+        console.log('✅ SEO URL query result:', { data, error });
+        
         if (!error && data) return data as Game;
+        
+        // If not found by slug, log it
+        if (!data) {
+          console.warn('⚠️ Game not found by slug, trying fallback methods');
+        }
       }
       
       // Fallback to ID-based lookup (backwards compatibility)
       if (id) {
+        console.log('🔍 Loading game by ID:', id);
         const { data, error } = await supabase
           .from('games')
           .select('*')
           .eq('id', id)
           .single();
         
+        console.log('✅ ID query result:', { data, error });
+        
         if (error) throw error;
         return data as Game;
       }
       
+      console.error('❌ No valid game identifier provided');
       throw new Error('Game not found');
     },
   });
@@ -453,10 +465,31 @@ export function GameDetail() {
     }
   };
 
-  if (!game) {
+  if (isGameLoading) {
     return (
       <Layout>
         <div className="p-6 text-center">Loading...</div>
+      </Layout>
+    );
+  }
+
+  if (!game) {
+    return (
+      <Layout>
+        <div className="max-w-screen-xl mx-auto px-4 py-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-bold text-red-800 mb-4">Game Not Found</h2>
+            <p className="text-red-600 mb-6">
+              The game you're looking for doesn't exist or may have been removed.
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90"
+            >
+              Back to Games
+            </button>
+          </div>
+        </div>
       </Layout>
     );
   }
