@@ -664,7 +664,27 @@ export function Admin() {
                   {sortedStates.map(state => (
                     <div key={state} className="bg-white rounded-lg shadow p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold">{state}</h3>
+                        <div>
+                          <h3 className="text-xl font-bold mb-2">{state}</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {Object.entries(gamesByStateAndPrice[state]).map(([priceRange, games]) => {
+                              if (games.length === 0) return null;
+                              const firstGame = games[0];
+                              const slug = firstGame.slug || `${firstGame.game_number}-${firstGame.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                              return (
+                                <a
+                                  key={priceRange}
+                                  href={`/games/${firstGame.state}/${firstGame.price}/${slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm font-medium text-teal hover:underline"
+                                >
+                                  {priceRange} ({games.length})
+                                </a>
+                              );
+                            })}
+                          </div>
+                        </div>
                         <span className="text-sm text-gray-600">{gamesByState[state].length} active games</span>
                       </div>
                       
@@ -677,34 +697,34 @@ export function Admin() {
                             <div key={priceRange}>
                               <h4 className="text-md font-semibold mb-3 text-gray-700">{priceRange} ({games.length})</h4>
                               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10 gap-4">
-                                {games.map(game => (
-                                  <button
-                                    key={game.id}
-                                    onClick={() => {
-                                      const slug = game.slug || `${game.game_number}-${game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-                                      navigate(`/games/${game.state}/${game.price}/${slug}`, {
-                                        state: { fromStateGames: true }
-                                      });
-                                    }}
-                                    className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-teal transition-all aspect-[2/3] bg-gray-100"
-                                  >
-                                    <img
-                                      src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=300&h=450&fit=crop&q=80'}
-                                      alt={game.game_name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <div className="absolute bottom-0 left-0 right-0 p-2">
-                                        <p className="text-white text-xs font-semibold line-clamp-2">{game.game_name}</p>
-                                        <p className="text-white/80 text-xs">${game.price}</p>
+                                {games.map(game => {
+                                  const slug = game.slug || `${game.game_number}-${game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+                                  return (
+                                    <a
+                                      key={game.id}
+                                      href={`/games/${game.state}/${game.price}/${slug}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="group relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-teal transition-all aspect-[2/3] bg-gray-100 block"
+                                    >
+                                      <img
+                                        src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=300&h=450&fit=crop&q=80'}
+                                        alt={game.game_name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                                          <p className="text-white text-xs font-semibold line-clamp-2">{game.game_name}</p>
+                                          <p className="text-white/80 text-xs">${game.price}</p>
+                                        </div>
                                       </div>
-                                    </div>
-                                    {/* Rank Badge */}
-                                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
-                                      <span className="text-white text-xs font-bold">#{game.rank}</span>
-                                    </div>
-                                  </button>
-                                ))}
+                                      {/* Rank Badge */}
+                                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                                        <span className="text-white text-xs font-bold">#{game.rank}</span>
+                                      </div>
+                                    </a>
+                                  );
+                                })}
                               </div>
                             </div>
                           );
