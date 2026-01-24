@@ -105,6 +105,12 @@ export function Admin() {
   const [announcementMessage, setAnnouncementMessage] = useState('');
   const [isSendingAnnouncement, setIsSendingAnnouncement] = useState(false);
 
+  // Scheduled Import state
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState('02:00');
+  const [scheduleAutoConvert, setScheduleAutoConvert] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   // Check user role
   const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['userProfile', user?.id],
@@ -248,6 +254,37 @@ export function Admin() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: importSchedule, refetch: refetchSchedule } = useQuery({
+    queryKey: ['importSchedule'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('import_schedule')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows returned" error
+      return data;
+    },
+  });
+
+  // Update current time every second
+  useState(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  });
+
+  // Sync schedule state with database
+  useState(() => {
+    if (importSchedule) {
+      setScheduleEnabled(importSchedule.enabled);
+      setScheduledTime(importSchedule.scheduled_time?.substring(0, 5) || '02:00');
+      setScheduleAutoConvert(importSchedule.auto_convert_images || false);
+    }
   });
 
   const availableStates = useMemo(() => {
@@ -867,6 +904,231 @@ export function Admin() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Data Import & Conversion Tools</h2>
+            </div>
+
+            {/* Scheduled Import Automation */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-bold mb-2">🕐 Scheduled Import Automation</h3>
+              <p className="text-sm opacity-90 mb-4">Automatically run CSV imports daily at a scheduled time. Handles multi-chunk imports and optional image conversion.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left: Settings */}
+                <div className="bg-white/10 rounded-lg p-4">
+                  <h4 className="font-semibold text-sm mb-3">Settings</h4>
+                  
+                  {/* Enable Toggle */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/20">
+                    <div>
+                      <div className="font-medium">Enable Automation</div>
+                      <div className="text-xs opacity-75">Run import daily at scheduled time</div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const newEnabled = !scheduleEnabled;
+                        setScheduleEnabled(newEnabled);
+                        try {
+                          const { error } = await supabase
+                            .from('import_schedule')
+                            .upsert({
+                              enabled: newEnabled,
+                              csv_url: csvUrl,
+                              scheduled_time: scheduledTime + ':00',
+                              auto_convert_images: scheduleAutoConvert,
+                            });
+                          if (error) throw error;
+                          toast.success(newEnabled ? 'Scheduled import enabled' : 'Scheduled import disabled');
+                          refetchSchedule();
+                        } catch (error: any) {
+                          toast.error(error.message);
+                          setScheduleEnabled(!newEnabled);
+                        }
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        scheduleEnabled ? 'bg-green-500' : 'bg-white/30'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          scheduleEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  
+                  {/* Scheduled Time */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold mb-2">Daily Run Time (24-hour)</label>
+                    <input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                      onBlur={async () => {
+                        try {
+                          const { error } = await supabase
+                            .from('import_schedule')
+                            .upsert({
+                              enabled: scheduleEnabled,
+                              csv_url: csvUrl,
+                              scheduled_time: scheduledTime + ':00',
+                              auto_convert_images: scheduleAutoConvert,
+                            });
+                          if (error) throw error;
+                          toast.success('Schedule time updated');
+                          refetchSchedule();
+                        } catch (error: any) {
+                          toast.error(error.message);
+                        }
+                      }}
+                      className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm"
+                    />
+                  </div>
+                  
+                  {/* Auto Convert Images */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-sm">Auto-Convert Images</div>
+                      <div className="text-xs opacity-75">Run image conversion after import</div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const newValue = !scheduleAutoConvert;
+                        setScheduleAutoConvert(newValue);
+                        try {
+                          const { error } = await supabase
+                            .from('import_schedule')
+                            .upsert({
+                              enabled: scheduleEnabled,
+                              csv_url: csvUrl,
+                              scheduled_time: scheduledTime + ':00',
+                              auto_convert_images: newValue,
+                            });
+                          if (error) throw error;
+                          toast.success('Auto-conversion ' + (newValue ? 'enabled' : 'disabled'));
+                          refetchSchedule();
+                        } catch (error: any) {
+                          toast.error(error.message);
+                          setScheduleAutoConvert(!newValue);
+                        }
+                      }}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        scheduleAutoConvert ? 'bg-green-500' : 'bg-white/30'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          scheduleAutoConvert ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Right: Status */}
+                <div className="bg-white/10 rounded-lg p-4">
+                  <h4 className="font-semibold text-sm mb-3">Status</h4>
+                  
+                  {/* Current Time */}
+                  <div className="mb-4 pb-4 border-b border-white/20">
+                    <div className="text-xs opacity-75 mb-1">Current Time</div>
+                    <div className="text-2xl font-bold font-mono">
+                      {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                    </div>
+                  </div>
+                  
+                  {/* Schedule Status */}
+                  {importSchedule && (
+                    <>
+                      <div className="mb-3">
+                        <div className="text-xs opacity-75 mb-1">Status</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                            importSchedule.status === 'completed' ? 'bg-green-500/20 text-green-100' :
+                            importSchedule.status === 'running' || importSchedule.status === 'importing' || importSchedule.status === 'converting' ? 'bg-blue-500/20 text-blue-100' :
+                            importSchedule.status === 'failed' ? 'bg-red-500/20 text-red-100' :
+                            'bg-white/20 text-white'
+                          }`}>
+                            {importSchedule.status === 'importing' ? '📦 Importing...' :
+                             importSchedule.status === 'converting' ? '🖼️ Converting...' :
+                             importSchedule.status === 'running' ? '⏳ Running...' :
+                             importSchedule.status}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {importSchedule.last_run_at && (
+                        <div className="mb-3">
+                          <div className="text-xs opacity-75 mb-1">Last Run</div>
+                          <div className="text-sm">{new Date(importSchedule.last_run_at).toLocaleString()}</div>
+                        </div>
+                      )}
+                      
+                      {importSchedule.next_run_at && scheduleEnabled && (
+                        <div className="mb-3">
+                          <div className="text-xs opacity-75 mb-1">Next Run</div>
+                          <div className="text-sm">{new Date(importSchedule.next_run_at).toLocaleString()}</div>
+                        </div>
+                      )}
+                      
+                      {importSchedule.current_offset > 0 && (
+                        <div className="mb-3">
+                          <div className="text-xs opacity-75 mb-1">Progress</div>
+                          <div className="text-sm">
+                            {importSchedule.current_offset} / {importSchedule.total_rows} rows
+                            <div className="w-full bg-white/20 rounded-full h-2 mt-1">
+                              <div
+                                className="bg-white h-2 rounded-full transition-all"
+                                style={{ width: `${(importSchedule.current_offset / importSchedule.total_rows) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {importSchedule.error_message && (
+                        <div className="bg-red-500/20 rounded p-2 text-xs">
+                          <div className="font-semibold mb-1">Error:</div>
+                          <div className="opacity-90">{importSchedule.error_message}</div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  
+                  {!importSchedule && (
+                    <div className="text-sm opacity-75">No schedule configured yet. Enable automation to start.</div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Manual Trigger Button */}
+              <button
+                onClick={async () => {
+                  if (!confirm('Manually trigger scheduled import now? This will run the full import process including all batches.')) return;
+                  try {
+                    toast.info('Starting scheduled import...');
+                    const { error } = await supabase.functions.invoke('scheduled-import');
+                    if (error) {
+                      if (error instanceof FunctionsHttpError) {
+                        const errorText = await error.context?.text();
+                        throw new Error(errorText || error.message);
+                      }
+                      throw error;
+                    }
+                    toast.success('Scheduled import triggered successfully');
+                    refetchSchedule();
+                    refetchGames();
+                    refetchImportLogs();
+                  } catch (error: any) {
+                    toast.error(error.message || 'Failed to trigger import');
+                  }
+                }}
+                className="w-full mt-4 bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                ▶️ Manually Trigger Import Now
+              </button>
+              
+              <p className="text-xs opacity-75 mt-3 text-center">
+                ⚠️ To enable automatic daily execution, set up a cron job to call the scheduled-import edge function. See documentation for setup instructions.
+              </p>
             </div>
 
             {/* Two-Column Layout */}
