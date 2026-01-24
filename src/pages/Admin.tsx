@@ -15,7 +15,7 @@ import { SavedScanCard } from '@/components/SavedScanCard';
 export function Admin() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeMainTab, setActiveMainTab] = useState<'imports' | 'games' | 'member-services' | 'scanner'>('imports');
+  const [activeMainTab, setActiveMainTab] = useState<'imports' | 'games' | 'member-services' | 'scanner' | 'backup'>('imports');
   const [gamesSubTab, setGamesSubTab] = useState<'manager' | 'states' | 'state-games' | 'rankings'>(() => {
     // Check URL hash for direct linking
     const hash = window.location.hash.replace('#', '');
@@ -110,6 +110,14 @@ export function Admin() {
   const [scheduledTime, setScheduledTime] = useState('02:00');
   const [scheduleAutoConvert, setScheduleAutoConvert] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Backup state
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [isRestoringBackup, setIsRestoringBackup] = useState(false);
+  const [selectedBackupId, setSelectedBackupId] = useState<string | null>(null);
+  const [selectedTablesToBackup, setSelectedTablesToBackup] = useState<string[]>([]);
+  const [selectedTablesToRestore, setSelectedTablesToRestore] = useState<string[]>([]);
+  const [replaceExisting, setReplaceExisting] = useState(false);
 
   // Check user role
   const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
@@ -266,6 +274,20 @@ export function Admin() {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error; // Ignore "no rows returned" error
+      return data;
+    },
+  });
+
+  const { data: backups = [], refetch: refetchBackups } = useQuery({
+    queryKey: ['backups'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('backups')
+        .select('*')
+        .order('backup_date', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
       return data;
     },
   });
@@ -482,6 +504,7 @@ export function Admin() {
           <button onClick={() => setActiveMainTab('games')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'games' ? 'border-b-2 border-teal text-teal' : 'text-gray-500 hover:text-gray-700'}`}>Games</button>
           <button onClick={() => setActiveMainTab('member-services')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'member-services' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}>Member Services</button>
           <button onClick={() => setActiveMainTab('scanner')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'scanner' ? 'border-b-2 border-orange-500 text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}>Scanner</button>
+          <button onClick={() => setActiveMainTab('backup')} className={`px-6 py-3 font-semibold transition-colors ${activeMainTab === 'backup' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>Backup</button>
         </div>
 
         {/* Games Subtabs */}
@@ -1423,6 +1446,283 @@ export function Admin() {
                   onDelete={() => refetchScans()}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* BACKUP TAB */}
+        {activeMainTab === 'backup' && (
+          <div>
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Database Backup & Restore</h2>
+              <p className="opacity-90">Create daily backups of database tables and restore from previous versions</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* CREATE BACKUP */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">Create New Backup</h3>
+                <p className="text-sm text-gray-600 mb-4">Export all database tables to a JSON backup file stored in the backups bucket.</p>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Backup Type</label>
+                  <select className="w-full px-4 py-2 border rounded-lg" defaultValue="database">
+                    <option value="database">Full Database Backup</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!confirm('Create a new database backup? This will export all tables to storage.')) return;
+                    setIsCreatingBackup(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('create-backup', {
+                        body: {
+                          backupType: 'database',
+                          userId: user?.id,
+                        },
+                      });
+                      if (error) {
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context?.text();
+                          throw new Error(errorText || error.message);
+                        }
+                        throw error;
+                      }
+                      toast.success(`Backup created successfully! ${data.tables_count} tables, ${data.total_rows} rows`);
+                      refetchBackups();
+                    } catch (error: any) {
+                      console.error('Backup creation error:', error);
+                      toast.error(error.message || 'Failed to create backup');
+                    } finally {
+                      setIsCreatingBackup(false);
+                    }
+                  }}
+                  disabled={isCreatingBackup}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCreatingBackup ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      Creating Backup...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-5 h-5" />
+                      Create Backup Now
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* RESTORE FROM BACKUP */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-bold mb-4">Restore from Backup</h3>
+                <p className="text-sm text-gray-600 mb-4">Select a backup date to restore database tables from a previous version.</p>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Select Backup</label>
+                  <select
+                    className="w-full px-4 py-2 border rounded-lg"
+                    value={selectedBackupId || ''}
+                    onChange={(e) => setSelectedBackupId(e.target.value)}
+                  >
+                    <option value="">Choose a backup...</option>
+                    {backups.filter(b => b.status === 'completed').map(backup => (
+                      <option key={backup.id} value={backup.id}>
+                        {new Date(backup.backup_date).toLocaleDateString()} - {backup.tables_backed_up?.length || 0} tables ({(backup.file_size / 1024).toFixed(1)} KB)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="replace-existing"
+                    checked={replaceExisting}
+                    onChange={(e) => setReplaceExisting(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="replace-existing" className="text-sm text-gray-700">
+                    Replace existing data (delete current data before restore)
+                  </label>
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!selectedBackupId) {
+                      toast.error('Please select a backup to restore');
+                      return;
+                    }
+                    if (!confirm(`⚠️ WARNING: This will restore data from the selected backup.${replaceExisting ? ' All current data in restored tables will be DELETED first.' : ''} Continue?`)) return;
+                    setIsRestoringBackup(true);
+                    try {
+                      const { data, error } = await supabase.functions.invoke('restore-backup', {
+                        body: {
+                          backupId: selectedBackupId,
+                          replaceExisting,
+                        },
+                      });
+                      if (error) {
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context?.text();
+                          throw new Error(errorText || error.message);
+                        }
+                        throw error;
+                      }
+                      toast.success(`Restore completed! Success: ${data.summary.successful}, Failed: ${data.summary.failed}`);
+                      refetchGames();
+                      refetchBackups();
+                    } catch (error: any) {
+                      console.error('Restore error:', error);
+                      toast.error(error.message || 'Failed to restore backup');
+                    } finally {
+                      setIsRestoringBackup(false);
+                    }
+                  }}
+                  disabled={isRestoringBackup || !selectedBackupId}
+                  className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isRestoringBackup ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      Restoring...
+                    </>
+                  ) : (
+                    'Restore Selected Backup'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* BACKUP HISTORY */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-bold">Backup History</h3>
+                <p className="text-sm text-gray-600 mt-1">View, download, or delete previous backups</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Type</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Tables</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Size</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Created</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {backups.map(backup => (
+                      <tr key={backup.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium">
+                          {new Date(backup.backup_date).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm capitalize">{backup.backup_type}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
+                            backup.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            backup.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                            backup.status === 'archived' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {backup.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{backup.tables_backed_up?.length || 0}</td>
+                        <td className="px-4 py-3 text-sm">{backup.file_size ? `${(backup.file_size / 1024).toFixed(1)} KB` : '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {new Date(backup.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {backup.status === 'completed' && backup.file_path && (
+                              <>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { data, error } = await supabase.storage
+                                        .from('backups')
+                                        .download(backup.file_path);
+                                      if (error) throw error;
+                                      const url = URL.createObjectURL(data);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = `backup-${backup.backup_date}.json`;
+                                      a.click();
+                                      URL.revokeObjectURL(url);
+                                      toast.success('Backup downloaded');
+                                    } catch (error: any) {
+                                      toast.error('Failed to download backup');
+                                    }
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 text-sm"
+                                  title="Download"
+                                >
+                                  Download
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Archive backup from ${backup.backup_date}? This will mark it as archived.`)) return;
+                                    try {
+                                      const { error } = await supabase
+                                        .from('backups')
+                                        .update({ status: 'archived' })
+                                        .eq('id', backup.id);
+                                      if (error) throw error;
+                                      toast.success('Backup archived');
+                                      refetchBackups();
+                                    } catch (error: any) {
+                                      toast.error('Failed to archive backup');
+                                    }
+                                  }}
+                                  className="text-gray-600 hover:text-gray-800 text-sm"
+                                  title="Archive"
+                                >
+                                  Archive
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`⚠️ DELETE backup from ${backup.backup_date}? This cannot be undone.`)) return;
+                                try {
+                                  if (backup.file_path) {
+                                    await supabase.storage.from('backups').remove([backup.file_path]);
+                                  }
+                                  const { error } = await supabase
+                                    .from('backups')
+                                    .delete()
+                                    .eq('id', backup.id);
+                                  if (error) throw error;
+                                  toast.success('Backup deleted');
+                                  refetchBackups();
+                                } catch (error: any) {
+                                  toast.error('Failed to delete backup');
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {backups.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                          No backups found. Create your first backup above.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
