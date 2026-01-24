@@ -1,11 +1,12 @@
 import { Game } from '@/types';
-import { Award, Heart, Trophy, Megaphone, Gift } from 'lucide-react';
+import { Award, Heart, Trophy, Megaphone, Gift, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { haptics } from '@/lib/haptics';
+import { BuyTicketPopup } from './BuyTicketPopup';
 
 interface GameCardProps {
   game: Game;
@@ -17,6 +18,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
   const { user } = useAuth();
   const navigate = useNavigate();
   const [favorited, setFavorited] = useState(isFavorited);
+  const [showBuyPopup, setShowBuyPopup] = useState(false);
 
   const prizesRemaining = game.top_prizes_remaining;
   const totalPrizes = game.total_top_prizes;
@@ -103,6 +105,39 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     navigate(`/games/${game.state.toLowerCase()}/${game.price}/${slug}#convos`);
   };
 
+  const handleBuyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    haptics.light();
+    
+    if (!user) {
+      toast.error('Please sign in to track purchases', {
+        action: {
+          label: 'Sign In',
+          onClick: () => navigate('/profile'),
+        },
+      });
+      return;
+    }
+    
+    setShowBuyPopup(true);
+  };
+
+  const handleBuyConfirm = async (quantity: number) => {
+    try {
+      await supabase.from('purchases').insert({
+        user_id: user!.id,
+        game_id: game.id,
+        quantity,
+      });
+      
+      toast.success(`Tracked ${quantity} ticket${quantity > 1 ? 's' : ''} purchased! 🎫`);
+      setShowBuyPopup(false);
+    } catch (error) {
+      console.error('Error saving purchase:', error);
+      toast.error('Failed to track purchase');
+    }
+  };
+
   const handleRankClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     haptics.light(); // Haptic feedback
@@ -160,20 +195,26 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
       {/* Badges - Right Side with White Background Pad */}
       <div className="absolute right-3 top-1/2 -translate-y-1/2">
         <div className="bg-white/30 backdrop-blur-sm rounded-lg p-2 flex flex-col gap-0.5">
-        {/* Rank and Favorite Badges - Same Row */}
+        {/* Rank, Buy, and Favorite Badges - Same Row */}
         <div className="flex gap-1">
           <button
             onClick={handleRankClick}
-            className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 backdrop-blur rounded-md px-2 py-1 flex items-center justify-center gap-1 shadow-md cursor-pointer hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 transition-all"
+            className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 backdrop-blur rounded-md px-1.5 py-1 flex items-center justify-center gap-0.5 shadow-md cursor-pointer hover:from-yellow-500 hover:via-yellow-600 hover:to-yellow-700 transition-all"
           >
             <span className="text-sm">🏅</span>
             <span className="text-white text-xs font-semibold">{game.rank}</span>
           </button>
           <button
-            onClick={toggleFavorite}
-            className="bg-white/20 backdrop-blur rounded-md px-2 py-1 flex items-center justify-center"
+            onClick={handleBuyClick}
+            className="bg-teal-500/80 backdrop-blur rounded-md px-1.5 py-1 flex items-center justify-center hover:bg-teal-600/80 transition-all"
           >
-            <Heart className={`w-4 h-4 ${favorited ? 'fill-red-500 text-red-500' : 'text-red-500'}`} />
+            <ShoppingCart className="w-3.5 h-3.5 text-white" />
+          </button>
+          <button
+            onClick={toggleFavorite}
+            className="bg-white/20 backdrop-blur rounded-md px-1.5 py-1 flex items-center justify-center"
+          >
+            <Heart className={`w-3.5 h-3.5 ${favorited ? 'fill-red-500 text-red-500' : 'text-red-500'}`} />
           </button>
         </div>
 
@@ -208,6 +249,14 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
           <h3 className="text-white font-bold text-sm truncate">${game.price}•{game.game_name}</h3>
         </div>
       </div>
+
+      {/* Buy Ticket Popup */}
+      <BuyTicketPopup
+        isOpen={showBuyPopup}
+        onClose={() => setShowBuyPopup(false)}
+        onConfirm={handleBuyConfirm}
+        gameName={game.game_name}
+      />
     </div>
   );
 }

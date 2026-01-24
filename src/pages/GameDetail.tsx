@@ -3,11 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Game, ForumTopic } from '@/types';
-import { ArrowLeft, Award, Heart, ThumbsUp, ThumbsDown, Trophy, Upload, X, ScanLine } from 'lucide-react';
+import { ArrowLeft, Award, Heart, ThumbsUp, ThumbsDown, Trophy, Upload, X, ScanLine, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { haptics } from '@/lib/haptics';
+import { BuyTicketPopup } from '@/components/BuyTicketPopup';
 
 export function GameDetail() {
   const { id, state, price, slug } = useParams<{ id?: string; state?: string; price?: string; slug?: string }>();
@@ -42,6 +43,9 @@ export function GameDetail() {
   // Swipe gesture state
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchEndX, setTouchEndX] = useState(0);
+  
+  // Buy ticket popup
+  const [showBuyPopup, setShowBuyPopup] = useState(false);
 
   // Get user's game layout preference
   const { data: userPref } = useQuery({
@@ -333,6 +337,33 @@ export function GameDetail() {
       }, 100);
     }
   }, [location]);
+
+  const handleBuyClick = () => {
+    haptics.light();
+    
+    if (!user) {
+      toast.error('Please sign in to track purchases');
+      return;
+    }
+    
+    setShowBuyPopup(true);
+  };
+
+  const handleBuyConfirm = async (quantity: number) => {
+    try {
+      await supabase.from('purchases').insert({
+        user_id: user!.id,
+        game_id: game!.id,
+        quantity,
+      });
+      
+      toast.success(`Tracked ${quantity} ticket${quantity > 1 ? 's' : ''} purchased! 🎫`);
+      setShowBuyPopup(false);
+    } catch (error) {
+      console.error('Error saving purchase:', error);
+      toast.error('Failed to track purchase');
+    }
+  };
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -673,6 +704,12 @@ export function GameDetail() {
                     <Award className="w-4 h-4 text-white" />
                     <span className="text-sm font-bold text-white">{game.rank}</span>
                   </div>
+                  <button
+                    onClick={handleBuyClick}
+                    className="p-2 rounded-lg bg-teal-500/80 hover:bg-teal-600/80 transition-colors"
+                  >
+                    <ShoppingCart className="w-5 h-5 text-white" />
+                  </button>
                   <button
                     onClick={toggleFavorite}
                     className="p-2 rounded-lg hover:bg-gray-100"
@@ -1322,7 +1359,7 @@ export function GameDetail() {
               className="flex-shrink-0 relative min-h-screen flex flex-col py-8"
               style={{ width: '100%' }}
             >
-              {/* Multiple Triangle Buttons spaced 200px apart */}
+              {/* Multiple Triangle Buttons spaced 250px apart (increased spacing) */}
               {[0, 1, 2, 3, 4, 5].map((index) => (
                 <button
                   key={index}
@@ -1331,7 +1368,7 @@ export function GameDetail() {
                     setImageSlideState(imageSlideState === 'peek' ? 'full' : 'peek');
                   }}
                   className="absolute left-4 z-10 bg-white/40 p-3 rounded-lg hover:bg-white/60 transition-colors"
-                  style={{ top: `${31 + (index * 200)}px` }}
+                  style={{ top: `${31 + (index * 250)}px` }}
                 >
                   <span className="text-white text-2xl font-bold">
                     {imageSlideState === 'peek' ? '▶' : '◀'}
@@ -1339,11 +1376,20 @@ export function GameDetail() {
                 </button>
               ))}
               
-              {/* Favorite Heart - positioned below first arrow */}
+              {/* Buy Button - positioned below first arrow */}
+              <button
+                onClick={handleBuyClick}
+                className="absolute left-4 z-10 p-2 rounded-lg bg-teal-500/80 hover:bg-teal-600/80 backdrop-blur transition-colors"
+                style={{ top: '95px' }}
+              >
+                <ShoppingCart className="w-6 h-6 text-white" />
+              </button>
+              
+              {/* Favorite Heart - positioned below buy button */}
               <button
                 onClick={toggleFavorite}
                 className="absolute left-4 z-10 p-2 rounded-lg bg-white/40 hover:bg-white/60 backdrop-blur"
-                style={{ top: '95px' }}
+                style={{ top: '143px' }}
               >
                 <Heart
                   className={`w-6 h-6 ${
@@ -1353,8 +1399,8 @@ export function GameDetail() {
                 />
               </button>
               
-              {/* Voting Buttons - positioned between first and second arrow */}
-              <div className="absolute left-4 z-10 flex flex-col gap-2" style={{ top: '131px' }}>
+              {/* Voting Buttons - positioned below favorite */}
+              <div className="absolute left-4 z-10 flex flex-col gap-2" style={{ top: '191px' }}>
                 <button className="flex items-center gap-2 px-4 py-2 bg-gray-100/90 rounded-lg hover:bg-gray-200 backdrop-blur">
                   <ThumbsUp className="w-4 h-4" />
                   <span>{game.upvotes}</span>
@@ -1409,6 +1455,14 @@ export function GameDetail() {
           </div>
         </div>
         )}
+
+        {/* Buy Ticket Popup */}
+        <BuyTicketPopup
+          isOpen={showBuyPopup}
+          onClose={() => setShowBuyPopup(false)}
+          onConfirm={handleBuyConfirm}
+          gameName={game.game_name}
+        />
       </div>
     </Layout>
   );
