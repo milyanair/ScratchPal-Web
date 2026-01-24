@@ -62,19 +62,23 @@ export function Admin() {
       }
     }
     return {
+      game_id: 'game_id',
+      state_code: 'state_code',
       game_number: 'game_number',
+      game_slug: 'game_slug',
       game_name: 'game_name',
-      state: 'state_code',
-      price: 'ticket_price',
-      top_prize: 'top_prize_amount',
-      top_prizes_remaining: 'top_prizes_remaining',
-      total_top_prizes: 'top_prizes_total_original',
-      overall_odds: 'overall_odds',
-      start_date: 'game_added_date',
-      end_date: 'end_date',
+      ticket_price: 'ticket_price',
       image_url: 'image_url',
+      top_prize_amount: 'top_prize_amount',
+      top_prizes_total_original: 'top_prizes_total_original',
+      game_added_date: 'game_added_date',
+      start_date: 'start_date',
+      end_date: 'end_date',
       source: 'source',
       source_url: 'source_url',
+      top_prizes_claimed: 'top_prizes_claimed',
+      top_prizes_remaining: 'top_prizes_remaining',
+      last_updated: 'last_updated',
     };
   });
   const [availableColumns, setAvailableColumns] = useState<string[]>([]);
@@ -861,29 +865,186 @@ export function Admin() {
         {/* IMPORTS TAB */}
         {activeMainTab === 'imports' && (
           <div>
-            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
-              <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
-              <p className="opacity-90">Import game data from external CSV sources</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Data Import & Conversion Tools</h2>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={csvUrl}
-                  onChange={(e) => setCsvUrl(e.target.value)}
-                  placeholder="Enter CSV URL..."
-                  className="flex-1 px-4 py-2 border rounded-lg"
-                />
+            {/* Two-Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* LEFT COLUMN - CSV Import Tools */}
+              <div className="space-y-6">
+                {/* CSV Import Section */}
+                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-bold mb-2">CSV Data Import</h3>
+                  <p className="text-sm opacity-90 mb-4">Import game data from CSV file URL. Processes 200 rows per run - for large files, click Import multiple times to continue. New games will be added, existing games (matching state + slug) will be updated.</p>
+                  <div className="bg-white/10 rounded-lg p-4 mb-4">
+                    <label className="block text-sm font-semibold mb-2">CSV File URL</label>
+                    <input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} placeholder="https://scratchpal.com/latest_game_data.csv" className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm" />
+                    <p className="text-xs opacity-75 mt-2">Expected columns: game_id, state_code, game_number, game_slug, game_name, ticket_price, image_url, top_prize_amount, top_prizes_total_original, game_added_date, start_date, end_date, source, source_url, top_prizes_claimed, top_prizes_remaining, last_updated</p>
+                  </div>
+                  
+                  {/* Download First Button */}
+                  <button onClick={async () => {
+                    if (!csvUrl.trim()) {
+                      toast.error('Please enter a CSV file URL');
+                      return;
+                    }
+                    setIsDownloadingCsv(true);
+                    try {
+                      console.log('Downloading CSV from:', csvUrl);
+                      const { data, error } = await supabase.functions.invoke('download-csv', {
+                        body: { csvUrl },
+                      });
+                      if (error) {
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context?.text();
+                          throw new Error(errorText || error.message);
+                        }
+                        throw error;
+                      }
+                      setCsvUrl(data.url);
+                      setUploadedCsvUrl(data.url);
+                      toast.success(`CSV downloaded and saved to Storage! (${(data.size / 1024).toFixed(1)} KB)`);
+                      console.log('Local URL:', data.url);
+                    } catch (error: any) {
+                      console.error('CSV download error:', error);
+                      toast.error(error.message || 'Failed to download CSV');
+                    } finally {
+                      setIsDownloadingCsv(false);
+                    }
+                  }} disabled={isDownloadingCsv} className="w-full bg-white/20 border-2 border-white/50 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mb-3">
+                    {isDownloadingCsv ? (<><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Downloading...</>) : (<>📥 Download to Storage First</>)}
+                  </button>
+                  
+                  <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV chunk...'); const currentOffset = importOffset; try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl, offset: currentOffset, columnMapping }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.has_more) { setImportOffset(data.next_offset); toast.success(`Chunk complete! Processed ${data.processed_up_to}/${data.total_rows} rows. ${data.total_rows - data.processed_up_to} remaining. Click Import again to continue.`); } else { setImportOffset(0); if (data.status === 'success') toast.success(`Import complete! All ${data.total_rows} rows processed.`); else if (data.status === 'partial') toast.warning(`Import complete with ${data.records_failed} failures`); else toast.error('Import failed'); } refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); setImportOffset(0); } finally { setIsImporting(false); } }} disabled={isImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
+                    {isImporting ? (<><div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full" />Importing...</>) : (<><Plus className="w-4 h-4" />{importOffset > 0 ? `Continue Import (from row ${importOffset + 1})` : 'Import CSV Data'}</>)}
+                  </button>
+                  {importProgress && (<div className="mt-4 p-3 bg-white/20 rounded-lg text-sm">{importProgress}</div>)}
+                  {lastImportResult && (<div className="mt-4 bg-white/10 rounded-lg p-4"><h4 className="font-semibold text-sm mb-2">Last Import Results</h4>{lastImportResult.total_rows && (<div className="mb-3 p-2 bg-white/20 rounded text-xs"><div className="font-semibold">Progress: {lastImportResult.processed_up_to}/{lastImportResult.total_rows} rows</div><div className="w-full bg-white/20 rounded-full h-2 mt-1"><div className="bg-white h-2 rounded-full" style={{ width: `${(lastImportResult.processed_up_to / lastImportResult.total_rows) * 100}%` }}></div></div>{lastImportResult.has_more && (<div className="mt-1 text-yellow-300 font-semibold">⚠️ {lastImportResult.total_rows - lastImportResult.processed_up_to} rows remaining - click Import again</div>)}</div>)}<div className="grid grid-cols-2 gap-3 text-xs"><div><div className="opacity-75">Processed</div><div className="text-xl font-bold">{lastImportResult.records_processed}</div></div><div><div className="opacity-75">Inserted</div><div className="text-xl font-bold text-green-300">{lastImportResult.records_inserted}</div></div><div><div className="opacity-75">Updated</div><div className="text-xl font-bold text-blue-300">{lastImportResult.records_updated}</div></div><div><div className="opacity-75">Failed</div><div className="text-xl font-bold text-red-300">{lastImportResult.records_failed}</div></div></div>{lastImportResult.details?.failed?.length > 0 && (<div className="mt-3 p-3 bg-red-500/20 rounded text-xs"><div className="font-semibold mb-1">Errors:</div><div className="space-y-1 max-h-32 overflow-y-auto">{lastImportResult.details.failed.slice(0, 5).map((fail: any, idx: number) => (<div key={idx}>Row {fail.row}: {fail.error}</div>))}{lastImportResult.details.failed.length > 5 && (<div className="opacity-75">...and {lastImportResult.details.failed.length - 5} more</div>)}</div></div>)}</div>)}
+                </div>
+
+                {/* Import History */}
+                {importLogs.length > 0 && (<div className="bg-white rounded-lg shadow p-6"><h3 className="text-lg font-bold mb-4">Recent Import History</h3><div className="overflow-x-auto"><table className="w-full"><thead className="bg-gray-50"><tr><th className="px-3 py-2 text-left text-xs font-semibold">Date</th><th className="px-3 py-2 text-left text-xs font-semibold">Source</th><th className="px-3 py-2 text-center text-xs font-semibold">Status</th><th className="px-3 py-2 text-center text-xs font-semibold">Results</th></tr></thead><tbody className="divide-y">{importLogs.slice(0, 5).map((log: any) => (<tr key={log.id} className="hover:bg-gray-50"><td className="px-3 py-2 text-xs">{new Date(log.import_date).toLocaleString()}</td><td className="px-3 py-2 text-xs"><a href={log.source_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{log.source_url.split('/').pop()}</a></td><td className="px-3 py-2 text-center"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${log.status === 'success' ? 'bg-green-100 text-green-800' : log.status === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{log.status}</span></td><td className="px-3 py-2 text-center text-xs"><span className="text-green-600 font-semibold">+{log.records_inserted}</span>{' / '}<span className="text-blue-600 font-semibold">↻{log.records_updated}</span>{log.records_failed > 0 && (<>{' / '}<span className="text-red-600 font-semibold">✗{log.records_failed}</span></>)}</td></tr>))}</tbody></table></div></div>)}
+
+                {/* CSV Upload Section */}
+                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-bold mb-2">📤 Upload CSV File</h3>
+                  <p className="text-sm opacity-90 mb-4">Upload your CSV file to Supabase Storage to get a reliable URL for importing. Files will be permanently stored and accessible.</p>
+                  
+                  {/* Drag & Drop Area */}
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                    }}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files[0];
+                      if (!file) return;
+                      if (!file.name.endsWith('.csv')) {
+                        toast.error('Please upload a CSV file');
+                        return;
+                      }
+                      await uploadCsvFile(file);
+                    }}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      isDragging
+                        ? 'border-white bg-white/20'
+                        : 'border-white/50 bg-white/10 hover:bg-white/15'
+                    }`}
+                  >
+                    <div className="mb-4">
+                      <div className="text-4xl mb-2">📁</div>
+                      <p className="font-semibold mb-1">Drag & Drop CSV File Here</p>
+                      <p className="text-sm opacity-75">or click to browse</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        await uploadCsvFile(file);
+                      }}
+                      className="hidden"
+                      id="csv-upload-input"
+                      disabled={isUploadingCsv}
+                    />
+                    <label
+                      htmlFor="csv-upload-input"
+                      className="inline-block bg-white text-green-600 px-6 py-2 rounded-lg font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      {isUploadingCsv ? 'Uploading...' : 'Choose File'}
+                    </label>
+                  </div>
+
+                  {/* Upload Result */}
+                  {uploadedCsvUrl && (
+                    <div className="mt-4 bg-white/10 rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm mb-1">✅ File Uploaded Successfully!</p>
+                          <p className="text-xs opacity-75 break-all">{uploadedCsvUrl}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(uploadedCsvUrl);
+                            toast.success('URL copied to clipboard!');
+                          }}
+                          className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs font-semibold whitespace-nowrap"
+                        >
+                          Copy URL
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setCsvUrl(uploadedCsvUrl);
+                          toast.success('URL pasted into import field');
+                        }}
+                        className="w-full bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 text-sm mt-2"
+                      >
+                        Use This URL for Import
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
-                CSV will be imported in chunks of 200 rows. If there are more rows, you'll need to run the import again.
-              </p>
-            </div>
 
-            <div className="text-center py-12">
-              <p className="text-gray-500">Full import interface would be implemented here</p>
+              {/* RIGHT COLUMN - Image Conversion */}
+              <div className="space-y-6">
+                {/* Image Conversion Tools */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-bold mb-2">Image Conversion Tools</h3>
+                  <p className="text-sm text-gray-600 mb-2">Convert external image URLs to local storage. Images already hosted on play.scratchpal.com will be skipped.</p>
+                  <p className="text-sm text-gray-600 mb-4"><strong>Status:</strong> {filteredAndSortedGames.filter(g => g.image_converted).length} of {filteredAndSortedGames.length} games have converted images {gameStateFilter !== 'all' && `(${gameStateFilter} only)`}</p>
+                  <div className="space-y-4">
+                    {/* Server Conversion */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">Server Conversion</h4>
+                      <p className="text-xs text-gray-600 mb-3">Fast server-side conversion. May fail for sites that block automated requests.</p>
+                      <button onClick={async () => { if (!confirm('Convert all unconverted images using server? This may fail for sites that block automated requests.')) return; setIsConvertingImages(true); setConversionProgress('Starting batch conversion...'); try { const { data, error } = await supabase.functions.invoke('batch-convert-images', { body: { stateFilter: gameStateFilter }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setConversionProgress(`Complete! Converted: ${data.converted}, Failed: ${data.failed}`); toast.success(`Converted ${data.converted} images`); if (data.failed > 0) toast.error(`Failed to convert ${data.failed} images - use browser method for blocked sites`); refetchGames(); } catch (error: any) { console.error('Batch conversion error:', error); setConversionProgress('Conversion failed'); toast.error(error.message || 'Failed to convert images'); } finally { setIsConvertingImages(false); } }} disabled={isConvertingImages} className="w-full gradient-teal text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                        {isConvertingImages ? 'Converting...' : 'Server Batch Convert'}
+                      </button>
+                      {conversionProgress && (<div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">{conversionProgress}</div>)}
+                    </div>
+
+                    {/* Browser Conversion */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold text-sm mb-2">Browser-Based Conversion</h4>
+                      <p className="text-xs text-gray-600 mb-3">Uses your browser to download images (works for blocked sites). Slower but more reliable. Keep this tab open during conversion.</p>
+                      <button onClick={async () => { if (!confirm('Convert images using browser? This is slower but works for blocked sites. Keep this tab open during conversion.')) return; setIsClientConverting(true); setClientConversionProgress('Starting browser-based conversion...'); try { let query = supabase.from('games').select('id, game_name, image_url, image_converted, state'); if (gameStateFilter && gameStateFilter !== 'all') query = query.eq('state', gameStateFilter); const { data: games, error: gamesError } = await query; if (gamesError) throw gamesError; const gamesToConvert = games.filter(game => { if (!game.image_url) return false; const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''; if (game.image_url.includes('play.scratchpal.com') || game.image_url.includes(supabaseUrl)) return false; return true; }); setClientConversionStats({ converted: 0, failed: 0, total: gamesToConvert.length }); setClientConversionProgress(`Found ${gamesToConvert.length} games to convert...`); let converted = 0; let failed = 0; for (let i = 0; i < gamesToConvert.length; i++) { const game = gamesToConvert[i]; setClientConversionProgress(`Converting ${i + 1}/${gamesToConvert.length}: ${game.game_name}...`); try { const response = await fetch(game.image_url, { mode: 'cors', cache: 'no-cache', }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const blob = await response.blob(); let extension = 'jpg'; const urlExtMatch = game.image_url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i); if (urlExtMatch) extension = urlExtMatch[1].toLowerCase(); else { const contentType = blob.type; if (contentType?.includes('png')) extension = 'png'; else if (contentType?.includes('gif')) extension = 'gif'; else if (contentType?.includes('webp')) extension = 'webp'; } const timestamp = Date.now(); const filename = `game_${game.id}_${timestamp}.${extension}`; const { error: uploadError } = await supabase.storage.from('game-images').upload(filename, blob, { contentType: blob.type || 'image/jpeg', upsert: false, }); if (uploadError) throw uploadError; const { data: publicUrlData } = supabase.storage.from('game-images').getPublicUrl(filename); const { error: updateError } = await supabase.from('games').update({ original_image_url: game.image_url, image_url: publicUrlData.publicUrl, image_converted: true, updated_at: new Date().toISOString(), }).eq('id', game.id); if (updateError) throw updateError; converted++; setClientConversionStats({ converted, failed, total: gamesToConvert.length }); if (i < gamesToConvert.length - 1) await new Promise(resolve => setTimeout(resolve, 1000)); } catch (error: any) { failed++; setClientConversionStats({ converted, failed, total: gamesToConvert.length }); if (i < gamesToConvert.length - 1) await new Promise(resolve => setTimeout(resolve, 1000)); } } setClientConversionProgress(`Complete! Converted: ${converted}, Failed: ${failed}`); toast.success(`Browser conversion complete: ${converted} images`); if (failed > 0) toast.error(`${failed} images failed to convert`); refetchGames(); } catch (error: any) { console.error('Browser conversion error:', error); setClientConversionProgress('Conversion failed'); toast.error(error.message || 'Failed to convert images'); } finally { setIsClientConverting(false); } }} disabled={isClientConverting} className="w-full bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                        {isClientConverting ? 'Converting...' : 'Browser Batch Convert'}
+                      </button>
+                      {clientConversionProgress && (<div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800"><div className="font-semibold mb-2">{clientConversionProgress}</div>{clientConversionStats.total > 0 && (<div className="flex gap-4 text-xs"><span>Total: {clientConversionStats.total}</span><span className="text-green-600">Converted: {clientConversionStats.converted}</span><span className="text-red-600">Failed: {clientConversionStats.failed}</span></div>)}</div>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
