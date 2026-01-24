@@ -2,19 +2,23 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface CSVRow {
+  game_id?: string;
+  state_code: string;
   game_number: string;
+  game_slug?: string;
   game_name: string;
-  state: string;
-  price: number;
-  top_prize: number;
-  top_prizes_remaining: number;
-  total_top_prizes: number;
-  overall_odds?: string;
+  ticket_price: number;
+  image_url?: string;
+  top_prize_amount: number;
+  top_prizes_total_original?: number;
+  game_added_date?: string;
   start_date?: string;
   end_date?: string;
-  image_url?: string;
   source?: string;
   source_url?: string;
+  top_prizes_claimed?: number;
+  top_prizes_remaining?: number;
+  last_updated?: string;
 }
 
 interface ImportResult {
@@ -50,8 +54,8 @@ function parseCSV(csvText: string, columnMapping?: Record<string, string>): CSVR
   
   console.log(`Detected delimiter: "${delimiter === '\t' ? '\\t' : delimiter}"`);
 
-  // Parse header
-  const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
+  // Parse header (keep original case for column position parsing)
+  const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
   console.log(`CSV Headers (${headers.length}):`, headers);
   
   // Log custom column mapping if provided
@@ -88,8 +92,32 @@ function parseCSV(csvText: string, columnMapping?: Record<string, string>): CSVR
     // Map values to CSVRow object
     const row: any = {};
     
-    // **USE CUSTOM COLUMN MAPPING IF PROVIDED**
-    if (columnMapping && Object.keys(columnMapping).length > 0) {
+    // **EXPECTED COLUMN ORDER (index-based parsing)**
+    // 0: game_id, 1: state_code, 2: game_number, 3: game_slug, 4: game_name, 5: ticket_price,
+    // 6: image_url, 7: top_prize_amount, 8: top_prizes_total_original, 9: game_added_date,
+    // 10: start_date, 11: end_date, 12: source, 13: source_url, 14: top_prizes_claimed,
+    // 15: top_prizes_remaining, 16: last_updated
+    
+    if (values.length === 17) {
+      // Parse by position (most reliable)
+      row.game_id = values[0]?.replace(/"/g, '').trim() || undefined;
+      row.state_code = values[1]?.replace(/"/g, '').trim().toUpperCase() || '';
+      row.game_number = values[2]?.replace(/"/g, '').trim() || '';
+      row.game_slug = values[3]?.replace(/"/g, '').trim() || undefined;
+      row.game_name = values[4]?.replace(/"/g, '').trim() || '';
+      row.ticket_price = parseFloat(values[5]?.replace(/[$,"/]/g, '').trim() || '0');
+      row.image_url = values[6]?.replace(/"/g, '').trim() || undefined;
+      row.top_prize_amount = parseFloat(values[7]?.replace(/[$,"/]/g, '').trim() || '0');
+      row.top_prizes_total_original = values[8]?.replace(/"/g, '').trim() ? parseInt(values[8].replace(/[,"]/g, '').trim()) : undefined;
+      row.game_added_date = values[9]?.replace(/"/g, '').trim() || undefined;
+      row.start_date = values[10]?.replace(/"/g, '').trim() || undefined;
+      row.end_date = values[11]?.replace(/"/g, '').trim() || undefined;
+      row.source = values[12]?.replace(/"/g, '').trim() || undefined;
+      row.source_url = values[13]?.replace(/"/g, '').trim() || undefined;
+      row.top_prizes_claimed = values[14]?.replace(/"/g, '').trim() ? parseInt(values[14].replace(/[,"]/g, '').trim()) : undefined;
+      row.top_prizes_remaining = values[15]?.replace(/"/g, '').trim() ? parseInt(values[15].replace(/[,"]/g, '').trim()) : undefined;
+      row.last_updated = values[16]?.replace(/"/g, '').trim() || undefined;
+    } else if (columnMapping && Object.keys(columnMapping).length > 0) {
       // Create reverse mapping (CSV column -> DB field)
       const csvToDbMap: Record<string, string> = {};
       Object.entries(columnMapping).forEach(([dbField, csvColumn]) => {
@@ -185,15 +213,17 @@ function parseCSV(csvText: string, columnMapping?: Record<string, string>): CSVR
       console.log('Mapped row:', JSON.stringify(row, null, 2));
     }
 
-    // Validate required fields
-    if (row.game_number && row.game_name && row.state) {
+    // Validate required fields (new structure)
+    if (row.game_number && row.game_name && row.state_code && row.ticket_price && row.top_prize_amount) {
       rows.push(row as CSVRow);
     } else if (i <= 3) {
       // Log why first few rows are rejected
       console.log(`Row ${i} rejected - missing required fields:`, {
         has_game_number: !!row.game_number,
         has_game_name: !!row.game_name,
-        has_state: !!row.state,
+        has_state_code: !!row.state_code,
+        has_ticket_price: !!row.ticket_price,
+        has_top_prize_amount: !!row.top_prize_amount,
       });
     }
   }
@@ -389,21 +419,21 @@ Deno.serve(async (req) => {
       console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (chunk rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
-        // **STEP 1: Check which records already exist using composite key (state, game_number, price, top_prize)**
+        // **STEP 1: Check which records already exist using composite key (state_code, game_number, ticket_price, top_prize_amount)**
         // Get unique states in this batch
-        const statesInBatch = Array.from(new Set(batch.map(row => row.state)));
+        const statesInBatch = Array.from(new Set(batch.map(row => row.state_code)));
         
         // Fetch ALL existing games for these states (simpler query, no OR conditions)
         const { data: existingGames, error: fetchError } = await supabaseAdmin
           .from('games')
-          .select('id, state, game_number, price, top_prize, start_date, total_top_prizes, end_date, source, source_url, top_prizes_remaining')
+          .select('id, state, game_number, price, top_prize, start_date, total_top_prizes, end_date, source, source_url, top_prizes_remaining, slug')
           .in('state', statesInBatch);
         
         if (fetchError) {
           throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
         }
         
-        // Create lookup map for existing games
+        // Create lookup map for existing games (using DB field names: state, price, top_prize)
         const existingMap = new Map();
         existingGames?.forEach(game => {
           const key = `${game.state}|${game.game_number}|${game.price}|${game.top_prize}`;
@@ -416,21 +446,29 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         
         batch.forEach(row => {
-          const key = `${row.state}|${row.game_number}|${row.price}|${row.top_prize}`;
+          // Create key using CSV column names mapped to DB fields
+          const key = `${row.state_code}|${row.game_number}|${row.ticket_price}|${row.top_prize_amount}`;
           const existing = existingMap.get(key);
           
           if (!existing) {
             // **NEW RECORD - INSERT**
+            // Calculate top_prizes_remaining from total - claimed
+            const topPrizesRemaining = row.top_prizes_remaining !== undefined 
+              ? row.top_prizes_remaining
+              : (row.top_prizes_total_original && row.top_prizes_claimed !== undefined
+                  ? row.top_prizes_total_original - row.top_prizes_claimed
+                  : row.top_prizes_total_original || 0);
+            
             toInsert.push({
               game_number: row.game_number,
               game_name: row.game_name,
-              state: row.state,
-              price: row.price,
-              top_prize: row.top_prize,
-              top_prizes_remaining: row.top_prizes_remaining,
-              total_top_prizes: row.total_top_prizes,
-              overall_odds: row.overall_odds || null,
-              start_date: row.start_date || today, // Use CSV date or today
+              state: row.state_code,
+              price: row.ticket_price,
+              top_prize: row.top_prize_amount,
+              top_prizes_remaining: topPrizesRemaining,
+              total_top_prizes: row.top_prizes_total_original || 0,
+              slug: row.game_slug || null,
+              start_date: row.start_date || row.game_added_date || today,
               end_date: row.end_date || null,
               image_url: row.image_url || null,
               source: row.source || null,
@@ -439,44 +477,70 @@ Deno.serve(async (req) => {
             });
           } else {
             // **EXISTING RECORD - CONDITIONAL UPDATE**
-            const updates: any = {
-              updated_at: new Date().toISOString(),
-            };
+            const updates: any = {};
+            let hasChanges = false;
             
-            // If start_date (game_added_date) is empty, use today's date
-            if (!existing.start_date && row.start_date) {
-              updates.start_date = row.start_date;
-            } else if (!existing.start_date) {
-              updates.start_date = today;
+            // If game_added_date is empty, use today's date
+            if (!existing.start_date) {
+              updates.start_date = row.start_date || row.game_added_date || today;
+              hasChanges = true;
             }
             
-            // If total_top_prizes is empty, update it
-            if (!existing.total_top_prizes && row.total_top_prizes) {
-              updates.total_top_prizes = row.total_top_prizes;
+            // If top_prizes_total_original is empty, update it
+            if ((!existing.total_top_prizes || existing.total_top_prizes === 0) && row.top_prizes_total_original) {
+              updates.total_top_prizes = row.top_prizes_total_original;
+              hasChanges = true;
+            }
+            
+            // If start_date is different, update it
+            if (row.start_date && existing.start_date !== row.start_date) {
+              updates.start_date = row.start_date;
+              hasChanges = true;
             }
             
             // If end_date is different, update it
             if (row.end_date && existing.end_date !== row.end_date) {
               updates.end_date = row.end_date;
+              hasChanges = true;
             }
             
             // If source is empty, update it
             if ((!existing.source || existing.source.trim() === '') && row.source) {
               updates.source = row.source;
+              hasChanges = true;
             }
             
             // If source_url is empty, update it
             if ((!existing.source_url || existing.source_url.trim() === '') && row.source_url) {
               updates.source_url = row.source_url;
+              hasChanges = true;
             }
             
-            // If top_prizes_remaining is different, update it
-            if (existing.top_prizes_remaining !== row.top_prizes_remaining) {
+            // If top_prizes_claimed is different (calculate remaining)
+            if (row.top_prizes_claimed !== undefined) {
+              const newRemaining = (row.top_prizes_total_original || existing.total_top_prizes || 0) - row.top_prizes_claimed;
+              if (existing.top_prizes_remaining !== newRemaining) {
+                updates.top_prizes_remaining = newRemaining;
+                hasChanges = true;
+              }
+            } else if (row.top_prizes_remaining !== undefined && existing.top_prizes_remaining !== row.top_prizes_remaining) {
+              // If top_prizes_remaining is directly provided and different, update it
               updates.top_prizes_remaining = row.top_prizes_remaining;
+              hasChanges = true;
             }
             
-            // Only add to update queue if there are actual changes (beyond updated_at)
-            if (Object.keys(updates).length > 1) {
+            // If game_slug is missing and different, update it
+            if ((!existing.slug || existing.slug.trim() === '') && row.game_slug) {
+              updates.slug = row.game_slug;
+              hasChanges = true;
+            } else if (row.game_slug && existing.slug !== row.game_slug) {
+              updates.slug = row.game_slug;
+              hasChanges = true;
+            }
+            
+            // If any of these items are updated, change the updated_at date
+            if (hasChanges) {
+              updates.updated_at = new Date().toISOString();
               toUpdate.push({ id: existing.id, updates, row });
             }
           }
