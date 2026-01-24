@@ -77,6 +77,15 @@ export function GameDetail() {
   const { data: game, isLoading: isGameLoading, error: gameError } = useQuery({
     queryKey: ['game', id, state, price, slug],
     queryFn: async () => {
+      console.log('🎮 GameDetail Query Started:', {
+        id,
+        state,
+        price,
+        slug,
+        url: window.location.href,
+        isMobile,
+      });
+
       // Try new SEO-friendly URL format first
       if (state && slug) {
         console.log('🔍 Loading game by SEO URL:', { state, slug });
@@ -91,7 +100,10 @@ export function GameDetail() {
         
         console.log('✅ Slug query result:', { data: slugData, error: slugError });
         
-        if (!slugError && slugData) return slugData as Game;
+        if (!slugError && slugData) {
+          console.log('✅ Game found by slug!');
+          return slugData as Game;
+        }
         
         // Try 2: Extract game number from slug and match by game_number + state
         // Slug format: "858-fiery-5s-game-no-858" -> game_number is "858"
@@ -109,7 +121,10 @@ export function GameDetail() {
           
           console.log('✅ Game number query result:', { data: numberData, error: numberError });
           
-          if (!numberError && numberData) return numberData as Game;
+          if (!numberError && numberData) {
+            console.log('✅ Game found by game_number!');
+            return numberData as Game;
+          }
         }
         
         console.warn('⚠️ Game not found by slug or game_number');
@@ -126,13 +141,18 @@ export function GameDetail() {
         
         console.log('✅ ID query result:', { data, error });
         
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Error fetching game by ID:', error);
+          throw error;
+        }
+        console.log('✅ Game found by ID!');
         return data as Game;
       }
       
       console.error('❌ No valid game identifier provided');
-      return null;
+      throw new Error('No game ID, state, or slug provided');
     },
+    retry: false,
   });
 
   const { data: recentConvos = [] } = useQuery({
@@ -490,6 +510,7 @@ export function GameDetail() {
   };
 
   if (isGameLoading) {
+    console.log('⏳ Game loading...');
     return (
       <Layout>
         <div className="max-w-screen-xl mx-auto px-4 py-12">
@@ -507,17 +528,43 @@ export function GameDetail() {
     );
   }
 
-  // Debug log for troubleshooting
-  if (!game) {
+  // Show error state
+  if (gameError) {
     console.error('❌ Game Detail Error:', {
+      error: gameError,
+      params: { id, state, price, slug },
+      url: window.location.href,
+    });
+    return (
+      <Layout>
+        <div className="max-w-screen-xl mx-auto px-4 py-6">
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-bold text-red-800 mb-4">Game Not Found</h2>
+            <p className="text-red-600 mb-4">
+              The game you're looking for doesn't exist or may have been removed.
+            </p>
+            <p className="text-xs text-gray-500 mb-6">
+              Error: {gameError instanceof Error ? gameError.message : 'Unknown error'}
+            </p>
+            <button
+              onClick={() => navigate('/')}
+              className="gradient-teal text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90"
+            >
+              Back to Games
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show not found state (shouldn't happen with new error throwing, but keep as safety)
+  if (!game) {
+    console.error('❌ Game is null (unexpected):', {
       game,
-      gameError,
       params: { id, state, price, slug },
       url: window.location.href
     });
-  }
-
-  if (!game) {
     return (
       <Layout>
         <div className="max-w-screen-xl mx-auto px-4 py-6">
