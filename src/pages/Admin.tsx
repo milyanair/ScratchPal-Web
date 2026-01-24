@@ -842,6 +842,37 @@ export function Admin() {
                     rows={3}
                     placeholder="Enter your message..."
                   />
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-800">📋 Available Tokens (Click to expand)</summary>
+                    <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs space-y-2">
+                      <div>
+                        <div className="font-semibold text-purple-700 mb-1">User-Specific Tokens (based on selected state):</div>
+                        <div className="grid grid-cols-2 gap-2 text-gray-700">
+                          <div><code className="bg-white px-1 rounded">{'{scode}'}</code> - State code (e.g., FL)</div>
+                          <div><code className="bg-white px-1 rounded">{'{sname}'}</code> - State name (e.g., Florida)</div>
+                          <div><code className="bg-white px-1 rounded">{'{icon}'}</code> - State emoji (e.g., 🌴)</div>
+                          <div><code className="bg-white px-1 rounded">{'{country}'}</code> - Country (e.g., US)</div>
+                          <div><code className="bg-white px-1 rounded">{'{game-count}'}</code> - Number of games in state</div>
+                          <div><code className="bg-white px-1 rounded">{'{source}'}</code> - Game source (e.g., Florida Lottery)</div>
+                          <div><code className="bg-white px-1 rounded">{'{surl}'}</code> - Source URL</div>
+                        </div>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="font-semibold text-indigo-700 mb-1">Global Tokens:</div>
+                        <div className="grid grid-cols-2 gap-2 text-gray-700">
+                          <div><code className="bg-white px-1 rounded">{'{activestates}'}</code> - Count of active states</div>
+                          <div><code className="bg-white px-1 rounded">{'{newlyenabled}'}</code> - States added in last 7 days</div>
+                        </div>
+                      </div>
+                      <div className="border-t pt-2">
+                        <div className="font-semibold text-green-700 mb-1">Example:</div>
+                        <div className="bg-white p-2 rounded italic text-gray-600">
+                          "ScratchPal welcomes {'{source}'}{'{icon}'} players with {'{game-count}'} games!"
+                        </div>
+                        <div className="mt-1 text-gray-500">→ ScratchPal welcomes Florida Lottery🌴 players with 78 games!</div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
