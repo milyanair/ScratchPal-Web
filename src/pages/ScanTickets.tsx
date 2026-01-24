@@ -854,7 +854,11 @@ export function ScanTickets() {
                           transform: 'translate(-50%, -50%)',
                           border: '3px solid white',
                         }}
-                        onClick={() => navigate(`/games/${match.game.id}`)}
+                        onClick={() => {
+                          // Generate SEO-friendly URL
+                          const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                          navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`);
+                        }}
                         title={`${match.game.game_name} - Click to view details`}
                       >
                         {/* Mobile: Just rank in white */}
@@ -907,7 +911,9 @@ export function ScanTickets() {
                           className="flex rounded-lg overflow-hidden hover:shadow-md cursor-pointer transition-all"
                           onClick={() => {
                             haptics.light();
-                            navigate(`/games/${match.game.id}`);
+                            // Generate SEO-friendly URL
+                            const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                            navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`);
                           }}
                         >
                           {/* Color Bar */}
