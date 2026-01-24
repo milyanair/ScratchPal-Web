@@ -498,32 +498,29 @@ export function Favorites() {
                               // View Mode
                               <div className="flex items-center gap-3">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
+                                  {/* Row 1: Game number, then game title */}
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                                      #{purchase.games?.game_number || 'N/A'}
+                                    </span>
                                     <h4 className="font-bold text-sm line-clamp-1">
                                       {purchase.games?.game_name || 'Unknown Game'}
                                     </h4>
-                                    <span className="text-xs bg-white px-2 py-0.5 rounded">
-                                      #{purchase.games?.game_number || 'N/A'}
+                                  </div>
+                                  
+                                  {/* Row 2: Ticket price, number of tickets */}
+                                  <div className="flex items-center gap-3 text-sm mb-1">
+                                    <span className="font-semibold text-green-600">
+                                      ${purchase.games?.price || 0}
+                                    </span>
+                                    <span className="text-gray-700">
+                                      {purchase.quantity} 🎫
                                     </span>
                                   </div>
-                                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="w-3 h-3" />
-                                      <span>{new Date(purchase.created_at).toLocaleDateString()}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <ShoppingCart className="w-3 h-3" />
-                                      <span>{purchase.quantity}x tickets</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <DollarSign className="w-3 h-3" />
-                                      <span className="font-semibold text-green-600">
-                                        ${purchase.games?.price || 0} ea
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  
+                                  {/* Row 3: Date and time */}
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
