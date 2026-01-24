@@ -24,9 +24,10 @@ interface SavedScanCardProps {
   autoOpen?: boolean;
   onClose?: () => void;
   onDelete?: () => void;
+  showAdminActions?: boolean;
 }
 
-export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete }: SavedScanCardProps) {
+export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete, showAdminActions = false }: SavedScanCardProps) {
   const [showModal, setShowModal] = useState(autoOpen);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('all');
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete }: Sav
             <p className="text-xs text-gray-500">
               {new Date(scan.created_at).toLocaleDateString()} • {scan.state}
             </p>
-            {!scan.is_sample && (
+            {!scan.is_sample && !showAdminActions && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -261,8 +262,13 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete }: Sav
                           onClick={() => {
                             haptics.medium();
                             handleClose();
-                            navigate(`/games/${match.game.id}`, {
-                              state: { returnToScanId: scan.id }
+                            // Generate SEO-friendly URL
+                            const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                            navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`, {
+                              state: { 
+                                returnToScan: scan.id,
+                                isSampleScan: scan.is_sample || false
+                              }
                             });
                           }}
                           title={`${match.game.game_name} - Click to view details`}
@@ -306,8 +312,13 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete }: Sav
                             onClick={() => {
                               haptics.light();
                               handleClose();
-                              navigate(`/games/${match.game.id}`, {
-                                state: { returnToScanId: scan.id }
+                              // Generate SEO-friendly URL
+                              const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                              navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`, {
+                                state: { 
+                                  returnToScan: scan.id,
+                                  isSampleScan: scan.is_sample || false
+                                }
                               });
                             }}
                           >

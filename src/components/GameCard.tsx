@@ -38,6 +38,14 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     return 'from-red-700 to-red-800'; // Maroon red
   };
 
+  // Generate SEO-friendly slug
+  const getGameSlug = () => {
+    if (game.slug) return game.slug;
+    // Fallback: generate slug from game details
+    const slugName = game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return `${game.game_number}-${slugName}`;
+  };
+
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     haptics.doubleTap(); // Haptic feedback for favorite
@@ -90,12 +98,9 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     e.stopPropagation();
     haptics.light(); // Haptic feedback
     
-    // Use SEO-friendly URL if slug exists, otherwise fallback to ID
-    if (game.slug) {
-      navigate(`/games/${game.state.toLowerCase()}/${game.price}/${game.slug}#convos`);
-    } else {
-      navigate(`/games/${game.id}#convos`);
-    }
+    // Always use SEO-friendly URL
+    const slug = getGameSlug();
+    navigate(`/games/${game.state.toLowerCase()}/${game.price}/${slug}#convos`);
   };
 
   const handleRankClick = (e: React.MouseEvent) => {
@@ -118,12 +123,9 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     <div
       onClick={() => {
         haptics.light(); // Haptic feedback on card tap
-        // Use SEO-friendly URL if slug exists, otherwise fallback to ID
-        if (game.slug) {
-          navigate(`/games/${game.state.toLowerCase()}/${game.price}/${game.slug}`);
-        } else {
-          navigate(`/games/${game.id}`);
-        }
+        // Always use SEO-friendly URL
+        const slug = getGameSlug();
+        navigate(`/games/${game.state.toLowerCase()}/${game.price}/${slug}`);
       }}
       className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4]"
       style={{
