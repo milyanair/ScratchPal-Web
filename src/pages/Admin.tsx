@@ -860,14 +860,14 @@ export function Admin() {
 
         {/* IMPORTS TAB */}
         {activeMainTab === 'imports' && (
-          <div>
-            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6">
               <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
               <p className="opacity-90">Import game data from external CSV sources</p>
             </div>
 
             {/* Two Column Layout for Desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* LEFT COLUMN - Import Controls */}
               <div className="space-y-6">
                 {/* Import from URL */}
