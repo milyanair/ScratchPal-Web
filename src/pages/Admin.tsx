@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { SliderMessage, Game } from '@/types';
-import { Trash2, Search, ChevronLeft, ChevronRight, Send, Database } from 'lucide-react';
+import { Trash2, Search, ChevronLeft, ChevronRight, Send, Database, Pencil, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AdminRewards } from './AdminRewards';
@@ -697,24 +697,73 @@ export function Admin() {
               <p className="opacity-90">Manage homepage messages</p>
             </div>
 
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Messages</h3>
+              <button
+                onClick={() => {
+                  setEditingMessage({
+                    id: '',
+                    message: '',
+                    transition_type: 'fade',
+                    duration: 5000,
+                    is_active: true,
+                    display_order: messages.length,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+                  setIsMessageModalOpen(true);
+                }}
+                className="gradient-purple text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold"
+              >
+                <Plus className="w-4 h-4" />
+                Add Message
+              </button>
+            </div>
+
             <div className="grid gap-4">
               {messages.map(message => (
                 <div key={message.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
                   <div className="flex-1">
                     <p className="font-medium">{message.message}</p>
                     <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                      <span>Transition: {message.transition_type}</span>
                       <span>Duration: {message.duration}ms</span>
                       <span>Order: {message.display_order}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        message.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {message.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteMessage(message.id)}
-                    className="text-red-600 hover:text-red-800 ml-4"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => {
+                        setEditingMessage(message);
+                        setIsMessageModalOpen(true);
+                      }}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this message?')) {
+                          deleteMessage(message.id);
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ))}
+              {messages.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-lg">
+                  <p className="text-gray-500">No messages yet. Click "Add Message" to create one.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -771,6 +820,166 @@ export function Admin() {
         {/* MEMBER SERVICES - REWARDS */}
         {activeMainTab === 'member-services' && memberServicesSubTab === 'rewards' && (
           <AdminRewards />
+        )}
+
+        {/* Slider Message Modal */}
+        {isMessageModalOpen && editingMessage && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-lg w-full p-6">
+              <h2 className="text-2xl font-bold mb-6">
+                {editingMessage.id ? 'Edit Message' : 'Add New Message'}
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Message Text</label>
+                  <textarea
+                    value={editingMessage.message}
+                    onChange={(e) =>
+                      setEditingMessage({ ...editingMessage, message: e.target.value })
+                    }
+                    className="w-full border rounded-lg px-4 py-2"
+                    rows={3}
+                    placeholder="Enter your message..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Transition Type</label>
+                    <select
+                      value={editingMessage.transition_type}
+                      onChange={(e) =>
+                        setEditingMessage({ ...editingMessage, transition_type: e.target.value })
+                      }
+                      className="w-full border rounded-lg px-4 py-2"
+                    >
+                      <option value="fade">Fade</option>
+                      <option value="zoom">Zoom</option>
+                      <option value="flip">Flip</option>
+                      <option value="slide">Slide</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Duration (ms)</label>
+                    <input
+                      type="number"
+                      value={editingMessage.duration}
+                      onChange={(e) =>
+                        setEditingMessage({
+                          ...editingMessage,
+                          duration: parseInt(e.target.value) || 5000,
+                        })
+                      }
+                      className="w-full border rounded-lg px-4 py-2"
+                      min="1000"
+                      step="500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Display Order</label>
+                    <input
+                      type="number"
+                      value={editingMessage.display_order}
+                      onChange={(e) =>
+                        setEditingMessage({
+                          ...editingMessage,
+                          display_order: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full border rounded-lg px-4 py-2"
+                      min="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Status</label>
+                    <label className="flex items-center gap-3 border rounded-lg px-4 py-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editingMessage.is_active}
+                        onChange={(e) =>
+                          setEditingMessage({
+                            ...editingMessage,
+                            is_active: e.target.checked,
+                          })
+                        }
+                        className="w-5 h-5 rounded"
+                      />
+                      <span className="text-sm font-medium">Active</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 mt-6 border-t pt-4">
+                <button
+                  onClick={async () => {
+                    if (!editingMessage.message.trim()) {
+                      toast.error('Please enter a message');
+                      return;
+                    }
+
+                    try {
+                      if (editingMessage.id) {
+                        const { error } = await supabase
+                          .from('slider_messages')
+                          .update({
+                            message: editingMessage.message,
+                            transition_type: editingMessage.transition_type,
+                            duration: editingMessage.duration,
+                            display_order: editingMessage.display_order,
+                            is_active: editingMessage.is_active,
+                            updated_at: new Date().toISOString(),
+                          })
+                          .eq('id', editingMessage.id);
+
+                        if (error) throw error;
+                        toast.success('Message updated!');
+                      } else {
+                        const { error } = await supabase
+                          .from('slider_messages')
+                          .insert({
+                            message: editingMessage.message,
+                            transition_type: editingMessage.transition_type,
+                            duration: editingMessage.duration,
+                            display_order: editingMessage.display_order,
+                            is_active: editingMessage.is_active,
+                          });
+
+                        if (error) throw error;
+                        toast.success('Message added!');
+                      }
+
+                      setIsMessageModalOpen(false);
+                      setEditingMessage(null);
+                      refetchMessages();
+                    } catch (error: any) {
+                      console.error('Save error:', error);
+                      toast.error(error.message || 'Failed to save message');
+                    }
+                  }}
+                  className="flex-1 gradient-purple text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90"
+                >
+                  {editingMessage.id ? 'Save Changes' : 'Add Message'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMessageModalOpen(false);
+                    setEditingMessage(null);
+                  }}
+                  className="flex-1 border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* SCANNER - SCANS */}
