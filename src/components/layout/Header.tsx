@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -6,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { UserPreference } from '@/types';
 import { useState, useEffect } from 'react';
 import { usePoints } from '@/hooks/usePoints';
-import { Trophy, Bell, Heart, User } from 'lucide-react';
+import { Trophy, Bell, ScanLine, User } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 
 export function Header() {
@@ -131,18 +130,8 @@ export function Header() {
         }}
       />
 
-      {/* Left: Favorites & Rewards Counter */}
+      {/* Left: Rewards Counter & Notification Bell */}
       <div className="flex justify-start items-center gap-2 relative z-10">
-        {/* My Favorites - Available to All */}
-        <Link
-          to="/favorites"
-          onClick={() => haptics.light()}
-          className="p-2 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all"
-          title="My Favorites"
-        >
-          <Heart className="w-5 h-5 text-gray-700" />
-        </Link>
-        
         {/* Points Display - Perfect Circle - Visible on all devices */}
         {user && totalPoints > 0 && (
           <button
@@ -156,31 +145,7 @@ export function Header() {
             <span className="text-gray-700 font-bold text-xs">{totalPoints > 999 ? '999+' : totalPoints}</span>
           </button>
         )}
-      </div>
-
-      {/* Center: Coin Icon Only - Overflows header */}
-      <div className="flex items-center justify-center relative z-10">
-        {isAdmin ? (
-          <Link to="/admin" className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
-            <img
-              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
-              alt="Admin"
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
-          </Link>
-        ) : (
-          <Link to="/" onClick={() => haptics.light()} className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
-            <img
-              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
-              alt="ScratchPal"
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
-          </Link>
-        )}
-      </div>
-
-      {/* Right: Notification Bell & State */}
-      <div className="flex items-center justify-end gap-2 relative z-10">
+        
         {/* Notification Bell - Visible on all devices */}
         {user && (
           <div className="relative">
@@ -206,7 +171,7 @@ export function Header() {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifications(false)}
                 />
-                <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl z-50">
+                <div className="absolute left-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-lg shadow-xl z-50">
                   <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between">
                     <h3 className="font-bold">Notifications</h3>
                     {unreadCount > 0 && (
@@ -263,6 +228,40 @@ export function Header() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Center: Coin Icon Only - Overflows header */}
+      <div className="flex items-center justify-center relative z-10">
+        {isAdmin ? (
+          <Link to="/admin" className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
+              alt="Admin"
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </Link>
+        ) : (
+          <Link to="/" onClick={() => haptics.light()} className="w-[80px] h-[80px] flex-shrink-0 relative z-10" style={{ marginBottom: '-12px' }}>
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/YeHsi5H6A5dXrzEn4A8wxN/scratchpalcoin100.png"
+              alt="ScratchPal"
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </Link>
+        )}
+      </div>
+
+      {/* Right: Scan & State */}
+      <div className="flex items-center justify-end gap-2 relative z-10">
+        {/* Ticket Scanner - Available to All */}
+        <Link
+          to="/scan-tickets"
+          onClick={() => haptics.light()}
+          className="p-2 rounded-full bg-gray-200/30 hover:bg-gray-300/30 transition-all"
+          title="Scan Tickets"
+        >
+          <ScanLine className="w-5 h-5 text-gray-700" />
+        </Link>
 
         {/* State Circle */}
         <div className="relative">
