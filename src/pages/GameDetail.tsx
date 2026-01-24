@@ -74,7 +74,7 @@ export function GameDetail() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { data: game, isLoading: isGameLoading } = useQuery({
+  const { data: game, isLoading: isGameLoading, error: gameError } = useQuery({
     queryKey: ['game', id, state, price, slug],
     queryFn: async () => {
       // Try new SEO-friendly URL format first
@@ -82,16 +82,16 @@ export function GameDetail() {
         console.log('🔍 Loading game by SEO URL:', { state, slug });
         
         // Try 1: Match by slug field (if populated)
-        const slugData = await supabase
+        const { data: slugData, error: slugError } = await supabase
           .from('games')
           .select('*')
           .eq('state', state.toUpperCase())
           .eq('slug', slug)
           .maybeSingle();
         
-        console.log('✅ Slug query result:', { data: slugData.data, error: slugData.error });
+        console.log('✅ Slug query result:', { data: slugData, error: slugError });
         
-        if (!slugData.error && slugData.data) return slugData.data as Game;
+        if (!slugError && slugData) return slugData as Game;
         
         // Try 2: Extract game number from slug and match by game_number + state
         // Slug format: "858-fiery-5s-game-no-858" -> game_number is "858"
@@ -100,19 +100,19 @@ export function GameDetail() {
           const gameNumber = gameNumberMatch[1];
           console.log('🔍 Trying game_number fallback:', { state: state.toUpperCase(), gameNumber });
           
-          const numberData = await supabase
+          const { data: numberData, error: numberError } = await supabase
             .from('games')
             .select('*')
             .eq('state', state.toUpperCase())
             .eq('game_number', gameNumber)
             .maybeSingle();
           
-          console.log('✅ Game number query result:', { data: numberData.data, error: numberData.error });
+          console.log('✅ Game number query result:', { data: numberData, error: numberError });
           
-          if (!numberData.error && numberData.data) return numberData.data as Game;
+          if (!numberError && numberData) return numberData as Game;
         }
         
-        console.warn('⚠️ Game not found by slug or game_number, trying ID fallback');
+        console.warn('⚠️ Game not found by slug or game_number');
       }
       
       // Fallback to ID-based lookup (backwards compatibility)
@@ -131,7 +131,7 @@ export function GameDetail() {
       }
       
       console.error('❌ No valid game identifier provided');
-      throw new Error('Game not found');
+      return null;
     },
   });
 
@@ -505,6 +505,16 @@ export function GameDetail() {
         </div>
       </Layout>
     );
+  }
+
+  // Debug log for troubleshooting
+  if (!game) {
+    console.error('❌ Game Detail Error:', {
+      game,
+      gameError,
+      params: { id, state, price, slug },
+      url: window.location.href
+    });
   }
 
   if (!game) {
