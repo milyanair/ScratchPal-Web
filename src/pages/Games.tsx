@@ -299,12 +299,12 @@ export function Games() {
             </div>
 
             {/* Price Filter Buttons */}
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-1.5 justify-center">
               {Object.entries(priceRanges).map(([key, { label }]) => (
                 <button
                   key={key}
                   onClick={() => setSelectedPriceRange(key)}
-                  className={`w-20 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     selectedPriceRange === key
                       ? 'gradient-games text-white'
                       : 'bg-gray-200 hover:bg-gray-300'
@@ -356,12 +356,12 @@ export function Games() {
           {/* Mobile: Price Buttons + Sort Buttons */}
           <div className="md:hidden flex flex-col gap-3">
             {/* Price Filter Buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {Object.entries(priceRanges).map(([key, { label }]) => (
                 <button
                   key={key}
                   onClick={() => setSelectedPriceRange(key)}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 px-2 py-2 rounded-lg text-xs font-medium transition-colors ${
                     selectedPriceRange === key
                       ? 'gradient-games text-white'
                       : 'bg-gray-200 hover:bg-gray-300'

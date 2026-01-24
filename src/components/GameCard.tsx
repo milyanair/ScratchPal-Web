@@ -24,8 +24,13 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
   const totalPrizes = game.total_top_prizes;
   const percentage = totalPrizes > 0 ? (prizesRemaining / totalPrizes) * 100 : 0;
 
-  // Format numbers with K suffix for values > 1000
+  // Format numbers with K suffix for values > 1000, M for millions
   const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      const millions = num / 1000000;
+      // Show 1 decimal place for values like 2.5M
+      return `${millions % 1 === 0 ? millions : millions.toFixed(1)}M`;
+    }
     if (num > 1000) {
       return `${Math.floor(num / 1000)}K`;
     }
@@ -222,7 +227,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
 
         {/* Top Prize Badge */}
         <div className="bg-green-500/90 backdrop-blur rounded-md px-2 py-1 text-white text-xs font-semibold flex items-center justify-center gap-1">
-          Top🎁${formatNumber(game.top_prize)}
+          🎁${formatNumber(game.top_prize)}
         </div>
 
         {/* Share a Win Badge */}
