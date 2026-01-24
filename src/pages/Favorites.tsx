@@ -1,3 +1,4 @@
+
 import { Layout } from '@/components/layout/Layout';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useAuth } from '@/hooks/useAuth';
@@ -327,86 +328,6 @@ export function Favorites() {
             <div>
               {activeTab === 'favorites' && currentView === 'overview' && (
                 <div className="space-y-6">
-                  {/* Games Widget */}
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold flex items-center gap-2">
-                        <Heart className="w-5 h-5 text-games" />
-                        Games
-                      </h3>
-                      {games.length > 4 && (
-                        <button
-                          onClick={() => setCurrentView('all-games')}
-                          className="text-teal hover:underline font-semibold flex items-center gap-1"
-                        >
-                          View All <ChevronRight className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    {games.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8">No favorite games yet</p>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {games.slice(0, 4).map((game) => (
-                          <GameCard
-                            key={game.id}
-                            game={game}
-                            isFavorited={true}
-                            onFavoriteChange={refetch}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Convos Widget */}
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-hot" />
-                        Convos
-                      </h3>
-                      {topics.length > 4 && (
-                        <button
-                          onClick={() => setCurrentView('all-convos')}
-                          className="text-teal hover:underline font-semibold flex items-center gap-1"
-                        >
-                          View All <ChevronRight className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    {topics.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8">No favorite conversations yet</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {topics.slice(0, 4).map((topic) => (
-                          <div
-                            key={topic.id}
-                            onClick={() => {
-                              if (topic.slug) {
-                                navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
-                              } else {
-                                navigate(`/topic/${topic.id}`);
-                              }
-                            }}
-                            className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs bg-white px-2 py-1 rounded">
-                                {topic.category}
-                              </span>
-                            </div>
-                            <h4 className="font-bold text-sm mb-1 line-clamp-1">{topic.title}</h4>
-                            <p className="text-gray-600 text-xs line-clamp-2">
-                              {topic.content}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* My Tickets Widget */}
                   <div className="bg-white rounded-lg shadow p-6">
                     <div className="mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
@@ -541,6 +462,85 @@ export function Favorites() {
                                 </div>
                               </div>
                             )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Games Widget */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold flex items-center gap-2">
+                        <Heart className="w-5 h-5 text-games" />
+                        Games
+                      </h3>
+                      {games.length > 4 && (
+                        <button
+                          onClick={() => setCurrentView('all-games')}
+                          className="text-teal hover:underline font-semibold flex items-center gap-1"
+                        >
+                          View All <ChevronRight className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    {games.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">No favorite games yet</p>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {games.slice(0, 4).map((game) => (
+                          <GameCard
+                            key={game.id}
+                            game={game}
+                            isFavorited={true}
+                            onFavoriteChange={refetch}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Convos Widget */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-hot" />
+                        Convos
+                      </h3>
+                      {topics.length > 4 && (
+                        <button
+                          onClick={() => setCurrentView('all-convos')}
+                          className="text-teal hover:underline font-semibold flex items-center gap-1"
+                        >
+                          View All <ChevronRight className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    {topics.length === 0 ? (
+                      <p className="text-gray-500 text-center py-8">No favorite conversations yet</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {topics.slice(0, 4).map((topic) => (
+                          <div
+                            key={topic.id}
+                            onClick={() => {
+                              if (topic.slug) {
+                                navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
+                              } else {
+                                navigate(`/topic/${topic.id}`);
+                              }
+                            }}
+                            className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs bg-white px-2 py-1 rounded">
+                                {topic.category}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-sm mb-1 line-clamp-1">{topic.title}</h4>
+                            <p className="text-gray-600 text-xs line-clamp-2">
+                              {topic.content}
+                            </p>
                           </div>
                         ))}
                       </div>
