@@ -860,7 +860,7 @@ export function Admin() {
 
         {/* IMPORTS TAB */}
         {activeMainTab === 'imports' && (
-          <div className="max-w-7xl mx-auto">
+          <div>
             <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
               <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
               <p className="opacity-90">Import game data from external CSV sources</p>
@@ -869,7 +869,7 @@ export function Admin() {
             {/* Import from URL */}
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
-              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <div className="flex gap-2 mb-4">
                 <input
                   type="text"
                   value={csvUrl}
@@ -1002,7 +1002,7 @@ export function Admin() {
               <p className="text-sm text-gray-600 mb-4">
                 If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Object.keys(columnMapping).map((dbField) => (
                   <div key={dbField}>
                     <label className="block text-sm font-medium mb-1">{dbField}</label>
@@ -1050,7 +1050,7 @@ export function Admin() {
             {/* Import Logs */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Import Logs</h3>
-              <div className="space-y-4 max-w-full overflow-x-auto">
+              <div className="space-y-4">
                 {importLogs.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No import logs yet</p>
                 ) : (
@@ -1069,7 +1069,7 @@ export function Admin() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2 break-all">{log.source_url}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Processed:</span>
                           <span className="ml-2 font-medium">{log.records_processed}</span>
