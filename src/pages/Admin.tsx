@@ -643,7 +643,391 @@ export function Admin() {
           </div>
         )}
         
-        {/* Other sections would be here but truncated for brevity */}
+        {/* GAMES - GAME MANAGER */}
+        {activeMainTab === 'games' && gamesSubTab === 'manager' && (
+          <div>
+            <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Game Manager</h2>
+              <p className="opacity-90">Search, filter, and manage all scratch-off games</p>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search games..."
+                    value={gameSearch}
+                    onChange={(e) => setGameSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                  />
+                </div>
+                <select
+                  value={gameStateFilter}
+                  onChange={(e) => setGameStateFilter(e.target.value)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="all">All States</option>
+                  {availableStates.map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+                <select
+                  value={gamePriceFilter}
+                  onChange={(e) => setGamePriceFilter(e.target.value)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="all">All Prices</option>
+                  <option value="1-5">$1-$5</option>
+                  <option value="6-10">$6-$10</option>
+                  <option value="11-20">$11-$20</option>
+                  <option value="21-50">$21-$50</option>
+                </select>
+                <select
+                  value={`${gameSortBy}-${gameSortOrder}`}
+                  onChange={(e) => {
+                    const [sortBy, sortOrder] = e.target.value.split('-');
+                    setGameSortBy(sortBy as any);
+                    setGameSortOrder(sortOrder as any);
+                  }}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="rank-desc">Rank (High to Low)</option>
+                  <option value="rank-asc">Rank (Low to High)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="price-asc">Price (Low to High)</option>
+                  <option value="price-desc">Price (High to Low)</option>
+                  <option value="prizes-desc">Prizes (High to Low)</option>
+                  <option value="prizes-asc">Prizes (Low to High)</option>
+                  <option value="converted-asc">Not Converted First</option>
+                  <option value="converted-desc">Converted First</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Showing {startIndex + 1}-{endIndex} of {totalGames} games</span>
+                <div className="flex gap-2 items-center">
+                  <span>Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="px-2 py-1 border rounded"
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Games Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Game</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Top Prize</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Prizes Left</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Rank</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Converted</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {paginatedGames.map(game => (
+                      <tr key={game.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{game.game_name}</div>
+                          <div className="text-sm text-gray-500">#{game.game_number}</div>
+                        </td>
+                        <td className="px-4 py-3">{game.state}</td>
+                        <td className="px-4 py-3">${game.price}</td>
+                        <td className="px-4 py-3">${game.top_prize?.toLocaleString()}</td>
+                        <td className="px-4 py-3">{game.top_prizes_remaining} / {game.total_top_prizes}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-teal/10 text-teal">
+                            #{game.rank}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            game.image_converted 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {game.image_converted ? 'Yes' : 'No'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => deleteGame(game.id)}
+                            className="text-red-600 hover:text-red-800 ml-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="px-4 py-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* GAMES - STATES */}
+        {activeMainTab === 'games' && gamesSubTab === 'states' && (
+          <AdminStates />
+        )}
+
+        {/* GAMES - RANKINGS */}
+        {activeMainTab === 'games' && gamesSubTab === 'rankings' && (
+          <div>
+            <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Ranking System</h2>
+              <p className="opacity-90">View ranking algorithm summary and trigger manual updates</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <button
+                onClick={handleUpdateRanks}
+                disabled={isUpdatingRanks}
+                className="gradient-teal text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+              >
+                {isUpdatingRanks ? 'Updating...' : 'Update All Rankings Now'}
+              </button>
+              <p className="text-sm text-gray-600 mt-2">
+                Manually trigger a ranking calculation for all games
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Price Group</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Total Games</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Avg Rank</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Top Rank</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {rankingSummary.map((row: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">{row.state}</td>
+                      <td className="px-4 py-3">{row.price_group}</td>
+                      <td className="px-4 py-3">{row.total_games}</td>
+                      <td className="px-4 py-3">{row.avg_rank?.toFixed(1) || 'N/A'}</td>
+                      <td className="px-4 py-3">{row.top_rank || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* IMPORTS TAB */}
+        {activeMainTab === 'imports' && (
+          <div>
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
+              <p className="opacity-90">Import game data from external CSV sources</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={csvUrl}
+                  onChange={(e) => setCsvUrl(e.target.value)}
+                  placeholder="Enter CSV URL..."
+                  className="flex-1 px-4 py-2 border rounded-lg"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                CSV will be imported in chunks of 200 rows. If there are more rows, you'll need to run the import again.
+              </p>
+            </div>
+
+            <div className="text-center py-12">
+              <p className="text-gray-500">Full import interface would be implemented here</p>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - SLIDER */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'slider' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Slider Messages</h2>
+              <p className="opacity-90">Manage rotating messages shown on the homepage</p>
+            </div>
+
+            <div className="grid gap-4">
+              {messages.map(message => (
+                <div key={message.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium">{message.message}</p>
+                    <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                      <span>Duration: {message.duration}ms</span>
+                      <span>Transition: {message.transition_type}</span>
+                      <span>Order: {message.display_order}</span>
+                      <span className={message.is_active ? 'text-green-600' : 'text-gray-400'}>
+                        {message.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteMessage(message.id)}
+                    className="text-red-600 hover:text-red-800 ml-4"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - ANNOUNCEMENTS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'announcements' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Send Announcement</h2>
+              <p className="opacity-90">Send notifications to all users</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Title</label>
+                <input
+                  type="text"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Enter announcement title..."
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Message</label>
+                <textarea
+                  value={announcementMessage}
+                  onChange={(e) => setAnnouncementMessage(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  rows={4}
+                  placeholder="Enter announcement message..."
+                />
+              </div>
+              <button
+                className="gradient-purple text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send to All Users
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - USERS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'users' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">User Management</h2>
+              <p className="opacity-90">View and manage user accounts</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Total Users: {usersData.length}</p>
+              <div className="mt-4 text-sm text-gray-500">
+                User management interface would be implemented here
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - REWARDS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'rewards' && (
+          <AdminRewards />
+        )}
+
+        {/* SCANNER - SCANS */}
+        {activeMainTab === 'scanner' && scannerSubTab === 'scans' && (
+          <div>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Recent Scans</h2>
+              <p className="opacity-90">View all user ticket scans</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {allScans.map((scan: any) => (
+                <SavedScanCard
+                  key={scan.id}
+                  scan={scan}
+                  games={allGames}
+                  onDelete={() => refetchScans()}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SCANNER - SETTINGS */}
+        {activeMainTab === 'scanner' && scannerSubTab === 'settings' && (
+          <div>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Scanner Settings</h2>
+              <p className="opacity-90">Configure AI scanner parameters</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600 mb-4">Scanner configuration settings</p>
+              <div className="space-y-4">
+                {scannerConfig.map((config: any) => (
+                  <div key={config.id} className="border-b pb-4">
+                    <div className="font-medium">{config.config_key}</div>
+                    <div className="text-sm text-gray-600">{config.config_value}</div>
+                    {config.description && (
+                      <div className="text-xs text-gray-500 mt-1">{config.description}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
