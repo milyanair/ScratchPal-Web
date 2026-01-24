@@ -433,21 +433,13 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
         }
         
-        // Create TWO lookup maps for existing games
-        // Map 1: By state + slug (primary lookup)
-        const existingBySlug = new Map();
-        // Map 2: By state + game_number + top_prize (unique constraint fallback)
-        const existingByUniqueKey = new Map();
-        
+        // Create lookup map for existing games (using state + slug as composite key)
+        const existingMap = new Map();
         existingGames?.forEach(game => {
-          // Primary lookup: state + slug
           if (game.slug) {
-            const slugKey = `${game.state}|${game.slug}`;
-            existingBySlug.set(slugKey, game);
+            const key = `${game.state}|${game.slug}`;
+            existingMap.set(key, game);
           }
-          // Fallback lookup: state + game_number + top_prize (matches DB unique constraint)
-          const uniqueKey = `${game.state}|${game.game_number}|${game.top_prize}`;
-          existingByUniqueKey.set(uniqueKey, game);
         });
         
         // **STEP 2: Separate batch into inserts and updates**
@@ -456,21 +448,9 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         
         batch.forEach(row => {
-          // Try BOTH lookup methods to find existing game
-          // Method 1: By slug (primary)
-          const slugKey = row.game_slug ? `${row.state_code}|${row.game_slug}` : null;
-          let existing = slugKey ? existingBySlug.get(slugKey) : null;
-          
-          // Method 2: By unique constraint (fallback - prevents duplicate key errors)
-          if (!existing) {
-            const uniqueKey = `${row.state_code}|${row.game_number}|${row.top_prize_amount}`;
-            existing = existingByUniqueKey.get(uniqueKey);
-            
-            // Debug log if found by fallback
-            if (existing) {
-              console.log(`  Found game by unique key fallback: ${row.game_name} (${row.game_number})`);
-            }
-          }
+          // Create key using state + game_slug
+          const key = row.game_slug ? `${row.state_code}|${row.game_slug}` : null;
+          const existing = key ? existingMap.get(key) : null;
           
           if (!existing) {
             // **NEW RECORD - INSERT**
