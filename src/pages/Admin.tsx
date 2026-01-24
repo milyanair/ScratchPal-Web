@@ -899,11 +899,21 @@ export function Admin() {
                       </button>
                       <button
                         onClick={async () => {
+                          if (!csvUrl || csvUrl.trim() === '') {
+                            toast.error('Please enter a CSV URL');
+                            return;
+                          }
                           setIsImporting(true);
                           setImportProgress('Starting import...');
                           try {
+                            console.log('Starting import with URL:', csvUrl);
+                            console.log('Offset:', importOffset);
                             const { data, error } = await supabase.functions.invoke('import-csv-data', {
-                              body: { csvUrl, offset: importOffset, columnMapping },
+                              body: { 
+                                csvUrl: csvUrl.trim(), 
+                                offset: importOffset, 
+                                columnMapping 
+                              },
                             });
                             if (error instanceof FunctionsHttpError) {
                               const errorText = await error.context.text();
@@ -929,7 +939,7 @@ export function Admin() {
                             setIsImporting(false);
                           }
                         }}
-                        disabled={isImporting || !csvUrl}
+                        disabled={isImporting || !csvUrl || csvUrl.trim() === ''}
                         className="flex-1 gradient-indigo text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
                       >
                         {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
