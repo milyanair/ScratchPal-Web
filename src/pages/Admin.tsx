@@ -88,10 +88,14 @@ export function Admin() {
   const [gameSearch, setGameSearch] = useState('');
   const [gameStateFilter, setGameStateFilter] = useState('all');
   const [gamePriceFilter, setGamePriceFilter] = useState('all');
-  const [gameSortBy, setGameSortBy] = useState<'rank' | 'name' | 'price' | 'prizes' | 'converted'>('rank');
+  const [gameSortBy, setGameSortBy] = useState<'rank' | 'name' | 'price' | 'prizes' | 'converted' | 'game' | 'state' | 'top_prize'>('rank');
   const [gameSortOrder, setGameSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  // Ranking System state
+  const [rankingSortBy, setRankingSortBy] = useState<'state' | 'price_group' | 'total_games' | 'avg_rank' | 'top_rank'>('state');
+  const [rankingSortOrder, setRankingSortOrder] = useState<'asc' | 'desc'>('asc');
 
   // User Management state
   const [userSearch, setUserSearch] = useState('');
@@ -348,10 +352,14 @@ export function Admin() {
 
       if (gameSortBy === 'rank') {
         compareValue = (b.rank || 0) - (a.rank || 0);
-      } else if (gameSortBy === 'name') {
+      } else if (gameSortBy === 'name' || gameSortBy === 'game') {
         compareValue = a.game_name.localeCompare(b.game_name);
+      } else if (gameSortBy === 'state') {
+        compareValue = a.state.localeCompare(b.state);
       } else if (gameSortBy === 'price') {
         compareValue = a.price - b.price;
+      } else if (gameSortBy === 'top_prize') {
+        compareValue = (a.top_prize || 0) - (b.top_prize || 0);
       } else if (gameSortBy === 'prizes') {
         compareValue = b.top_prizes_remaining - a.top_prizes_remaining;
       } else if (gameSortBy === 'converted') {
@@ -374,7 +382,7 @@ export function Admin() {
     setCurrentPage(1);
   }, [gameSearch, gameStateFilter, gamePriceFilter, gameSortBy, gameSortOrder]);
 
-  const { data: rankingSummary = [], refetch: refetchRankingSummary } = useQuery({
+  const { data: rankingSummaryRaw = [], refetch: refetchRankingSummary } = useQuery({
     queryKey: ['rankingSummary'],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_ranking_summary');
@@ -382,6 +390,28 @@ export function Admin() {
       return data;
     },
   });
+
+  const rankingSummary = useMemo(() => {
+    const sorted = [...rankingSummaryRaw];
+    sorted.sort((a, b) => {
+      let compareValue = 0;
+
+      if (rankingSortBy === 'state') {
+        compareValue = a.state.localeCompare(b.state);
+      } else if (rankingSortBy === 'price_group') {
+        compareValue = a.price_group.localeCompare(b.price_group);
+      } else if (rankingSortBy === 'total_games') {
+        compareValue = a.total_games - b.total_games;
+      } else if (rankingSortBy === 'avg_rank') {
+        compareValue = (a.avg_rank || 0) - (b.avg_rank || 0);
+      } else if (rankingSortBy === 'top_rank') {
+        compareValue = (a.top_rank || 0) - (b.top_rank || 0);
+      }
+
+      return rankingSortOrder === 'asc' ? compareValue : -compareValue;
+    });
+    return sorted;
+  }, [rankingSummaryRaw, rankingSortBy, rankingSortOrder]);
 
   const handleUpdateRanks = async () => {
     setIsUpdatingRanks(true);
@@ -794,13 +824,132 @@ export function Admin() {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Game</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Top Prize</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Prizes Left</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Rank</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold">Converted</th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'game') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('game');
+                            setGameSortOrder('asc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Game
+                          {gameSortBy === 'game' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'state') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('state');
+                            setGameSortOrder('asc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          State
+                          {gameSortBy === 'state' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'price') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('price');
+                            setGameSortOrder('asc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Price
+                          {gameSortBy === 'price' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'top_prize') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('top_prize');
+                            setGameSortOrder('desc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Top Prize
+                          {gameSortBy === 'top_prize' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'prizes') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('prizes');
+                            setGameSortOrder('desc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Prizes Left
+                          {gameSortBy === 'prizes' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'rank') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('rank');
+                            setGameSortOrder('desc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Rank
+                          {gameSortBy === 'rank' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        onClick={() => {
+                          if (gameSortBy === 'converted') {
+                            setGameSortOrder(gameSortOrder === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setGameSortBy('converted');
+                            setGameSortOrder('desc');
+                          }
+                        }}
+                        className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-1">
+                          Converted
+                          {gameSortBy === 'converted' && (
+                            <span className="text-teal">{gameSortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
                       <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -899,11 +1048,96 @@ export function Admin() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Price Group</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Total Games</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Avg Rank</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Top Rank</th>
+                    <th
+                      onClick={() => {
+                        if (rankingSortBy === 'state') {
+                          setRankingSortOrder(rankingSortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setRankingSortBy('state');
+                          setRankingSortOrder('asc');
+                        }
+                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        State
+                        {rankingSortBy === 'state' && (
+                          <span className="text-teal">{rankingSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => {
+                        if (rankingSortBy === 'price_group') {
+                          setRankingSortOrder(rankingSortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setRankingSortBy('price_group');
+                          setRankingSortOrder('asc');
+                        }
+                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        Price Group
+                        {rankingSortBy === 'price_group' && (
+                          <span className="text-teal">{rankingSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => {
+                        if (rankingSortBy === 'total_games') {
+                          setRankingSortOrder(rankingSortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setRankingSortBy('total_games');
+                          setRankingSortOrder('desc');
+                        }
+                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        Total Games
+                        {rankingSortBy === 'total_games' && (
+                          <span className="text-teal">{rankingSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => {
+                        if (rankingSortBy === 'avg_rank') {
+                          setRankingSortOrder(rankingSortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setRankingSortBy('avg_rank');
+                          setRankingSortOrder('desc');
+                        }
+                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        Avg Rank
+                        {rankingSortBy === 'avg_rank' && (
+                          <span className="text-teal">{rankingSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                    <th
+                      onClick={() => {
+                        if (rankingSortBy === 'top_rank') {
+                          setRankingSortOrder(rankingSortOrder === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setRankingSortBy('top_rank');
+                          setRankingSortOrder('desc');
+                        }
+                      }}
+                      className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-1">
+                        Top Rank
+                        {rankingSortBy === 'top_rank' && (
+                          <span className="text-teal">{rankingSortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
