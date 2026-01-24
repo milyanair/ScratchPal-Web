@@ -7,7 +7,7 @@ import { Favorite, Game, ForumTopic } from '@/types';
 import { useState, useEffect } from 'react';
 import { GameCard } from '@/components/GameCard';
 import { SavedScanCard } from '@/components/SavedScanCard';
-import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight } from 'lucide-react';
+import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight, ShoppingCart, Calendar, DollarSign, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePoints } from '@/hooks/usePoints';
 import { useUserColors } from '@/hooks/useUserColor';
@@ -45,6 +45,41 @@ export function Favorites() {
 
   const gameFavorites = favorites.filter(f => f.favorite_type === 'game');
   const convoFavorites = favorites.filter(f => f.favorite_type === 'topic');
+
+  // Get user's ticket purchases
+  const { data: purchases = [], refetch: refetchPurchases } = useQuery({
+    queryKey: ['purchases', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('purchases')
+        .select('*, games(*)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Calculate weekly stats (last 7 days)
+  const weeklyStats = purchases.reduce((acc, purchase) => {
+    const purchaseDate = new Date(purchase.created_at);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    if (purchaseDate >= sevenDaysAgo) {
+      acc.count += purchase.quantity;
+      acc.total += purchase.quantity * (purchase.games?.price || 0);
+    }
+    return acc;
+  }, { count: 0, total: 0 });
+
+  // Edit purchase state
+  const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+  const [editQuantity, setEditQuantity] = useState<number>(1);
+  const [editDateTime, setEditDateTime] = useState<string>('');
 
   // Get user profile to check if admin
   const { data: userProfile } = useQuery({
@@ -152,8 +187,69 @@ export function Favorites() {
   // Pull-to-refresh handler
   const handleRefresh = async () => {
     console.log('🔄 Pull to refresh triggered');
-    const promises = [refetch(), refetchScans()];
+    const promises = [refetch(), refetchScans(), refetchPurchases()];
     await Promise.all(promises);
+  };
+
+  // Handle edit purchase
+  const handleEditPurchase = async (purchaseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('purchases')
+        .update({
+          quantity: editQuantity,
+          created_at: editDateTime,
+        })
+        .eq('id', purchaseId);
+
+      if (error) throw error;
+
+      setEditingPurchaseId(null);
+      refetchPurchases();
+      // Use toast from sonner
+      const { toast } = await import('sonner');
+      toast.success('Purchase updated!');
+    } catch (error) {
+      console.error('Error updating purchase:', error);
+      const { toast } = await import('sonner');
+      toast.error('Failed to update purchase');
+    }
+  };
+
+  // Handle delete purchase
+  const handleDeletePurchase = async (purchaseId: string) => {
+    if (!confirm('Are you sure you want to delete this purchase record?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('purchases')
+        .delete()
+        .eq('id', purchaseId);
+
+      if (error) throw error;
+
+      refetchPurchases();
+      const { toast } = await import('sonner');
+      toast.success('Purchase deleted!');
+    } catch (error) {
+      console.error('Error deleting purchase:', error);
+      const { toast } = await import('sonner');
+      toast.error('Failed to delete purchase');
+    }
+  };
+
+  // Start editing a purchase
+  const startEdit = (purchase: any) => {
+    setEditingPurchaseId(purchase.id);
+    setEditQuantity(purchase.quantity);
+    // Format datetime for input
+    const date = new Date(purchase.created_at);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    setEditDateTime(`${year}-${month}-${day}T${hours}:${minutes}`);
   };
 
   return (
@@ -291,6 +387,144 @@ export function Favorites() {
                             <p className="text-gray-600 text-xs line-clamp-2">
                               {topic.content}
                             </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* My Tickets Widget */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="mb-4">
+                      <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
+                        <ShoppingCart className="w-5 h-5 text-teal" />
+                        My Tickets
+                      </h3>
+                      
+                      {/* Weekly Stats */}
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <ShoppingCart className="w-5 h-5 text-teal" />
+                            <span className="text-sm font-semibold text-gray-600">This Week</span>
+                          </div>
+                          <p className="text-3xl font-bold text-teal">{weeklyStats.count}</p>
+                          <p className="text-xs text-gray-500 mt-1">tickets purchased</p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-semibold text-gray-600">This Week</span>
+                          </div>
+                          <p className="text-3xl font-bold text-green-600">${weeklyStats.total.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500 mt-1">total spent</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {purchases.length === 0 ? (
+                      <div className="text-center py-8">
+                        <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 mb-3">No ticket purchases tracked yet</p>
+                        <p className="text-sm text-gray-400">Use the 🛒 button on game cards to track your purchases</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {purchases.slice(0, 10).map((purchase) => (
+                          <div
+                            key={purchase.id}
+                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                          >
+                            {editingPurchaseId === purchase.id ? (
+                              // Edit Mode
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Quantity</label>
+                                    <input
+                                      type="number"
+                                      value={editQuantity}
+                                      onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
+                                      min="1"
+                                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Date & Time</label>
+                                    <input
+                                      type="datetime-local"
+                                      value={editDateTime}
+                                      onChange={(e) => setEditDateTime(e.target.value)}
+                                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEditPurchase(purchase.id)}
+                                    className="flex-1 bg-teal text-white px-4 py-2 rounded-lg font-semibold hover:bg-teal/90 text-sm"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingPurchaseId(null)}
+                                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 text-sm"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              // View Mode
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-bold text-sm line-clamp-1">
+                                      {purchase.games?.game_name || 'Unknown Game'}
+                                    </h4>
+                                    <span className="text-xs bg-white px-2 py-0.5 rounded">
+                                      #{purchase.games?.game_number || 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      <span>{new Date(purchase.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <ShoppingCart className="w-3 h-3" />
+                                      <span>{purchase.quantity}x tickets</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <DollarSign className="w-3 h-3" />
+                                      <span className="font-semibold text-green-600">
+                                        ${purchase.games?.price || 0} ea
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <button
+                                    onClick={() => startEdit(purchase)}
+                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4 text-teal" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePurchase(purchase.id)}
+                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
