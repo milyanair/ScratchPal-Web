@@ -1,6 +1,6 @@
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { FunctionsHttpError } from '@supabase/supabase-js';
@@ -162,21 +162,21 @@ export function DataPanel() {
   });
 
   // Update current time every second
-  useState(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
     return () => clearInterval(timer);
-  });
+  }, []);
 
   // Sync schedule state with database
-  useState(() => {
+  useEffect(() => {
     if (importSchedule) {
       setScheduleEnabled(importSchedule.enabled);
       setScheduledTime(importSchedule.scheduled_time?.substring(0, 5) || '02:00');
       setScheduleAutoConvert(importSchedule.auto_convert_images || false);
     }
-  });
+  }, [importSchedule]);
 
   const uploadCsvFile = async (file: File) => {
     setIsUploadingCsv(true);
