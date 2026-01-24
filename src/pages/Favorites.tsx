@@ -76,6 +76,19 @@ export function Favorites() {
     return acc;
   }, { count: 0, total: 0 });
 
+  // Calculate monthly stats (last 30 days)
+  const monthlyStats = purchases.reduce((acc, purchase) => {
+    const purchaseDate = new Date(purchase.created_at);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    if (purchaseDate >= thirtyDaysAgo) {
+      acc.count += purchase.quantity;
+      acc.total += purchase.quantity * (purchase.games?.price || 0);
+    }
+    return acc;
+  }, { count: 0, total: 0 });
+
   // Edit purchase state
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(1);
@@ -401,24 +414,30 @@ export function Favorites() {
                         My Tickets
                       </h3>
                       
-                      {/* Weekly Stats */}
-                      <div className="grid grid-cols-2 gap-4 mb-6">
+                      {/* Weekly & Monthly Stats */}
+                      <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <ShoppingCart className="w-5 h-5 text-teal" />
                             <span className="text-sm font-semibold text-gray-600">This Week</span>
                           </div>
-                          <p className="text-3xl font-bold text-teal">{weeklyStats.count}</p>
-                          <p className="text-xs text-gray-500 mt-1">tickets purchased</p>
+                          <p className="text-3xl font-bold text-teal">🎫{weeklyStats.count}</p>
+                          <p className="text-xs text-gray-500 mt-1">purchased</p>
                         </div>
                         
                         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <DollarSign className="w-5 h-5 text-green-600" />
                             <span className="text-sm font-semibold text-gray-600">This Week</span>
                           </div>
-                          <p className="text-3xl font-bold text-green-600">${weeklyStats.total.toFixed(2)}</p>
+                          <p className="text-3xl font-bold text-green-600">${Math.floor(weeklyStats.total)}</p>
                           <p className="text-xs text-gray-500 mt-1">total spent</p>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">This Month</span>
+                          </div>
+                          <p className="text-2xl font-bold text-purple-600">🎫{monthlyStats.count} / ${Math.floor(monthlyStats.total)}</p>
+                          <p className="text-xs text-gray-500 mt-1">last 30 days</p>
                         </div>
                       </div>
                     </div>
