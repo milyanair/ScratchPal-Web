@@ -262,7 +262,9 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete, showA
                           onClick={() => {
                             haptics.medium();
                             handleClose();
-                            navigate(`/games/${match.game.id}`, {
+                            // Generate SEO-friendly URL
+                            const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                            navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`, {
                               state: { 
                                 returnToScan: scan.id,
                                 isSampleScan: scan.is_sample || false
@@ -310,7 +312,9 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete, showA
                             onClick={() => {
                               haptics.light();
                               handleClose();
-                              navigate(`/games/${match.game.id}`, {
+                              // Generate SEO-friendly URL
+                              const slug = match.game.slug || `${match.game.game_number}-${match.game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+                              navigate(`/games/${match.game.state.toLowerCase()}/${match.game.price}/${slug}`, {
                                 state: { 
                                   returnToScan: scan.id,
                                   isSampleScan: scan.is_sample || false

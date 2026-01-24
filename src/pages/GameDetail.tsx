@@ -492,7 +492,17 @@ export function GameDetail() {
   if (isGameLoading) {
     return (
       <Layout>
-        <div className="p-6 text-center">Loading...</div>
+        <div className="max-w-screen-xl mx-auto px-4 py-12">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <img
+              src="https://cdn-ai.onspace.ai/onspace/files/BRvymSnwsufTKGwX2WG8JC/SPLoop.gif"
+              alt="Loading..."
+              className="w-16 h-16"
+              style={{ imageRendering: 'crisp-edges' }}
+            />
+            <p className="text-gray-600 font-medium">Loading game details...</p>
+          </div>
+        </div>
       </Layout>
     );
   }

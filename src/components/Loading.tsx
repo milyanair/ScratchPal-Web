@@ -10,7 +10,7 @@ export function Loading({ message }: LoadingProps) {
         <img
           src="https://cdn-ai.onspace.ai/onspace/files/BRvymSnwsufTKGwX2WG8JC/SPLoop.gif"
           alt="Loading..."
-          className="w-18 h-18"
+          className="w-9 h-9"
           style={{ imageRendering: 'crisp-edges' }}
         />
         {/* Optional Message */}
