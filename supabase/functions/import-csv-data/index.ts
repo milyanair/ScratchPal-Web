@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
       console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (chunk rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
-        // **STEP 1: Check which records already exist using composite key (state_code, game_number, ticket_price, top_prize_amount)**
+        // **STEP 1: Check which records already exist using composite key (state + game_slug)**
         // Get unique states in this batch
         const statesInBatch = Array.from(new Set(batch.map(row => row.state_code)));
         
@@ -433,11 +433,13 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
         }
         
-        // Create lookup map for existing games (using DB field names: state, price, top_prize)
+        // Create lookup map for existing games (using state + slug as composite key)
         const existingMap = new Map();
         existingGames?.forEach(game => {
-          const key = `${game.state}|${game.game_number}|${game.price}|${game.top_prize}`;
-          existingMap.set(key, game);
+          if (game.slug) {
+            const key = `${game.state}|${game.slug}`;
+            existingMap.set(key, game);
+          }
         });
         
         // **STEP 2: Separate batch into inserts and updates**
@@ -446,9 +448,9 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         
         batch.forEach(row => {
-          // Create key using CSV column names mapped to DB fields
-          const key = `${row.state_code}|${row.game_number}|${row.ticket_price}|${row.top_prize_amount}`;
-          const existing = existingMap.get(key);
+          // Create key using state + game_slug
+          const key = row.game_slug ? `${row.state_code}|${row.game_slug}` : null;
+          const existing = key ? existingMap.get(key) : null;
           
           if (!existing) {
             // **NEW RECORD - INSERT**
