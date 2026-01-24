@@ -51,34 +51,22 @@ export function Admin() {
   const [isDragging, setIsDragging] = useState(false);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
-  // Column Mapping state
-  const [columnMapping, setColumnMapping] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('csv_column_mapping');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {
-      game_number: 'game_number',
-      game_name: 'game_name',
-      state: 'state_code',
-      price: 'ticket_price',
-      top_prize: 'top_prize_amount',
-      top_prizes_remaining: 'top_prizes_remaining',
-      total_top_prizes: 'top_prizes_total_original',
-      overall_odds: 'overall_odds',
-      start_date: 'game_added_date',
-      end_date: 'end_date',
-      image_url: 'image_url',
-      source: 'source',
-      source_url: 'source_url',
-    };
-  });
-  const [availableColumns, setAvailableColumns] = useState<string[]>([]);
-  const [isDetectingColumns, setIsDetectingColumns] = useState(false);
+  // Column Mapping state (removed but kept for backward compatibility with edge function)
+  const columnMapping = {
+    game_number: 'game_number',
+    game_name: 'game_name',
+    state: 'state_code',
+    price: 'ticket_price',
+    top_prize: 'top_prize_amount',
+    top_prizes_remaining: 'top_prizes_remaining',
+    total_top_prizes: 'top_prizes_total_original',
+    overall_odds: 'overall_odds',
+    start_date: 'game_added_date',
+    end_date: 'end_date',
+    image_url: 'image_url',
+    source: 'source',
+    source_url: 'source_url',
+  };
 
   // Game Manager state
   const [gameSearch, setGameSearch] = useState('');
@@ -862,8 +850,8 @@ export function Admin() {
         {activeMainTab === 'imports' && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
-              <p className="opacity-90">Import game data from external CSV sources</p>
+              <h2 className="text-2xl font-bold mb-2">CSV Import & Image Management</h2>
+              <p className="opacity-90">Import game data and manage game images</p>
             </div>
 
             {/* Two Column Layout for Desktop */}
@@ -873,78 +861,80 @@ export function Admin() {
                 {/* Import from URL */}
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
-                  <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                  <div className="space-y-3 mb-4">
                     <input
                       type="text"
                       value={csvUrl}
                       onChange={(e) => setCsvUrl(e.target.value)}
                       placeholder="Enter CSV URL..."
-                      className="flex-1 px-4 py-2 border rounded-lg"
+                      className="w-full px-4 py-2 border rounded-lg"
                     />
-                    <button
-                      onClick={async () => {
-                        setIsDownloadingCsv(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke('download-csv', {
-                            body: { url: csvUrl },
-                          });
-                          if (error instanceof FunctionsHttpError) {
-                            const errorText = await error.context.text();
-                            throw new Error(errorText);
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setIsDownloadingCsv(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke('download-csv', {
+                              body: { url: csvUrl },
+                            });
+                            if (error instanceof FunctionsHttpError) {
+                              const errorText = await error.context.text();
+                              throw new Error(errorText);
+                            }
+                            if (error) throw error;
+                            setUploadedCsvUrl(data.url);
+                            setCsvUrl(data.url);
+                            toast.success('CSV downloaded and ready to import');
+                          } catch (err: any) {
+                            console.error('Download error:', err);
+                            toast.error(err.message || 'Failed to download CSV');
+                          } finally {
+                            setIsDownloadingCsv(false);
                           }
-                          if (error) throw error;
-                          setUploadedCsvUrl(data.url);
-                          setCsvUrl(data.url);
-                          toast.success('CSV downloaded and ready to import');
-                        } catch (err: any) {
-                          console.error('Download error:', err);
-                          toast.error(err.message || 'Failed to download CSV');
-                        } finally {
-                          setIsDownloadingCsv(false);
-                        }
-                      }}
-                      disabled={isDownloadingCsv || !csvUrl}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {isDownloadingCsv ? 'Downloading...' : 'Download to Storage'}
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setIsImporting(true);
-                        setImportProgress('Starting import...');
-                        try {
-                          const { data, error } = await supabase.functions.invoke('import-csv-data', {
-                            body: { csvUrl, offset: importOffset, columnMapping },
-                          });
-                          if (error instanceof FunctionsHttpError) {
-                            const errorText = await error.context.text();
-                            throw new Error(errorText);
+                        }}
+                        disabled={isDownloadingCsv || !csvUrl}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                      >
+                        {isDownloadingCsv ? 'Downloading...' : 'Download to Storage'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setIsImporting(true);
+                          setImportProgress('Starting import...');
+                          try {
+                            const { data, error } = await supabase.functions.invoke('import-csv-data', {
+                              body: { csvUrl, offset: importOffset, columnMapping },
+                            });
+                            if (error instanceof FunctionsHttpError) {
+                              const errorText = await error.context.text();
+                              throw new Error(errorText);
+                            }
+                            if (error) throw error;
+                            setLastImportResult(data);
+                            setImportProgress(`Import complete: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
+                            if (data.has_more) {
+                              setImportOffset(data.next_offset);
+                              toast.success(`Imported ${data.processed_up_to}/${data.total_rows} rows. Click "Continue Import" to process remaining rows.`);
+                            } else {
+                              setImportOffset(0);
+                              toast.success('Import completed successfully!');
+                            }
+                            refetchGames();
+                            refetchImportLogs();
+                          } catch (err: any) {
+                            console.error('Import error:', err);
+                            setImportProgress(`Error: ${err.message}`);
+                            toast.error(err.message || 'Import failed');
+                          } finally {
+                            setIsImporting(false);
                           }
-                          if (error) throw error;
-                          setLastImportResult(data);
-                          setImportProgress(`Import complete: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
-                          if (data.has_more) {
-                            setImportOffset(data.next_offset);
-                            toast.success(`Imported ${data.processed_up_to}/${data.total_rows} rows. Click "Continue Import" to process remaining rows.`);
-                          } else {
-                            setImportOffset(0);
-                            toast.success('Import completed successfully!');
-                          }
-                          refetchGames();
-                          refetchImportLogs();
-                        } catch (err: any) {
-                          console.error('Import error:', err);
-                          setImportProgress(`Error: ${err.message}`);
-                          toast.error(err.message || 'Import failed');
-                        } finally {
-                          setIsImporting(false);
-                        }
-                      }}
-                      disabled={isImporting || !csvUrl}
-                      className="gradient-indigo text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
-                    >
-                      {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
-                    </button>
+                        }}
+                        disabled={isImporting || !csvUrl}
+                        className="flex-1 gradient-indigo text-white px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                      >
+                        {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
+                      </button>
+                    </div>
                   </div>
                   {importOffset > 0 && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -1078,99 +1068,129 @@ export function Admin() {
               </div>
             </div>
 
-            {/* Column Mapping - Full Width Below */}
+            {/* Image Management - Full Width Below */}
             <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold mb-4">Image Management</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Convert external game images to Supabase storage for faster loading and better reliability.
+              </p>
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Column Mapping (Optional)</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
-                  </p>
-                </div>
-                <button
-                  onClick={async () => {
-                    if (!csvUrl) {
-                      toast.error('Please enter a CSV URL first');
-                      return;
-                    }
-                    setIsDetectingColumns(true);
-                    try {
-                      const response = await fetch(csvUrl);
-                      const text = await response.text();
-                      const lines = text.split('\n');
-                      if (lines.length > 0) {
-                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-                        setAvailableColumns(headers);
-                        toast.success(`Detected ${headers.length} columns`);
+                  <button
+                    onClick={async () => {
+                      if (!confirm('This will convert all unconverted images using the edge function. Continue?')) return;
+                      setIsConvertingImages(true);
+                      setConversionProgress('Starting batch conversion...');
+                      try {
+                        const { data, error } = await supabase.functions.invoke('batch-convert-images', {
+                          body: { batchSize: 50 },
+                        });
+                        if (error instanceof FunctionsHttpError) {
+                          const errorText = await error.context.text();
+                          throw new Error(errorText);
+                        }
+                        if (error) throw error;
+                        setConversionProgress(`Conversion complete: ${data.converted} converted, ${data.failed} failed`);
+                        toast.success(`Converted ${data.converted} images!`);
+                        refetchGames();
+                      } catch (err: any) {
+                        console.error('Conversion error:', err);
+                        setConversionProgress(`Error: ${err.message}`);
+                        toast.error(err.message || 'Conversion failed');
+                      } finally {
+                        setIsConvertingImages(false);
                       }
-                    } catch (err: any) {
-                      console.error('Column detection error:', err);
-                      toast.error('Failed to detect columns');
-                    } finally {
-                      setIsDetectingColumns(false);
-                    }
-                  }}
-                  disabled={isDetectingColumns || !csvUrl}
-                  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg font-semibold disabled:opacity-50 text-sm"
-                >
-                  {isDetectingColumns ? 'Detecting...' : 'Auto-Detect Columns'}
-                </button>
-              </div>
-              {availableColumns.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-blue-800 font-medium mb-2">Detected Columns:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {availableColumns.map((col) => (
-                      <span key={col} className="inline-block bg-white px-3 py-1 rounded-full text-xs font-medium text-blue-700 border border-blue-200">
-                        {col}
-                      </span>
-                    ))}
-                  </div>
+                    }}
+                    disabled={isConvertingImages}
+                    className="gradient-teal text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+                  >
+                    {isConvertingImages ? 'Converting...' : 'Convert Images (Server)'}
+                  </button>
+                  {conversionProgress && (
+                    <p className="text-sm text-gray-600 mt-2">{conversionProgress}</p>
+                  )}
                 </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {Object.keys(columnMapping).map((dbField) => (
-                  <div key={dbField}>
-                    <label className="block text-sm font-medium mb-1">{dbField}</label>
-                    <input
-                      type="text"
-                      value={columnMapping[dbField]}
-                      onChange={(e) => {
-                        const newMapping = { ...columnMapping, [dbField]: e.target.value };
-                        setColumnMapping(newMapping);
-                        localStorage.setItem('csv_column_mapping', JSON.stringify(newMapping));
-                      }}
-                      placeholder={`CSV column for ${dbField}...`}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                    />
-                  </div>
-                ))}
+                <div className="border-t pt-4">
+                  <button
+                    onClick={async () => {
+                      if (!confirm('This will convert all unconverted images in your browser. Keep this tab open. Continue?')) return;
+                      setIsClientConverting(true);
+                      setClientConversionProgress('Starting client-side conversion...');
+                      setClientConversionStats({ converted: 0, failed: 0, total: 0 });
+                      
+                      try {
+                        const unconvertedGames = allGames.filter(g => !g.image_converted && g.image_url && !g.image_url.includes('supabase'));
+                        setClientConversionStats({ converted: 0, failed: 0, total: unconvertedGames.length });
+                        
+                        let converted = 0;
+                        let failed = 0;
+                        
+                        for (const game of unconvertedGames) {
+                          try {
+                            setClientConversionProgress(`Converting ${game.game_name} (${converted + failed + 1}/${unconvertedGames.length})...`);
+                            
+                            const response = await fetch(game.image_url);
+                            const blob = await response.blob();
+                            const filename = `game-images/${game.state}/${game.game_number}.jpg`;
+                            
+                            const { error: uploadError } = await supabase.storage
+                              .from('game-images')
+                              .upload(filename, blob, { contentType: 'image/jpeg', upsert: true });
+                            
+                            if (uploadError) throw uploadError;
+                            
+                            const { data: publicUrlData } = supabase.storage
+                              .from('game-images')
+                              .getPublicUrl(filename);
+                            
+                            const { error: updateError } = await supabase
+                              .from('games')
+                              .update({
+                                image_url: publicUrlData.publicUrl,
+                                image_converted: true,
+                                original_image_url: game.image_url,
+                              })
+                              .eq('id', game.id);
+                            
+                            if (updateError) throw updateError;
+                            converted++;
+                            setClientConversionStats({ converted, failed, total: unconvertedGames.length });
+                          } catch (err) {
+                            console.error(`Failed to convert ${game.game_name}:`, err);
+                            failed++;
+                            setClientConversionStats({ converted, failed, total: unconvertedGames.length });
+                          }
+                        }
+                        
+                        setClientConversionProgress(`Complete: ${converted} converted, ${failed} failed`);
+                        toast.success(`Converted ${converted} images!`);
+                        refetchGames();
+                      } catch (err: any) {
+                        console.error('Client conversion error:', err);
+                        setClientConversionProgress(`Error: ${err.message}`);
+                        toast.error(err.message || 'Conversion failed');
+                      } finally {
+                        setIsClientConverting(false);
+                      }
+                    }}
+                    disabled={isClientConverting}
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+                  >
+                    {isClientConverting ? 'Converting...' : 'Convert Images (Browser)'}
+                  </button>
+                  {clientConversionProgress && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">{clientConversionProgress}</p>
+                      {clientConversionStats.total > 0 && (
+                        <p className="text-sm text-gray-500">
+                          Progress: {clientConversionStats.converted + clientConversionStats.failed} / {clientConversionStats.total}
+                          {' '}(✓ {clientConversionStats.converted} ✗ {clientConversionStats.failed})
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <button
-                onClick={() => {
-                  const resetMapping = {
-                    game_number: 'game_number',
-                    game_name: 'game_name',
-                    state: 'state_code',
-                    price: 'ticket_price',
-                    top_prize: 'top_prize_amount',
-                    top_prizes_remaining: 'top_prizes_remaining',
-                    total_top_prizes: 'top_prizes_total_original',
-                    overall_odds: 'overall_odds',
-                    start_date: 'game_added_date',
-                    end_date: 'end_date',
-                    image_url: 'image_url',
-                    source: 'source',
-                    source_url: 'source_url',
-                  };
-                  setColumnMapping(resetMapping);
-                  localStorage.setItem('csv_column_mapping', JSON.stringify(resetMapping));
-                  toast.success('Column mapping reset to defaults');
-                }}
-                className="mt-4 text-sm text-indigo-600 hover:underline"
-              >
-                Reset to defaults
-              </button>
             </div>
           </div>
         )}
