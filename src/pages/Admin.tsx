@@ -866,138 +866,193 @@ export function Admin() {
               <p className="opacity-90">Import game data from external CSV sources</p>
             </div>
 
-            {/* Import from URL */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={csvUrl}
-                  onChange={(e) => setCsvUrl(e.target.value)}
-                  placeholder="Enter CSV URL..."
-                  className="flex-1 px-4 py-2 border rounded-lg"
-                />
-                <button
-                  onClick={async () => {
-                    setIsImporting(true);
-                    setImportProgress('Starting import...');
-                    try {
-                      const { data, error } = await supabase.functions.invoke('import-csv-data', {
-                        body: { csvUrl, offset: importOffset, columnMapping },
-                      });
-                      if (error instanceof FunctionsHttpError) {
-                        const errorText = await error.context.text();
-                        throw new Error(errorText);
-                      }
-                      if (error) throw error;
-                      setLastImportResult(data);
-                      setImportProgress(`Import complete: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
-                      if (data.has_more) {
-                        setImportOffset(data.next_offset);
-                        toast.success(`Imported ${data.processed_up_to}/${data.total_rows} rows. Click "Continue Import" to process remaining rows.`);
-                      } else {
-                        setImportOffset(0);
-                        toast.success('Import completed successfully!');
-                      }
-                      refetchGames();
-                      refetchImportLogs();
-                    } catch (err: any) {
-                      console.error('Import error:', err);
-                      setImportProgress(`Error: ${err.message}`);
-                      toast.error(err.message || 'Import failed');
-                    } finally {
-                      setIsImporting(false);
-                    }
-                  }}
-                  disabled={isImporting || !csvUrl}
-                  className="gradient-indigo text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
-                >
-                  {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
-                </button>
-              </div>
-              {importOffset > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Partial Import:</strong> {importOffset} rows already processed. Click "Continue Import" to process the next batch.
-                  </p>
-                  <button
-                    onClick={() => setImportOffset(0)}
-                    className="text-xs text-yellow-600 hover:underline mt-2"
-                  >
-                    Reset to start from beginning
-                  </button>
-                </div>
-              )}
-              {importProgress && (
-                <div className={`rounded-lg p-4 ${importProgress.includes('Error') ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
-                  <p className="text-sm">{importProgress}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Upload CSV File */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-4">Upload CSV File</h3>
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
-                }`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={async (e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  const file = e.dataTransfer.files[0];
-                  if (file && file.name.endsWith('.csv')) {
-                    await uploadCsvFile(file);
-                  } else {
-                    toast.error('Please upload a CSV file');
-                  }
-                }}
-              >
-                {isUploadingCsv ? (
-                  <p className="text-gray-600">Uploading...</p>
-                ) : (
-                  <>
-                    <p className="text-gray-600 mb-2">Drag and drop CSV file here, or</p>
+            {/* Two Column Layout for Desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* LEFT COLUMN - Import Controls */}
+              <div className="space-y-6">
+                {/* Import from URL */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
+                  <div className="flex flex-col sm:flex-row gap-2 mb-4">
                     <input
-                      type="file"
-                      accept=".csv"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadCsvFile(file);
-                      }}
-                      className="hidden"
-                      id="csv-upload"
+                      type="text"
+                      value={csvUrl}
+                      onChange={(e) => setCsvUrl(e.target.value)}
+                      placeholder="Enter CSV URL..."
+                      className="flex-1 px-4 py-2 border rounded-lg"
                     />
-                    <label
-                      htmlFor="csv-upload"
-                      className="inline-block gradient-indigo text-white px-4 py-2 rounded-lg font-semibold cursor-pointer"
+                    <button
+                      onClick={async () => {
+                        setIsImporting(true);
+                        setImportProgress('Starting import...');
+                        try {
+                          const { data, error } = await supabase.functions.invoke('import-csv-data', {
+                            body: { csvUrl, offset: importOffset, columnMapping },
+                          });
+                          if (error instanceof FunctionsHttpError) {
+                            const errorText = await error.context.text();
+                            throw new Error(errorText);
+                          }
+                          if (error) throw error;
+                          setLastImportResult(data);
+                          setImportProgress(`Import complete: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
+                          if (data.has_more) {
+                            setImportOffset(data.next_offset);
+                            toast.success(`Imported ${data.processed_up_to}/${data.total_rows} rows. Click "Continue Import" to process remaining rows.`);
+                          } else {
+                            setImportOffset(0);
+                            toast.success('Import completed successfully!');
+                          }
+                          refetchGames();
+                          refetchImportLogs();
+                        } catch (err: any) {
+                          console.error('Import error:', err);
+                          setImportProgress(`Error: ${err.message}`);
+                          toast.error(err.message || 'Import failed');
+                        } finally {
+                          setIsImporting(false);
+                        }
+                      }}
+                      disabled={isImporting || !csvUrl}
+                      className="gradient-indigo text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
                     >
-                      Browse Files
-                    </label>
-                  </>
-                )}
-              </div>
-              {uploadedCsvUrl && (
-                <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800 mb-2">✓ File uploaded successfully!</p>
-                  <p className="text-xs text-green-600 break-all mb-2">{uploadedCsvUrl}</p>
-                  <button
-                    onClick={() => setCsvUrl(uploadedCsvUrl)}
-                    className="text-sm text-green-600 hover:underline"
-                  >
-                    Use this file for import
-                  </button>
+                      {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
+                    </button>
+                  </div>
+                  {importOffset > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Partial Import:</strong> {importOffset} rows already processed. Click "Continue Import" to process the next batch.
+                      </p>
+                      <button
+                        onClick={() => setImportOffset(0)}
+                        className="text-xs text-yellow-600 hover:underline mt-2"
+                      >
+                        Reset to start from beginning
+                      </button>
+                    </div>
+                  )}
+                  {importProgress && (
+                    <div className={`rounded-lg p-4 ${importProgress.includes('Error') ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
+                      <p className="text-sm">{importProgress}</p>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Upload CSV File */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold mb-4">Upload CSV File</h3>
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      const file = e.dataTransfer.files[0];
+                      if (file && file.name.endsWith('.csv')) {
+                        await uploadCsvFile(file);
+                      } else {
+                        toast.error('Please upload a CSV file');
+                      }
+                    }}
+                  >
+                    {isUploadingCsv ? (
+                      <p className="text-gray-600">Uploading...</p>
+                    ) : (
+                      <>
+                        <p className="text-gray-600 mb-2">Drag and drop CSV file here, or</p>
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadCsvFile(file);
+                          }}
+                          className="hidden"
+                          id="csv-upload"
+                        />
+                        <label
+                          htmlFor="csv-upload"
+                          className="inline-block gradient-indigo text-white px-4 py-2 rounded-lg font-semibold cursor-pointer"
+                        >
+                          Browse Files
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  {uploadedCsvUrl && (
+                    <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-sm text-green-800 mb-2">✓ File uploaded successfully!</p>
+                      <p className="text-xs text-green-600 break-all mb-2">{uploadedCsvUrl}</p>
+                      <button
+                        onClick={() => setCsvUrl(uploadedCsvUrl)}
+                        className="text-sm text-green-600 hover:underline"
+                      >
+                        Use this file for import
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN - Import Logs */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">Recent Import Logs</h3>
+                <div className="space-y-4">
+                  {importLogs.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No import logs yet</p>
+                  ) : (
+                    importLogs.map((log: any) => (
+                      <div key={log.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            log.status === 'success' ? 'bg-green-100 text-green-800' :
+                            log.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {log.status}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(log.import_date).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2 break-all">{log.source_url}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">Processed:</span>
+                            <span className="ml-2 font-medium">{log.records_processed}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Inserted:</span>
+                            <span className="ml-2 font-medium text-green-600">{log.records_inserted}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Updated:</span>
+                            <span className="ml-2 font-medium text-blue-600">{log.records_updated}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Failed:</span>
+                            <span className="ml-2 font-medium text-red-600">{log.records_failed}</span>
+                          </div>
+                        </div>
+                        {log.error_message && (
+                          <p className="text-sm text-red-600 mt-2">{log.error_message}</p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Column Mapping */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            {/* Column Mapping - Full Width Below */}
+            <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Column Mapping (Optional)</h3>
               <p className="text-sm text-gray-600 mb-4">
                 If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
@@ -1045,55 +1100,6 @@ export function Admin() {
               >
                 Reset to defaults
               </button>
-            </div>
-
-            {/* Import Logs */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Recent Import Logs</h3>
-              <div className="space-y-4">
-                {importLogs.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No import logs yet</p>
-                ) : (
-                  importLogs.map((log: any) => (
-                    <div key={log.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          log.status === 'success' ? 'bg-green-100 text-green-800' :
-                          log.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {log.status}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(log.import_date).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2 break-all">{log.source_url}</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Processed:</span>
-                          <span className="ml-2 font-medium">{log.records_processed}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Inserted:</span>
-                          <span className="ml-2 font-medium text-green-600">{log.records_inserted}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Updated:</span>
-                          <span className="ml-2 font-medium text-blue-600">{log.records_updated}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Failed:</span>
-                          <span className="ml-2 font-medium text-red-600">{log.records_failed}</span>
-                        </div>
-                      </div>
-                      {log.error_message && (
-                        <p className="text-sm text-red-600 mt-2">{log.error_message}</p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </div>
         )}
