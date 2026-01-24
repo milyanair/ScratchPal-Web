@@ -38,6 +38,14 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     return 'from-red-700 to-red-800'; // Maroon red
   };
 
+  // Generate SEO-friendly slug
+  const getGameSlug = () => {
+    if (game.slug) return game.slug;
+    // Fallback: generate slug from game details
+    const slugName = game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return `${game.game_number}-${slugName}`;
+  };
+
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
     haptics.doubleTap(); // Haptic feedback for favorite
@@ -109,14 +117,6 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
       // On desktop, open in popup window
       window.open('https://play.scratchpal.com/topic/fb39a7fc-568b-4af6-9168-96328976b4be', '_blank', 'width=800,height=600,scrollbars=yes');
     }
-  };
-
-  // Generate SEO-friendly slug
-  const getGameSlug = () => {
-    if (game.slug) return game.slug;
-    // Fallback: generate slug from game details
-    const slugName = game.game_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return `${game.game_number}-${slugName}`;
   };
 
   return (
