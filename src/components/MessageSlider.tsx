@@ -8,6 +8,25 @@ export function MessageSlider() {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Get selected state from localStorage for anonymous users
+  const [anonymousState, setAnonymousState] = useState<string>(() => {
+    return localStorage.getItem('selected_state') || '';
+  });
+
+  // Listen for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAnonymousState(localStorage.getItem('selected_state') || '');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    // Also check on interval in case same-window updates don't trigger storage event
+    const interval = setInterval(handleStorageChange, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   const { data: messages = [] } = useQuery({
     queryKey: ['sliderMessages'],
     queryFn: async () => {
@@ -39,48 +58,51 @@ export function MessageSlider() {
     enabled: !!user,
   });
 
-  // Fetch state configuration for user's selected state
+  // Determine selected state (logged in user's pref or anonymous localStorage)
+  const selectedState = user ? userPrefs?.selected_state : anonymousState;
+
+  // Fetch state configuration for selected state
   const { data: stateConfig } = useQuery({
-    queryKey: ['stateConfig', userPrefs?.selected_state],
+    queryKey: ['stateConfig', selectedState],
     queryFn: async () => {
-      if (!userPrefs?.selected_state) return null;
+      if (!selectedState) return null;
       const { data, error } = await supabase
         .from('state_config')
         .select('*')
-        .eq('state_code', userPrefs.selected_state)
+        .eq('state_code', selectedState)
         .maybeSingle();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!userPrefs?.selected_state,
+    enabled: !!selectedState,
   });
 
-  // Fetch game count for user's selected state
+  // Fetch game count for selected state
   const { data: gameCount } = useQuery({
-    queryKey: ['gameCount', userPrefs?.selected_state],
+    queryKey: ['gameCount', selectedState],
     queryFn: async () => {
-      if (!userPrefs?.selected_state) return 0;
+      if (!selectedState) return 0;
       const { count, error } = await supabase
         .from('games')
         .select('*', { count: 'exact', head: true })
-        .eq('state', userPrefs.selected_state);
+        .eq('state', selectedState);
       
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!userPrefs?.selected_state,
+    enabled: !!selectedState,
   });
 
-  // Fetch first game source for user's selected state
+  // Fetch first game source for selected state
   const { data: gameSource } = useQuery({
-    queryKey: ['gameSource', userPrefs?.selected_state],
+    queryKey: ['gameSource', selectedState],
     queryFn: async () => {
-      if (!userPrefs?.selected_state) return null;
+      if (!selectedState) return null;
       const { data, error } = await supabase
         .from('games')
         .select('source, source_url')
-        .eq('state', userPrefs.selected_state)
+        .eq('state', selectedState)
         .not('source', 'is', null)
         .limit(1)
         .maybeSingle();
@@ -88,7 +110,7 @@ export function MessageSlider() {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: !!userPrefs?.selected_state,
+    enabled: !!selectedState,
   });
 
   // Fetch global statistics
@@ -140,8 +162,8 @@ export function MessageSlider() {
     
     let message = messages[currentIndex]?.message || '';
 
-    // User-specific tokens (only if user is logged in and has state selected)
-    if (userPrefs?.selected_state && stateConfig) {
+    // State-specific tokens (works for both logged in users and anonymous users with selected state)
+    if (selectedState && stateConfig) {
       message = message.replace(/\{scode\}/g, stateConfig.state_code || '');
       message = message.replace(/\{sname\}/g, stateConfig.state_name || '');
       message = message.replace(/\{icon\}/g, stateConfig.emoji || '');
@@ -161,7 +183,7 @@ export function MessageSlider() {
     }
 
     return message;
-  }, [messages, currentIndex, userPrefs, stateConfig, gameCount, gameSource, globalStats]);
+  }, [messages, currentIndex, selectedState, stateConfig, gameCount, gameSource, globalStats]);
 
   useEffect(() => {
     if (messages.length === 0) return;
