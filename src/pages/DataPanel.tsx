@@ -71,6 +71,10 @@ export function DataPanel() {
   const [scheduleAutoConvert, setScheduleAutoConvert] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Delete Games by State
+  const [selectedStateToDelete, setSelectedStateToDelete] = useState('');
+  const [isDeletingGames, setIsDeletingGames] = useState(false);
+
   // Backup state
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [isRestoringBackup, setIsRestoringBackup] = useState(false);
@@ -108,6 +112,12 @@ export function DataPanel() {
       return data;
     },
   });
+
+  // Get unique states from games
+  const availableStates = useMemo(() => {
+    const states = new Set(allGames.map(g => g.state));
+    return Array.from(states).sort();
+  }, [allGames]);
 
   const { data: importLogs = [], refetch: refetchImportLogs } = useQuery({
     queryKey: ['importLogs'],
@@ -466,6 +476,104 @@ export function DataPanel() {
               >
                 ▶️ Manually Trigger Import Now
               </button>
+            </div>
+
+            {/* Delete Games by State */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-bold mb-2">🗑️ Delete Games by State</h3>
+              <p className="text-sm opacity-90 mb-4">Permanently remove all game records for a selected state. This action cannot be undone.</p>
+              
+              <div className="bg-white/10 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Select State to Delete</label>
+                    <select
+                      value={selectedStateToDelete}
+                      onChange={(e) => setSelectedStateToDelete(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm"
+                    >
+                      <option value="">Choose a state...</option>
+                      {availableStates.map(state => {
+                        const count = allGames.filter(g => g.state === state).length;
+                        return (
+                          <option key={state} value={state}>
+                            {state} ({count} games)
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <button
+                      onClick={async () => {
+                        if (!selectedStateToDelete) {
+                          toast.error('Please select a state');
+                          return;
+                        }
+                        
+                        const gamesCount = allGames.filter(g => g.state === selectedStateToDelete).length;
+                        
+                        if (!confirm(`⚠️ DELETE ALL GAMES FOR ${selectedStateToDelete}?\n\nThis will permanently delete ${gamesCount} game records.\n\nThis action CANNOT be undone!\n\nType "DELETE" in the next prompt to confirm.`)) {
+                          return;
+                        }
+                        
+                        const confirmText = prompt(`Type "DELETE" to confirm deletion of all ${selectedStateToDelete} games:`);
+                        if (confirmText !== 'DELETE') {
+                          toast.error('Deletion cancelled - confirmation text did not match');
+                          return;
+                        }
+                        
+                        setIsDeletingGames(true);
+                        try {
+                          const { data, error } = await supabase.rpc('delete_games_by_state', {
+                            p_state: selectedStateToDelete,
+                          });
+                          
+                          if (error) throw error;
+                          
+                          toast.success(`Successfully deleted ${data} games from ${selectedStateToDelete}`);
+                          setSelectedStateToDelete('');
+                          refetchGames();
+                        } catch (error: any) {
+                          console.error('Delete error:', error);
+                          toast.error(error.message || 'Failed to delete games');
+                        } finally {
+                          setIsDeletingGames(false);
+                        }
+                      }}
+                      disabled={!selectedStateToDelete || isDeletingGames}
+                      className="w-full bg-white text-red-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                    >
+                      {isDeletingGames ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4" />
+                          Delete All Games
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                {selectedStateToDelete && (
+                  <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-300/30 rounded-lg text-sm">
+                    <div className="font-semibold mb-1">⚠️ Warning</div>
+                    <div className="opacity-90">
+                      You are about to delete {allGames.filter(g => g.state === selectedStateToDelete).length} game records from {selectedStateToDelete}. This will:
+                      <ul className="list-disc ml-5 mt-2 space-y-1">
+                        <li>Permanently remove all game data</li>
+                        <li>Delete associated images and records</li>
+                        <li>Cannot be undone without a backup restore</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Two-Column Layout */}
