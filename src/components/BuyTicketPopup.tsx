@@ -12,11 +12,7 @@ interface BuyTicketPopupProps {
 }
 
 const RANDOM_MESSAGES = [
-  'Did you 🛒 any 🎫s?',
-  'Oracle says you 🛒 a 🎫.',
-  '🛒 a 🎫?',
   'Bought a ticket?',
-  'Ticket🧚says you 🛒 🎫s.',
 ];
 
 export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPopupProps) {
@@ -59,7 +55,9 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     haptics.medium();
     const quantity = customQuantity ? parseInt(customQuantity, 10) : selectedQuantity;
     if (quantity > 0) {
@@ -68,7 +66,9 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     haptics.light();
     onClose();
   };
@@ -76,13 +76,23 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Popup Card */}
-      <div className="bg-white/20 backdrop-blur-xl rounded-2xl shadow-2xl max-w-sm w-full animate-scale-up border border-white/30">
+      <div 
+        className="bg-white/20 backdrop-blur-xl rounded-2xl shadow-2xl max-w-sm w-full animate-scale-up border border-white/30"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-500/90 to-teal-600/90 backdrop-blur-md text-white p-6 rounded-t-2xl relative border-b border-white/20">
           <button
-            onClick={handleCancel}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleCancel(e);
+            }}
             className="absolute top-4 right-4 p-1 hover:bg-white/20 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
@@ -102,7 +112,11 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
               {[1, 2, 3, 4].map((num) => (
                 <button
                   key={num}
-                  onClick={() => handleQuickSelect(num)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleQuickSelect(num);
+                  }}
                   className={`py-3 rounded-lg font-bold text-lg transition-all backdrop-blur-md border ${
                     selectedQuantity === num && !customQuantity
                       ? 'bg-teal-500/90 text-white shadow-lg scale-105 border-teal-400/50'
@@ -122,7 +136,7 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
                   inputMode="numeric"
                   value={customQuantity}
                   onChange={(e) => handleCustomChange(e.target.value)}
-                  placeholder="Other amount..."
+                  placeholder="Other"
                   className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center font-semibold text-lg text-gray-800 placeholder:text-gray-600 focus:border-teal-400 focus:bg-white/40 focus:outline-none transition-all"
                   maxLength={3}
                 />
@@ -146,14 +160,22 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={handleConfirm}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleConfirm(e);
+              }}
               disabled={selectedQuantity === 0 || (!customQuantity && selectedQuantity < 1)}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500/90 to-teal-600/90 backdrop-blur-md text-white rounded-lg font-semibold hover:from-teal-600/90 hover:to-teal-700/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-white/20"
             >
               Yes
             </button>
             <button
-              onClick={handleCancel}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleCancel(e);
+              }}
               className="flex-1 px-6 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 text-gray-800 rounded-lg font-semibold hover:bg-white/40 transition-all"
             >
               No
