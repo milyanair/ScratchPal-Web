@@ -1007,7 +1007,229 @@ export function GameDetail() {
         </div>
         )}
 
-        {/* SlideOver Layout (mobile only) - Remaining code stays the same */}
+        {/* SlideOver Layout (mobile only) */}
+        {gameLayout === 'slideover' && isMobile && (
+          <div className="relative h-screen">
+            {/* Main Content Area - Game Details */}
+            <div className="h-full overflow-y-auto pb-32">
+              {/* Back + Title */}
+              <div className="flex items-center gap-3 px-4 py-4 bg-white sticky top-0 z-10 border-b">
+                <button
+                  onClick={() => {
+                    haptics.light();
+                    if (fromStateGames) {
+                      navigate('/admin#state-games');
+                    } else {
+                      navigate(-1);
+                    }
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <h1 className="text-xl font-bold flex-1 truncate">{game.game_name}</h1>
+                <button
+                  onClick={toggleFavorite}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <Heart
+                    className={`w-6 h-6 ${
+                      isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400 stroke-red-500'
+                    }`}
+                    strokeWidth={isFavorited ? 0 : 2}
+                  />
+                </button>
+              </div>
+
+              <div className="px-4 space-y-6 pt-6">
+                {/* Game Info */}
+                <div className="bg-gray-200/50 backdrop-blur rounded-lg shadow p-4 space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-sm font-medium">#{game.game_number}</span>
+                    <span className="text-sm bg-teal/10 text-teal px-3 py-1 rounded-full">{game.state}</span>
+                    <div className={`w-11 h-11 rounded-full ${getRankColor(game.rank)} border-2 border-white shadow-md flex items-center justify-center`}>
+                      <Award className="w-4 h-4 text-white" />
+                      <span className="text-sm font-bold text-white">{game.rank}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <div className="text-sm text-gray-500">Ticket Price</div>
+                      <div className="text-xl font-bold text-green-600">${game.price}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Top Prize</div>
+                      <div className="text-xl font-bold text-teal">${game.top_prize.toLocaleString()}</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-sm text-gray-500">Prizes Remaining</div>
+                      <div className="text-lg font-bold">
+                        {game.top_prizes_remaining} / {game.total_top_prizes}
+                        <span className="text-sm font-normal text-gray-500 ml-2">({percentage}%)</span>
+                      </div>
+                    </div>
+                    {game.overall_odds && (
+                      <div className="col-span-2">
+                        <div className="text-sm text-gray-500">Overall Odds</div>
+                        <div className="text-lg font-bold">{game.overall_odds}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recent Convos */}
+                <div id="convos" className="bg-orange-500/40 backdrop-blur rounded-lg shadow p-4">
+                  <h2 className="text-lg font-bold mb-3">Recent Convos</h2>
+                  <div className="space-y-3 mb-4">
+                    {recentConvos.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No conversations yet</p>
+                    ) : (
+                      recentConvos.map((convo) => (
+                        <div key={convo.id} className="border-l-4 border-teal pl-3 py-2">
+                          <p className="text-sm whitespace-pre-line">{convo.content}</p>
+                          <p className="text-xs text-gray-500 mt-1">{new Date(convo.created_at).toLocaleDateString()}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <button onClick={() => navigate('/hot-topics')} className="text-sm text-teal font-medium hover:underline">
+                    View All →
+                  </button>
+                </div>
+
+                {/* Share Your Win Widget */}
+                <div className="bg-purple-500/40 backdrop-blur rounded-lg shadow p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Trophy className="w-5 h-5 text-wins" />
+                    <h2 className="text-lg font-bold">Share Your Win</h2>
+                  </div>
+                  
+                  {/* Step Progress */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${winStep >= 1 ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-600'}`}>1</div>
+                      <span className="text-xs mt-1 text-gray-600">Game</span>
+                    </div>
+                    <div className={`h-0.5 w-6 mx-1 ${winStep >= 2 ? 'bg-purple-600' : 'bg-gray-300'}`}></div>
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${winStep >= 2 ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-600'}`}>2</div>
+                      <span className="text-xs mt-1 text-gray-600">Amount</span>
+                    </div>
+                    <div className={`h-0.5 w-6 mx-1 ${winStep >= 3 ? 'bg-purple-600' : 'bg-gray-300'}`}></div>
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${winStep >= 3 ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-600'}`}>3</div>
+                      <span className="text-xs mt-1 text-gray-600">Location</span>
+                    </div>
+                    <div className={`h-0.5 w-6 mx-1 ${winStep >= 4 ? 'bg-purple-600' : 'bg-gray-300'}`}></div>
+                    <div className="flex flex-col items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${winStep >= 4 ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-600'}`}>4</div>
+                      <span className="text-xs mt-1 text-gray-600">Photo</span>
+                    </div>
+                  </div>
+                  
+                  {/* Steps */}
+                  {winStep === 2 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">How much did you win?</p>
+                      <input type="number" value={winAmount} onChange={(e) => setWinAmount(e.target.value)} placeholder="Enter win amount" className="w-full px-4 py-2 border rounded-lg mb-3" min="0" step="0.01" />
+                      <button onClick={() => setWinStep(3)} disabled={!winAmount} className="w-full gradient-wins text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50">
+                        Next
+                      </button>
+                    </div>
+                  )}
+
+                  {winStep === 3 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Where was this ticket purchased?</p>
+                      <input type="text" value={purchaseLocation} onChange={(e) => setPurchaseLocation(e.target.value)} placeholder="Store location" className="w-full px-4 py-2 border rounded-lg mb-3" />
+                      <div className="flex gap-2">
+                        <button onClick={() => setWinStep(2)} className="flex-1 px-4 py-2 border rounded-lg font-semibold">Back</button>
+                        <button onClick={() => setWinStep(4)} className="flex-1 gradient-wins text-white px-4 py-2 rounded-lg font-semibold">Next</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {winStep === 4 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-3">Share a photo (optional)</p>
+                      <label className="flex items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 text-gray-600 cursor-pointer hover:bg-gray-50 transition-colors mb-3">
+                        <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                        <Upload className="w-5 h-5" />
+                        <span className="text-sm font-medium">{isUploading ? 'Uploading...' : 'Upload Images'}</span>
+                      </label>
+                      {uploadedImages.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          {uploadedImages.map((url, idx) => (
+                            <div key={idx} className="relative group">
+                              <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-20 object-cover rounded-lg" />
+                              <button onClick={() => removeImage(url)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="bg-gray-50 rounded-lg p-2 mb-3 text-xs">
+                        <p><strong>Game:</strong> {game.game_name}</p>
+                        <p><strong>Amount:</strong> ${winAmount}</p>
+                        {purchaseLocation && <p><strong>From:</strong> {purchaseLocation}</p>}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setWinStep(3)} className="flex-1 px-4 py-2 border rounded-lg font-semibold">Back</button>
+                        <button onClick={handleSubmitWin} className="flex-1 gradient-wins text-white px-4 py-2 rounded-lg font-semibold">Submit Win 🎉</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Talk About It */}
+                <div className="bg-orange-500/50 backdrop-blur rounded-lg shadow p-4">
+                  <h2 className="text-lg font-bold mb-3">Talk About It</h2>
+                  <p className="text-sm text-gray-600 mb-2">Share your thoughts about this game</p>
+                  <textarea value={newConvoText} onChange={(e) => setNewConvoText(e.target.value)} className="w-full border rounded-lg p-3 mb-3 min-h-[80px]" placeholder="What do you think?" />
+                  <button onClick={handlePostConvo} className="w-full gradient-teal text-white py-2 rounded-lg font-semibold hover:opacity-90">Post</button>
+                </div>
+
+                {/* Source and Report Links */}
+                <div className="text-center space-y-2 pb-4">
+                  {game.source && game.source_url && (
+                    <a href={game.source_url} target="_blank" rel="noopener noreferrer" className="block text-teal hover:text-teal/80 font-semibold text-sm underline">
+                      Source: {game.source}
+                    </a>
+                  )}
+                  <button onClick={() => { haptics.light(); navigate('/hot-topics', { state: { presetCategory: 'Report a Problem', gameId: game.id, gameName: game.game_name, state: game.state } }); }} className="block w-full text-red-600 hover:text-red-700 font-semibold text-sm underline">
+                    Report a Problem
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* SlideOver Image Panel */}
+            <div
+              className={`fixed bottom-0 left-0 right-0 bg-white transition-all duration-300 ease-out z-20 ${
+                imageSlideState === 'peek' ? 'h-32' : 'h-[80vh]'
+              }`}
+              onTouchStart={handleSwipeStart}
+              onTouchMove={handleSwipeMove}
+              onTouchEnd={handleSwipeEnd}
+            >
+              {/* Drag Handle */}
+              <div className="w-full flex justify-center py-2 cursor-grab active:cursor-grabbing">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+              </div>
+
+              {/* Image Content */}
+              <div className="h-[calc(100%-20px)] overflow-hidden">
+                <img
+                  src={game.image_url || 'https://images.unsplash.com/photo-1633265486064-086b219458ec?w=600&h=900&fit=crop&q=80'}
+                  alt={game.game_name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
