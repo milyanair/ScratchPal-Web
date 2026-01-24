@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Zap, Megaphone, ScanLine, Trophy } from 'lucide-react';
+import { Zap, Megaphone, Heart, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { haptics } from '@/lib/haptics';
 
 const navItems = [
   { path: '/', label: 'Games', icon: Zap, gradient: 'gradient-games' },
   { path: '/hot-topics', label: 'Hot', icon: Megaphone, gradient: 'gradient-hot' },
-  { path: '/scan-tickets', label: 'Scan', icon: ScanLine, gradient: 'gradient-favs' },
+  { path: '/favorites', label: 'Favs', icon: Heart, gradient: 'gradient-favs' },
   { path: '/report-wins', label: 'Wins', icon: Trophy, gradient: 'gradient-wins' },
 ];
 
@@ -21,7 +21,7 @@ export function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-[100] pointer-events-auto" style={{ position: 'fixed' }}>
+    <nav className="fixed bottom-0 left-0 right-0 h-[60px] z-50">
       {/* Smile Curve Background - Lower in center, higher on sides */}
       <div 
         className="absolute inset-0 bg-white/80 backdrop-blur-md border-t border-gray-200"

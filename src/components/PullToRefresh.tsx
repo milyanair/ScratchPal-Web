@@ -22,7 +22,7 @@ export function PullToRefresh({ onRefresh, children, enabled = true }: PullToRef
   const opacity = Math.min(pullDistance / 80, 1);
 
   return (
-    <div className="relative min-h-0">
+    <div className="relative">
       {/* Pull-to-Refresh Indicator */}
       <div
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center overflow-hidden transition-all duration-200"
@@ -54,7 +54,7 @@ export function PullToRefresh({ onRefresh, children, enabled = true }: PullToRef
 
       {/* Content */}
       <div
-        className="transition-transform duration-200 will-change-transform"
+        className="transition-transform duration-200"
         style={{
           transform: `translateY(${isPulling || isRefreshing ? Math.min(pullDistance, 60) : 0}px)`,
         }}
