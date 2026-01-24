@@ -415,7 +415,7 @@ export function Favorites() {
                       </h3>
                       
                       {/* Weekly & Monthly Stats */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                         <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">This Week</span>
@@ -432,7 +432,7 @@ export function Favorites() {
                           <p className="text-xs text-gray-500 mt-1">total spent</p>
                         </div>
                         
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                        <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">This Month</span>
                           </div>
