@@ -883,6 +883,33 @@ export function Admin() {
                     />
                     <button
                       onClick={async () => {
+                        setIsDownloadingCsv(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke('download-csv', {
+                            body: { url: csvUrl },
+                          });
+                          if (error instanceof FunctionsHttpError) {
+                            const errorText = await error.context.text();
+                            throw new Error(errorText);
+                          }
+                          if (error) throw error;
+                          setUploadedCsvUrl(data.url);
+                          setCsvUrl(data.url);
+                          toast.success('CSV downloaded and ready to import');
+                        } catch (err: any) {
+                          console.error('Download error:', err);
+                          toast.error(err.message || 'Failed to download CSV');
+                        } finally {
+                          setIsDownloadingCsv(false);
+                        }
+                      }}
+                      disabled={isDownloadingCsv || !csvUrl}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
+                    >
+                      {isDownloadingCsv ? 'Downloading...' : 'Download to Storage'}
+                    </button>
+                    <button
+                      onClick={async () => {
                         setIsImporting(true);
                         setImportProgress('Starting import...');
                         try {
@@ -1053,10 +1080,54 @@ export function Admin() {
 
             {/* Column Mapping - Full Width Below */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Column Mapping (Optional)</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Column Mapping (Optional)</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!csvUrl) {
+                      toast.error('Please enter a CSV URL first');
+                      return;
+                    }
+                    setIsDetectingColumns(true);
+                    try {
+                      const response = await fetch(csvUrl);
+                      const text = await response.text();
+                      const lines = text.split('\n');
+                      if (lines.length > 0) {
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                        setAvailableColumns(headers);
+                        toast.success(`Detected ${headers.length} columns`);
+                      }
+                    } catch (err: any) {
+                      console.error('Column detection error:', err);
+                      toast.error('Failed to detect columns');
+                    } finally {
+                      setIsDetectingColumns(false);
+                    }
+                  }}
+                  disabled={isDetectingColumns || !csvUrl}
+                  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg font-semibold disabled:opacity-50 text-sm"
+                >
+                  {isDetectingColumns ? 'Detecting...' : 'Auto-Detect Columns'}
+                </button>
+              </div>
+              {availableColumns.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800 font-medium mb-2">Detected Columns:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableColumns.map((col) => (
+                      <span key={col} className="inline-block bg-white px-3 py-1 rounded-full text-xs font-medium text-blue-700 border border-blue-200">
+                        {col}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Object.keys(columnMapping).map((dbField) => (
                   <div key={dbField}>
