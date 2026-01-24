@@ -50,6 +50,9 @@ export function Admin() {
   const [isUploadingCsv, setIsUploadingCsv] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
+  const [batchInterval, setBatchInterval] = useState('00:15');
+  const [batchFrequency, setBatchFrequency] = useState(5);
+  const [isSequentialImporting, setIsSequentialImporting] = useState(false);
 
   // Column Mapping state
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>(() => {
@@ -1398,7 +1401,79 @@ export function Admin() {
                   <p className="text-sm opacity-90 mb-4">Import game data from CSV file URL. Processes 200 rows per run - for large files, click Import multiple times to continue. New games will be added, existing games (matching state + slug) will be updated.</p>
                   <div className="bg-white/10 rounded-lg p-4 mb-4">
                     <label className="block text-sm font-semibold mb-2">CSV File URL</label>
-                    <input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} placeholder="https://scratchpal.com/latest_game_data.csv" className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm" />
+                    <input type="text" value={csvUrl} onChange={(e) => setCsvUrl(e.target.value)} placeholder="https://scratchpal.com/latest_game_data.csv" className="w-full px-4 py-2 rounded-lg text-gray-800 border-none text-sm mb-3" />
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Interval (MM:SS)</label>
+                        <input
+                          type="text"
+                          value={batchInterval}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (/^\d{0,2}:\d{0,2}$/.test(val) || /^\d{0,2}$/.test(val)) {
+                              setBatchInterval(val);
+                            }
+                          }}
+                          onBlur={async () => {
+                            // Format and validate
+                            const parts = batchInterval.split(':');
+                            let minutes = 0;
+                            let seconds = 0;
+                            if (parts.length === 2) {
+                              minutes = parseInt(parts[0]) || 0;
+                              seconds = parseInt(parts[1]) || 0;
+                            } else if (parts.length === 1) {
+                              seconds = parseInt(parts[0]) || 0;
+                            }
+                            const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                            setBatchInterval(formatted);
+                            
+                            // Save to database
+                            try {
+                              await supabase.from('import_schedule').upsert({
+                                enabled: scheduleEnabled,
+                                csv_url: csvUrl,
+                                scheduled_time: scheduledTime + ':00',
+                                auto_convert_images: scheduleAutoConvert,
+                                batch_interval: `${minutes} minutes ${seconds} seconds`,
+                              });
+                            } catch (err) {
+                              console.error('Failed to save interval:', err);
+                            }
+                          }}
+                          placeholder="00:15"
+                          className="w-full px-3 py-2 rounded-lg text-gray-800 border-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Frequency (batches)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={batchFrequency}
+                          onChange={(e) => setBatchFrequency(parseInt(e.target.value) || 1)}
+                          onBlur={async () => {
+                            // Save to database
+                            try {
+                              await supabase.from('import_schedule').upsert({
+                                enabled: scheduleEnabled,
+                                csv_url: csvUrl,
+                                scheduled_time: scheduledTime + ':00',
+                                auto_convert_images: scheduleAutoConvert,
+                                batch_frequency: batchFrequency,
+                              });
+                            } catch (err) {
+                              console.error('Failed to save frequency:', err);
+                            }
+                          }}
+                          placeholder="5"
+                          className="w-full px-3 py-2 rounded-lg text-gray-800 border-none text-sm"
+                        />
+                      </div>
+                    </div>
+                    
                     <p className="text-xs opacity-75 mt-2">Expected columns: game_id, state_code, game_number, game_slug, game_name, ticket_price, image_url, top_prize_amount, top_prizes_total_original, game_added_date, start_date, end_date, source, source_url, top_prizes_claimed, top_prizes_remaining, last_updated</p>
                   </div>
                   
@@ -1435,8 +1510,104 @@ export function Admin() {
                     {isDownloadingCsv ? (<><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Downloading...</>) : (<>📥 Download to Storage First</>)}
                   </button>
                   
-                  <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV chunk...'); const currentOffset = importOffset; try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl, offset: currentOffset, columnMapping }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.has_more) { setImportOffset(data.next_offset); toast.success(`Chunk complete! Processed ${data.processed_up_to}/${data.total_rows} rows. ${data.total_rows - data.processed_up_to} remaining. Click Import again to continue.`); } else { setImportOffset(0); if (data.status === 'success') toast.success(`Import complete! All ${data.total_rows} rows processed.`); else if (data.status === 'partial') toast.warning(`Import complete with ${data.records_failed} failures`); else toast.error('Import failed'); } refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); setImportOffset(0); } finally { setIsImporting(false); } }} disabled={isImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
+                  <button onClick={async () => { if (!csvUrl.trim()) { toast.error('Please enter a CSV file URL'); return; } setIsImporting(true); setImportProgress('Downloading and processing CSV chunk...'); const currentOffset = importOffset; try { const { data, error } = await supabase.functions.invoke('import-csv-data', { body: { csvUrl, offset: currentOffset, columnMapping }, }); if (error) { if (error instanceof FunctionsHttpError) { const errorText = await error.context?.text(); throw new Error(errorText || error.message); } throw error; } setLastImportResult(data); setImportProgress(''); if (data.has_more) { setImportOffset(data.next_offset); toast.success(`Chunk complete! Processed ${data.processed_up_to}/${data.total_rows} rows. ${data.total_rows - data.processed_up_to} remaining. Click Import again to continue.`); } else { setImportOffset(0); if (data.status === 'success') toast.success(`Import complete! All ${data.total_rows} rows processed.`); else if (data.status === 'partial') toast.warning(`Import complete with ${data.records_failed} failures`); else toast.error('Import failed'); } refetchGames(); refetchRankingSummary(); refetchImportLogs(); } catch (error: any) { console.error('Import error:', error); setImportProgress(''); toast.error(error.message || 'Failed to import CSV'); setImportOffset(0); } finally { setIsImporting(false); } }} disabled={isImporting || isSequentialImporting} className="w-full bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mb-3">
                     {isImporting ? (<><div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full" />Importing...</>) : (<><Plus className="w-4 h-4" />{importOffset > 0 ? `Continue Import (from row ${importOffset + 1})` : 'Import CSV Data'}</>)}
+                  </button>
+                  
+                  <button onClick={async () => {
+                    if (!csvUrl.trim()) {
+                      toast.error('Please enter a CSV file URL');
+                      return;
+                    }
+                    
+                    // Parse interval
+                    const [minutes, seconds] = batchInterval.split(':').map(v => parseInt(v) || 0);
+                    const intervalMs = (minutes * 60 + seconds) * 1000;
+                    
+                    if (intervalMs < 5000) {
+                      toast.error('Interval must be at least 5 seconds');
+                      return;
+                    }
+                    
+                    if (batchFrequency < 1 || batchFrequency > 100) {
+                      toast.error('Frequency must be between 1 and 100');
+                      return;
+                    }
+                    
+                    setIsSequentialImporting(true);
+                    setImportProgress(`Starting sequential import: ${batchFrequency} batches, ${minutes}m ${seconds}s interval...`);
+                    
+                    let currentOffset = importOffset;
+                    let totalInserted = 0;
+                    let totalUpdated = 0;
+                    let batchesCompleted = 0;
+                    
+                    try {
+                      for (let i = 0; i < batchFrequency; i++) {
+                        setImportProgress(`Batch ${i + 1}/${batchFrequency}: Processing from row ${currentOffset + 1}...`);
+                        
+                        const { data, error } = await supabase.functions.invoke('import-csv-data', {
+                          body: { csvUrl, offset: currentOffset, columnMapping },
+                        });
+                        
+                        if (error) {
+                          if (error instanceof FunctionsHttpError) {
+                            const errorText = await error.context?.text();
+                            throw new Error(errorText || error.message);
+                          }
+                          throw error;
+                        }
+                        
+                        totalInserted += data.records_inserted || 0;
+                        totalUpdated += data.records_updated || 0;
+                        batchesCompleted++;
+                        setLastImportResult(data);
+                        
+                        if (data.has_more) {
+                          currentOffset = data.next_offset;
+                          setImportOffset(currentOffset);
+                          
+                          // Wait before next batch (unless it's the last one)
+                          if (i < batchFrequency - 1) {
+                            setImportProgress(`Batch ${i + 1} complete. Waiting ${minutes}m ${seconds}s before next batch...`);
+                            await new Promise(resolve => setTimeout(resolve, intervalMs));
+                          }
+                        } else {
+                          // No more data to import
+                          setImportOffset(0);
+                          setImportProgress('');
+                          toast.success(`Sequential import complete! ${batchesCompleted} batches processed. Total: +${totalInserted} inserted, ↻${totalUpdated} updated`);
+                          break;
+                        }
+                      }
+                      
+                      // Completed all batches but more data remains
+                      if (currentOffset > importOffset) {
+                        setImportProgress('');
+                        toast.success(`Sequential import complete! ${batchesCompleted} batches processed. Total: +${totalInserted} inserted, ↻${totalUpdated} updated. More data remains - run again to continue.`);
+                      }
+                      
+                      refetchGames();
+                      refetchRankingSummary();
+                      refetchImportLogs();
+                    } catch (error: any) {
+                      console.error('Sequential import error:', error);
+                      setImportProgress('');
+                      toast.error(`Sequential import failed at batch ${batchesCompleted + 1}: ${error.message}`);
+                    } finally {
+                      setIsSequentialImporting(false);
+                    }
+                  }} disabled={isImporting || isSequentialImporting} className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
+                    {isSequentialImporting ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                        Sequential Import Running...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Import CSV in Sequence ({batchFrequency}x)
+                      </>
+                    )}
                   </button>
                   {importProgress && (<div className="mt-4 p-3 bg-white/20 rounded-lg text-sm">{importProgress}</div>)}
                   {lastImportResult && (<div className="mt-4 bg-white/10 rounded-lg p-4"><h4 className="font-semibold text-sm mb-2">Last Import Results</h4>{lastImportResult.total_rows && (<div className="mb-3 p-2 bg-white/20 rounded text-xs"><div className="font-semibold">Progress: {lastImportResult.processed_up_to}/{lastImportResult.total_rows} rows</div><div className="w-full bg-white/20 rounded-full h-2 mt-1"><div className="bg-white h-2 rounded-full" style={{ width: `${(lastImportResult.processed_up_to / lastImportResult.total_rows) * 100}%` }}></div></div>{lastImportResult.has_more && (<div className="mt-1 text-yellow-300 font-semibold">⚠️ {lastImportResult.total_rows - lastImportResult.processed_up_to} rows remaining - click Import again</div>)}</div>)}<div className="grid grid-cols-2 gap-3 text-xs"><div><div className="opacity-75">Processed</div><div className="text-xl font-bold">{lastImportResult.records_processed}</div></div><div><div className="opacity-75">Inserted</div><div className="text-xl font-bold text-green-300">{lastImportResult.records_inserted}</div></div><div><div className="opacity-75">Updated</div><div className="text-xl font-bold text-blue-300">{lastImportResult.records_updated}</div></div><div><div className="opacity-75">Failed</div><div className="text-xl font-bold text-red-300">{lastImportResult.records_failed}</div></div></div>{lastImportResult.details?.failed?.length > 0 && (<div className="mt-3 p-3 bg-red-500/20 rounded text-xs"><div className="font-semibold mb-1">Errors:</div><div className="space-y-1 max-h-32 overflow-y-auto">{lastImportResult.details.failed.slice(0, 5).map((fail: any, idx: number) => (<div key={idx}>Row {fail.row}: {fail.error}</div>))}{lastImportResult.details.failed.length > 5 && (<div className="opacity-75">...and {lastImportResult.details.failed.length - 5} more</div>)}</div></div>)}</div>)}
