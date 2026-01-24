@@ -643,7 +643,601 @@ export function Admin() {
           </div>
         )}
         
-        {/* Other sections would be here but truncated for brevity */}
+        {/* GAMES - GAME MANAGER */}
+        {activeMainTab === 'games' && gamesSubTab === 'manager' && (
+          <div>
+            <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Game Manager</h2>
+              <p className="opacity-90">Search, filter, and manage all scratch-off games</p>
+            </div>
+
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search games..."
+                    value={gameSearch}
+                    onChange={(e) => setGameSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                  />
+                </div>
+                <select
+                  value={gameStateFilter}
+                  onChange={(e) => setGameStateFilter(e.target.value)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="all">All States</option>
+                  {availableStates.map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+                <select
+                  value={gamePriceFilter}
+                  onChange={(e) => setGamePriceFilter(e.target.value)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="all">All Prices</option>
+                  <option value="1-5">$1-$5</option>
+                  <option value="6-10">$6-$10</option>
+                  <option value="11-20">$11-$20</option>
+                  <option value="21-50">$21-$50</option>
+                </select>
+                <select
+                  value={`${gameSortBy}-${gameSortOrder}`}
+                  onChange={(e) => {
+                    const [sortBy, sortOrder] = e.target.value.split('-');
+                    setGameSortBy(sortBy as any);
+                    setGameSortOrder(sortOrder as any);
+                  }}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  <option value="rank-desc">Rank (High to Low)</option>
+                  <option value="rank-asc">Rank (Low to High)</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="price-asc">Price (Low to High)</option>
+                  <option value="price-desc">Price (High to Low)</option>
+                  <option value="prizes-desc">Prizes (High to Low)</option>
+                  <option value="prizes-asc">Prizes (Low to High)</option>
+                  <option value="converted-asc">Not Converted First</option>
+                  <option value="converted-desc">Converted First</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Showing {startIndex + 1}-{endIndex} of {totalGames} games</span>
+                <div className="flex gap-2 items-center">
+                  <span>Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="px-2 py-1 border rounded"
+                  >
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Games Table */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Game</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Top Prize</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Prizes Left</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Rank</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold">Converted</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {paginatedGames.map(game => (
+                      <tr key={game.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{game.game_name}</div>
+                          <div className="text-sm text-gray-500">#{game.game_number}</div>
+                        </td>
+                        <td className="px-4 py-3">{game.state}</td>
+                        <td className="px-4 py-3">${game.price}</td>
+                        <td className="px-4 py-3">${game.top_prize?.toLocaleString()}</td>
+                        <td className="px-4 py-3">{game.top_prizes_remaining} / {game.total_top_prizes}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-teal/10 text-teal">
+                            #{game.rank}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            game.image_converted 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {game.image_converted ? 'Yes' : 'No'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => deleteGame(game.id)}
+                            className="text-red-600 hover:text-red-800 ml-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-6">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="px-4 py-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* GAMES - STATES */}
+        {activeMainTab === 'games' && gamesSubTab === 'states' && (
+          <AdminStates />
+        )}
+
+        {/* GAMES - RANKINGS */}
+        {activeMainTab === 'games' && gamesSubTab === 'rankings' && (
+          <div>
+            <div className="bg-gradient-to-r from-teal to-cyan-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Ranking System</h2>
+              <p className="opacity-90">View ranking algorithm summary and trigger manual updates</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <button
+                onClick={handleUpdateRanks}
+                disabled={isUpdatingRanks}
+                className="gradient-teal text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+              >
+                {isUpdatingRanks ? 'Updating...' : 'Update All Rankings Now'}
+              </button>
+              <p className="text-sm text-gray-600 mt-2">
+                Manually trigger a ranking calculation for all games
+              </p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">State</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Price Group</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Total Games</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Avg Rank</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold">Top Rank</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {rankingSummary.map((row: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">{row.state}</td>
+                      <td className="px-4 py-3">{row.price_group}</td>
+                      <td className="px-4 py-3">{row.total_games}</td>
+                      <td className="px-4 py-3">{row.avg_rank?.toFixed(1) || 'N/A'}</td>
+                      <td className="px-4 py-3">{row.top_rank || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* IMPORTS TAB */}
+        {activeMainTab === 'imports' && (
+          <div>
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">CSV Import</h2>
+              <p className="opacity-90">Import game data from external CSV sources</p>
+            </div>
+
+            {/* Import from URL */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Import from URL</h3>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={csvUrl}
+                  onChange={(e) => setCsvUrl(e.target.value)}
+                  placeholder="Enter CSV URL..."
+                  className="flex-1 px-4 py-2 border rounded-lg"
+                />
+                <button
+                  onClick={async () => {
+                    setIsImporting(true);
+                    setImportProgress('Starting import...');
+                    try {
+                      const { data, error } = await supabase.functions.invoke('import-csv-data', {
+                        body: { csvUrl, offset: importOffset, columnMapping },
+                      });
+                      if (error instanceof FunctionsHttpError) {
+                        const errorText = await error.context.text();
+                        throw new Error(errorText);
+                      }
+                      if (error) throw error;
+                      setLastImportResult(data);
+                      setImportProgress(`Import complete: ${data.records_inserted} inserted, ${data.records_updated} updated, ${data.records_failed} failed`);
+                      if (data.has_more) {
+                        setImportOffset(data.next_offset);
+                        toast.success(`Imported ${data.processed_up_to}/${data.total_rows} rows. Click "Continue Import" to process remaining rows.`);
+                      } else {
+                        setImportOffset(0);
+                        toast.success('Import completed successfully!');
+                      }
+                      refetchGames();
+                      refetchImportLogs();
+                    } catch (err: any) {
+                      console.error('Import error:', err);
+                      setImportProgress(`Error: ${err.message}`);
+                      toast.error(err.message || 'Import failed');
+                    } finally {
+                      setIsImporting(false);
+                    }
+                  }}
+                  disabled={isImporting || !csvUrl}
+                  className="gradient-indigo text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isImporting ? 'Importing...' : importOffset > 0 ? 'Continue Import' : 'Start Import'}
+                </button>
+              </div>
+              {importOffset > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Partial Import:</strong> {importOffset} rows already processed. Click "Continue Import" to process the next batch.
+                  </p>
+                  <button
+                    onClick={() => setImportOffset(0)}
+                    className="text-xs text-yellow-600 hover:underline mt-2"
+                  >
+                    Reset to start from beginning
+                  </button>
+                </div>
+              )}
+              {importProgress && (
+                <div className={`rounded-lg p-4 ${importProgress.includes('Error') ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
+                  <p className="text-sm">{importProgress}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Upload CSV File */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Upload CSV File</h3>
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const file = e.dataTransfer.files[0];
+                  if (file && file.name.endsWith('.csv')) {
+                    await uploadCsvFile(file);
+                  } else {
+                    toast.error('Please upload a CSV file');
+                  }
+                }}
+              >
+                {isUploadingCsv ? (
+                  <p className="text-gray-600">Uploading...</p>
+                ) : (
+                  <>
+                    <p className="text-gray-600 mb-2">Drag and drop CSV file here, or</p>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadCsvFile(file);
+                      }}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label
+                      htmlFor="csv-upload"
+                      className="inline-block gradient-indigo text-white px-4 py-2 rounded-lg font-semibold cursor-pointer"
+                    >
+                      Browse Files
+                    </label>
+                  </>
+                )}
+              </div>
+              {uploadedCsvUrl && (
+                <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-green-800 mb-2">✓ File uploaded successfully!</p>
+                  <p className="text-xs text-green-600 break-all mb-2">{uploadedCsvUrl}</p>
+                  <button
+                    onClick={() => setCsvUrl(uploadedCsvUrl)}
+                    className="text-sm text-green-600 hover:underline"
+                  >
+                    Use this file for import
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Column Mapping */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Column Mapping (Optional)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                If your CSV uses different column names, map them to the expected fields. Leave blank to use default column detection.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Object.keys(columnMapping).map((dbField) => (
+                  <div key={dbField}>
+                    <label className="block text-sm font-medium mb-1">{dbField}</label>
+                    <input
+                      type="text"
+                      value={columnMapping[dbField]}
+                      onChange={(e) => {
+                        const newMapping = { ...columnMapping, [dbField]: e.target.value };
+                        setColumnMapping(newMapping);
+                        localStorage.setItem('csv_column_mapping', JSON.stringify(newMapping));
+                      }}
+                      placeholder={`CSV column for ${dbField}...`}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  const resetMapping = {
+                    game_number: 'game_number',
+                    game_name: 'game_name',
+                    state: 'state_code',
+                    price: 'ticket_price',
+                    top_prize: 'top_prize_amount',
+                    top_prizes_remaining: 'top_prizes_remaining',
+                    total_top_prizes: 'top_prizes_total_original',
+                    overall_odds: 'overall_odds',
+                    start_date: 'game_added_date',
+                    end_date: 'end_date',
+                    image_url: 'image_url',
+                    source: 'source',
+                    source_url: 'source_url',
+                  };
+                  setColumnMapping(resetMapping);
+                  localStorage.setItem('csv_column_mapping', JSON.stringify(resetMapping));
+                  toast.success('Column mapping reset to defaults');
+                }}
+                className="mt-4 text-sm text-indigo-600 hover:underline"
+              >
+                Reset to defaults
+              </button>
+            </div>
+
+            {/* Import Logs */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold mb-4">Recent Import Logs</h3>
+              <div className="space-y-4">
+                {importLogs.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No import logs yet</p>
+                ) : (
+                  importLogs.map((log: any) => (
+                    <div key={log.id} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          log.status === 'success' ? 'bg-green-100 text-green-800' :
+                          log.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {log.status}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {new Date(log.import_date).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2 break-all">{log.source_url}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">Processed:</span>
+                          <span className="ml-2 font-medium">{log.records_processed}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Inserted:</span>
+                          <span className="ml-2 font-medium text-green-600">{log.records_inserted}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Updated:</span>
+                          <span className="ml-2 font-medium text-blue-600">{log.records_updated}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Failed:</span>
+                          <span className="ml-2 font-medium text-red-600">{log.records_failed}</span>
+                        </div>
+                      </div>
+                      {log.error_message && (
+                        <p className="text-sm text-red-600 mt-2">{log.error_message}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - SLIDER */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'slider' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Slider Messages</h2>
+              <p className="opacity-90">Manage rotating messages shown on the homepage</p>
+            </div>
+
+            <div className="grid gap-4">
+              {messages.map(message => (
+                <div key={message.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium">{message.message}</p>
+                    <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                      <span>Duration: {message.duration}ms</span>
+                      <span>Transition: {message.transition_type}</span>
+                      <span>Order: {message.display_order}</span>
+                      <span className={message.is_active ? 'text-green-600' : 'text-gray-400'}>
+                        {message.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => deleteMessage(message.id)}
+                    className="text-red-600 hover:text-red-800 ml-4"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - ANNOUNCEMENTS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'announcements' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Send Announcement</h2>
+              <p className="opacity-90">Send notifications to all users</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Title</label>
+                <input
+                  type="text"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  placeholder="Enter announcement title..."
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Message</label>
+                <textarea
+                  value={announcementMessage}
+                  onChange={(e) => setAnnouncementMessage(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  rows={4}
+                  placeholder="Enter announcement message..."
+                />
+              </div>
+              <button
+                className="gradient-purple text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send to All Users
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - USERS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'users' && (
+          <div>
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">User Management</h2>
+              <p className="opacity-90">View and manage user accounts</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Total Users: {usersData.length}</p>
+              <div className="mt-4 text-sm text-gray-500">
+                User management interface would be implemented here
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MEMBER SERVICES - REWARDS */}
+        {activeMainTab === 'member-services' && memberServicesSubTab === 'rewards' && (
+          <AdminRewards />
+        )}
+
+        {/* SCANNER - SCANS */}
+        {activeMainTab === 'scanner' && scannerSubTab === 'scans' && (
+          <div>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Recent Scans</h2>
+              <p className="opacity-90">View all user ticket scans</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {allScans.map((scan: any) => (
+                <SavedScanCard
+                  key={scan.id}
+                  scan={scan}
+                  games={allGames}
+                  onDelete={() => refetchScans()}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SCANNER - SETTINGS */}
+        {activeMainTab === 'scanner' && scannerSubTab === 'settings' && (
+          <div>
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Scanner Settings</h2>
+              <p className="opacity-90">Configure AI scanner parameters</p>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600 mb-4">Scanner configuration settings</p>
+              <div className="space-y-4">
+                {scannerConfig.map((config: any) => (
+                  <div key={config.id} className="border-b pb-4">
+                    <div className="font-medium">{config.config_key}</div>
+                    <div className="text-sm text-gray-600">{config.config_value}</div>
+                    {config.description && (
+                      <div className="text-xs text-gray-500 mt-1">{config.description}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

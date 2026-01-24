@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
       console.log(`Processing batch ${Math.floor(batchStart / BATCH_SIZE) + 1}/${Math.ceil(rowsToProcess.length / BATCH_SIZE)} (chunk rows ${batchStart + 1}-${batchEnd})...`);
       
       try {
-        // **STEP 1: Check which records already exist using composite key (state_code, game_number, ticket_price, top_prize_amount)**
+        // **STEP 1: Check which records already exist using composite key (state + game_slug)**
         // Get unique states in this batch
         const statesInBatch = Array.from(new Set(batch.map(row => row.state_code)));
         
@@ -433,11 +433,21 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to fetch existing games: ${fetchError.message}`);
         }
         
-        // Create lookup map for existing games (using DB field names: state, price, top_prize)
-        const existingMap = new Map();
+        // Create TWO lookup maps for existing games
+        // Map 1: By state + slug (primary lookup)
+        const existingBySlug = new Map();
+        // Map 2: By state + game_number + top_prize (unique constraint fallback)
+        const existingByUniqueKey = new Map();
+        
         existingGames?.forEach(game => {
-          const key = `${game.state}|${game.game_number}|${game.price}|${game.top_prize}`;
-          existingMap.set(key, game);
+          // Primary lookup: state + slug
+          if (game.slug) {
+            const slugKey = `${game.state}|${game.slug}`;
+            existingBySlug.set(slugKey, game);
+          }
+          // Fallback lookup: state + game_number + top_prize (matches DB unique constraint)
+          const uniqueKey = `${game.state}|${game.game_number}|${game.top_prize}`;
+          existingByUniqueKey.set(uniqueKey, game);
         });
         
         // **STEP 2: Separate batch into inserts and updates**
@@ -446,9 +456,21 @@ Deno.serve(async (req) => {
         const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
         
         batch.forEach(row => {
-          // Create key using CSV column names mapped to DB fields
-          const key = `${row.state_code}|${row.game_number}|${row.ticket_price}|${row.top_prize_amount}`;
-          const existing = existingMap.get(key);
+          // Try BOTH lookup methods to find existing game
+          // Method 1: By slug (primary)
+          const slugKey = row.game_slug ? `${row.state_code}|${row.game_slug}` : null;
+          let existing = slugKey ? existingBySlug.get(slugKey) : null;
+          
+          // Method 2: By unique constraint (fallback - prevents duplicate key errors)
+          if (!existing) {
+            const uniqueKey = `${row.state_code}|${row.game_number}|${row.top_prize_amount}`;
+            existing = existingByUniqueKey.get(uniqueKey);
+            
+            // Debug log if found by fallback
+            if (existing) {
+              console.log(`  Found game by unique key fallback: ${row.game_name} (${row.game_number})`);
+            }
+          }
           
           if (!existing) {
             // **NEW RECORD - INSERT**
