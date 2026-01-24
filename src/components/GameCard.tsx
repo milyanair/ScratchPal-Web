@@ -255,7 +255,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         isOpen={showBuyPopup}
         onClose={() => setShowBuyPopup(false)}
         onConfirm={handleBuyConfirm}
-        gameName={game.game_name}
+        game={game}
       />
     </div>
   );

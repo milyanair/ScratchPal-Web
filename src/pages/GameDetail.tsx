@@ -1461,7 +1461,7 @@ export function GameDetail() {
           isOpen={showBuyPopup}
           onClose={() => setShowBuyPopup(false)}
           onConfirm={handleBuyConfirm}
-          gameName={game.game_name}
+          game={game}
         />
       </div>
     </Layout>

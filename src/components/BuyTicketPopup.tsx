@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
+import { Game } from '@/types';
 
 interface BuyTicketPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (quantity: number) => void;
-  gameName: string;
+  game: Game;
 }
 
 const RANDOM_MESSAGES = [
@@ -18,7 +19,7 @@ const RANDOM_MESSAGES = [
   'Ticket🧚says you 🛒 🎫s.',
 ];
 
-export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTicketPopupProps) {
+export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPopupProps) {
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
   const [customQuantity, setCustomQuantity] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -76,14 +77,16 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTick
             <X className="w-5 h-5" />
           </button>
           <h2 className="text-2xl font-bold text-center pr-8">{message}</h2>
-          <p className="text-sm text-center mt-2 opacity-90 truncate">{gameName}</p>
+          <p className="text-sm text-center mt-2 opacity-90 truncate">
+            {game.state}-${game.price}-{game.game_number}-{game.game_name}
+          </p>
         </div>
 
         {/* Body */}
         <div className="p-6 space-y-6">
           {/* Quick Select Buttons */}
           <div>
-            <p className="text-sm text-gray-600 mb-3 text-center">🎫s</p>
+            <p className="text-sm text-gray-600 mb-3 text-center">How many 🎫s?</p>
             <div className="grid grid-cols-4 gap-3 mb-3">
               {[1, 2, 3, 4].map((num) => (
                 <button
@@ -122,17 +125,17 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTick
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={handleCancel}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-            >
-              No
-            </button>
-            <button
               onClick={handleConfirm}
               disabled={selectedQuantity === 0 || (!customQuantity && selectedQuantity < 1)}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
             >
               Yes
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+            >
+              No
             </button>
           </div>
         </div>
