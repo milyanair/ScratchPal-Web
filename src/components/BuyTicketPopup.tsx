@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 
@@ -32,8 +33,6 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTick
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleQuickSelect = (quantity: number) => {
     haptics.light();
     setSelectedQuantity(quantity);
@@ -62,7 +61,9 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTick
     onClose();
   };
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in">
       {/* Popup Card */}
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full animate-scale-up">
@@ -162,6 +163,7 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, gameName }: BuyTick
           animation: scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
