@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { StateConfig } from '@/types';
@@ -9,8 +9,6 @@ export function AdminStates() {
   const [editingState, setEditingState] = useState<StateConfig | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewState, setIsNewState] = useState(false);
-  const [sortBy, setSortBy] = useState<'display_order' | 'state_code' | 'state_name' | 'country' | 'games'>('display_order');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: stateConfigs = [], refetch: refetchStates } = useQuery({
     queryKey: ['adminStateConfigs'],
@@ -46,30 +44,6 @@ export function AdminStates() {
   const getGameCount = (stateCode: string) => {
     return gameCountByState.find(s => s.state === stateCode)?.count || 0;
   };
-
-  const sortedStateConfigs = useMemo(() => {
-    const sorted = [...stateConfigs];
-    sorted.sort((a, b) => {
-      let compareValue = 0;
-
-      if (sortBy === 'display_order') {
-        compareValue = a.display_order - b.display_order;
-      } else if (sortBy === 'state_code') {
-        compareValue = a.state_code.localeCompare(b.state_code);
-      } else if (sortBy === 'state_name') {
-        compareValue = a.state_name.localeCompare(b.state_name);
-      } else if (sortBy === 'country') {
-        compareValue = a.country.localeCompare(b.country);
-      } else if (sortBy === 'games') {
-        const aCount = getGameCount(a.state_code);
-        const bCount = getGameCount(b.state_code);
-        compareValue = aCount - bCount;
-      }
-
-      return sortOrder === 'asc' ? compareValue : -compareValue;
-    });
-    return sorted;
-  }, [stateConfigs, sortBy, sortOrder, gameCountByState]);
 
   const handleOpenNew = () => {
     setEditingState({
@@ -206,110 +180,25 @@ export function AdminStates() {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th
-                onClick={() => {
-                  if (sortBy === 'display_order') {
-                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                  } else {
-                    setSortBy('display_order');
-                    setSortOrder('asc');
-                  }
-                }}
-                className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Display Order
-                  {sortBy === 'display_order' && (
-                    <span className="text-teal">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
-              <th
-                onClick={() => {
-                  if (sortBy === 'state_code') {
-                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                  } else {
-                    setSortBy('state_code');
-                    setSortOrder('asc');
-                  }
-                }}
-                className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  State Code
-                  {sortBy === 'state_code' && (
-                    <span className="text-teal">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
-              <th
-                onClick={() => {
-                  if (sortBy === 'state_name') {
-                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                  } else {
-                    setSortBy('state_name');
-                    setSortOrder('asc');
-                  }
-                }}
-                className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  State Name
-                  {sortBy === 'state_name' && (
-                    <span className="text-teal">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
-              <th
-                onClick={() => {
-                  if (sortBy === 'country') {
-                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                  } else {
-                    setSortBy('country');
-                    setSortOrder('asc');
-                  }
-                }}
-                className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-1">
-                  Country
-                  {sortBy === 'country' && (
-                    <span className="text-teal">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Display Order</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">State Code</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">State Name</th>
+              <th className="px-4 py-3 text-left text-sm font-semibold">Country</th>
               <th className="px-4 py-3 text-left text-sm font-semibold">Icon</th>
-              <th
-                onClick={() => {
-                  if (sortBy === 'games') {
-                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-                  } else {
-                    setSortBy('games');
-                    setSortOrder('desc');
-                  }
-                }}
-                className="px-4 py-3 text-center text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center justify-center gap-1">
-                  Games
-                  {sortBy === 'games' && (
-                    <span className="text-teal">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </th>
+              <th className="px-4 py-3 text-center text-sm font-semibold">Games</th>
               <th className="px-4 py-3 text-center text-sm font-semibold">Visible</th>
               <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {sortedStateConfigs.length === 0 ? (
+            {stateConfigs.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                   No states configured yet
                 </td>
               </tr>
             ) : (
-              sortedStateConfigs.map((state) => {
+              stateConfigs.map((state) => {
                 const gameCount = getGameCount(state.state_code);
                 const isVisible = gameCount > 0;
 

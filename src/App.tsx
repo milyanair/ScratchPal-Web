@@ -141,7 +141,6 @@ import { Favorites } from '@/pages/Favorites';
 import { ReportWins } from '@/pages/ReportWins';
 import { Profile } from '@/pages/Profile';
 import { Admin } from '@/pages/Admin';
-import { DataPanel } from '@/pages/DataPanel';
 import { ScanTickets } from '@/pages/ScanTickets';
 import { Donate } from '@/pages/Donate';
 import { OAuthCallback } from '@/pages/OAuthCallback';
@@ -300,7 +299,6 @@ function AppRoutes() {
         <Route path="/report-wins" element={<ReportWins />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<Admin />} />
-        <Route path="/data-panel" element={<DataPanel />} />
         <Route path="/scan-tickets" element={<ScanTickets />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/sitemap" element={<Sitemap />} />
