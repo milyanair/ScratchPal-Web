@@ -338,7 +338,11 @@ export function GameDetail() {
     }
   }, [location]);
 
-  const handleBuyClick = () => {
+  const handleBuyClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     haptics.light();
     
     if (!user) {
@@ -349,12 +353,13 @@ export function GameDetail() {
     setShowBuyPopup(true);
   };
 
-  const handleBuyConfirm = async (quantity: number) => {
+  const handleBuyConfirm = async (quantity: number, purchaseDate?: Date) => {
     try {
       await supabase.from('purchases').insert({
         user_id: user!.id,
         game_id: game!.id,
         quantity,
+        created_at: purchaseDate?.toISOString() || new Date().toISOString(),
       });
       
       toast.success(`Tracked ${quantity} ticket${quantity > 1 ? 's' : ''} purchased! 🎫`);
@@ -705,7 +710,7 @@ export function GameDetail() {
                     <span className="text-sm font-bold text-white">{game.rank}</span>
                   </div>
                   <button
-                    onClick={handleBuyClick}
+                    onClick={(e) => handleBuyClick(e)}
                     className="p-2 rounded-lg bg-teal-500/80 hover:bg-teal-600/80 transition-colors"
                   >
                     <ShoppingCart className="w-5 h-5 text-white" />
@@ -1378,7 +1383,12 @@ export function GameDetail() {
               
               {/* Buy Button - positioned below first arrow */}
               <button
-                onClick={handleBuyClick}
+                onClick={(e) => handleBuyClick(e)}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleBuyClick();
+                }}
                 className="absolute left-4 z-10 p-2 rounded-lg bg-teal-500/80 hover:bg-teal-600/80 backdrop-blur transition-colors"
                 style={{ top: '95px' }}
               >

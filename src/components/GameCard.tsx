@@ -106,6 +106,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
   };
 
   const handleBuyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     haptics.light();
     
@@ -122,12 +123,13 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
     setShowBuyPopup(true);
   };
 
-  const handleBuyConfirm = async (quantity: number) => {
+  const handleBuyConfirm = async (quantity: number, purchaseDate?: Date) => {
     try {
       await supabase.from('purchases').insert({
         user_id: user!.id,
         game_id: game.id,
         quantity,
+        created_at: purchaseDate?.toISOString() || new Date().toISOString(),
       });
       
       toast.success(`Tracked ${quantity} ticket${quantity > 1 ? 's' : ''} purchased! 🎫`);

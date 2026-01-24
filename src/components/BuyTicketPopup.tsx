@@ -7,7 +7,7 @@ import { Game } from '@/types';
 interface BuyTicketPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (quantity: number) => void;
+  onConfirm: (quantity: number, purchaseDate?: Date) => void;
   game: Game;
 }
 
@@ -23,6 +23,7 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
   const [customQuantity, setCustomQuantity] = useState<string>('');
   const [message, setMessage] = useState<string>('');
+  const [purchaseDateTime, setPurchaseDateTime] = useState<string>('');
 
   // Select random message on mount
   useEffect(() => {
@@ -31,6 +32,15 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
       setMessage(randomMessage);
       setSelectedQuantity(1);
       setCustomQuantity('');
+      
+      // Set current date/time in datetime-local format
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      setPurchaseDateTime(`${year}-${month}-${day}T${hours}:${minutes}`);
     }
   }, [isOpen]);
 
@@ -53,7 +63,8 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
     haptics.medium();
     const quantity = customQuantity ? parseInt(customQuantity, 10) : selectedQuantity;
     if (quantity > 0) {
-      onConfirm(quantity);
+      const selectedDate = purchaseDateTime ? new Date(purchaseDateTime) : new Date();
+      onConfirm(quantity, selectedDate);
     }
   };
 
@@ -86,7 +97,7 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
         <div className="p-6 space-y-6 bg-white/10 backdrop-blur-lg rounded-b-2xl">
           {/* Quick Select Buttons */}
           <div>
-            <p className="text-sm text-gray-600 mb-3 text-center">How many 🎫s?</p>
+            <p className="text-sm text-white font-medium mb-3 text-center">How many tickets did you buy?</p>
             <div className="grid grid-cols-4 gap-3 mb-3">
               {[1, 2, 3, 4].map((num) => (
                 <button
@@ -103,22 +114,32 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
               ))}
             </div>
 
-            {/* Custom Input */}
-            <div className="relative">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={customQuantity}
-                onChange={(e) => handleCustomChange(e.target.value)}
-                placeholder="Other amount..."
-                className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center font-semibold text-lg text-gray-800 placeholder:text-gray-600 focus:border-teal-400 focus:bg-white/40 focus:outline-none transition-all"
-                maxLength={3}
-              />
-              {customQuantity && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-500 font-bold">
-                  ✓
-                </div>
-              )}
+            {/* Custom Input and Date/Time Selector Row */}
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={customQuantity}
+                  onChange={(e) => handleCustomChange(e.target.value)}
+                  placeholder="Other amount..."
+                  className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center font-semibold text-lg text-gray-800 placeholder:text-gray-600 focus:border-teal-400 focus:bg-white/40 focus:outline-none transition-all"
+                  maxLength={3}
+                />
+                {customQuantity && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-500 font-bold">
+                    ✓
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <input
+                  type="datetime-local"
+                  value={purchaseDateTime}
+                  onChange={(e) => setPurchaseDateTime(e.target.value)}
+                  className="w-36 px-3 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg font-semibold text-sm text-gray-800 focus:border-teal-400 focus:bg-white/40 focus:outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
 
