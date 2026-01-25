@@ -423,7 +423,7 @@ export function Games() {
 
         {/* Games Grid */}
         {filteredGames.length === 0 ? (
-          <div className="text-center py-12 animate-bounce-in-up">
+          <div className="text-center py-12">
             <p className="text-gray-500">
               {favoritesOnly 
                 ? 'No favorite games yet. Start favoriting games to see them here!'
@@ -433,14 +433,13 @@ export function Games() {
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {displayedGames.map((game, index) => (
-                <div key={game.id} className={`stagger-${(index % 20) + 1}`}>
-                  <GameCard
-                    game={game}
-                    isFavorited={favoriteGameIds.has(game.id)}
-                    onFavoriteChange={handleFavoriteChange}
-                  />
-                </div>
+              {displayedGames.map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  isFavorited={favoriteGameIds.has(game.id)}
+                  onFavoriteChange={handleFavoriteChange}
+                />
               ))}
             </div>
 
@@ -449,7 +448,7 @@ export function Games() {
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setDisplayCount(prev => prev + 20)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-all hover-bounce w-72"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors w-72"
                 >
                   View More Games ({filteredGames.length - displayCount})
                 </button>
@@ -464,7 +463,7 @@ export function Games() {
                     setDisplayCount(20);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-all hover-bounce w-72"
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors w-72"
                 >
                   Show Less
                 </button>
@@ -494,8 +493,7 @@ export function Games() {
                 return (
                   <div 
                     key={topic.id} 
-                    className={`${colorClass} rounded-xl shadow-md transition-all duration-300 hover:shadow-lg hover-bounce animate-bounce-in-up opacity-0`}
-                    style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}
+                    className={`${colorClass} rounded-xl shadow-md transition-all duration-300 hover:shadow-lg`}
                   >
                     {/* Card Header */}
                     <div 

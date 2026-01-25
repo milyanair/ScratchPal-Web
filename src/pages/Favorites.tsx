@@ -304,7 +304,7 @@ export function Favorites() {
                   setActiveTab('favorites');
                   setCurrentView('overview');
                 }}
-                className={`px-6 py-3 font-semibold transition-all hover-bounce ${
+                className={`px-6 py-3 font-semibold transition-colors ${
                   activeTab === 'favorites'
                     ? 'border-b-2 border-teal text-teal'
                     : 'text-gray-500 hover:text-gray-700'
@@ -314,7 +314,7 @@ export function Favorites() {
               </button>
               <button
                 onClick={() => setActiveTab('points')}
-                className={`px-6 py-3 font-semibold transition-all hover-bounce ${
+                className={`px-6 py-3 font-semibold transition-colors ${
                   activeTab === 'points'
                     ? 'border-b-2 border-teal text-teal'
                     : 'text-gray-500 hover:text-gray-700'
@@ -328,7 +328,7 @@ export function Favorites() {
             <div>
               {activeTab === 'favorites' && currentView === 'overview' && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-lg shadow p-6 animate-bounce-in-up">
+                  <div className="bg-white rounded-lg shadow p-6">
                     <div className="mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
                         <ShoppingCart className="w-5 h-5 text-teal" />
@@ -469,7 +469,7 @@ export function Favorites() {
                   </div>
 
                   {/* Games Widget */}
-                  <div className="bg-white rounded-lg shadow p-6 animate-bounce-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'forwards', opacity: 0 }}>
+                  <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2">
                         <Heart className="w-5 h-5 text-games" />
@@ -501,7 +501,7 @@ export function Favorites() {
                   </div>
 
                   {/* Convos Widget */}
-                  <div className="bg-white rounded-lg shadow p-6 animate-bounce-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'forwards', opacity: 0 }}>
+                  <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-hot" />
@@ -548,7 +548,7 @@ export function Favorites() {
                   </div>
 
                   {/* Scans Widget */}
-                  <div className="bg-white rounded-lg shadow p-6 animate-bounce-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'forwards', opacity: 0 }}>
+                  <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold flex items-center gap-2">
                         <ScanLine className="w-5 h-5 text-teal" />
