@@ -169,10 +169,11 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
         const slug = getGameSlug();
         navigate(`/games/${game.state.toLowerCase()}/${game.price}/${slug}`);
       }}
-      className="relative rounded-lg overflow-hidden cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 aspect-[3/4]"
+      className="relative rounded-lg overflow-hidden cursor-pointer hover-bounce aspect-[3/4] animate-bounce-in opacity-0"
       style={{
         backgroundColor: 'rgba(229, 231, 235, 0.8)',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), -2px 6px 8px rgba(0, 0, 0, 0.15), 2px 6px 8px rgba(0, 0, 0, 0.15)'
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), -2px 6px 8px rgba(0, 0, 0, 0.15), 2px 6px 8px rgba(0, 0, 0, 0.15)',
+        animationFillMode: 'forwards'
       }}
     >
       {/* Background Image with Caching */}
@@ -189,7 +190,7 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
 
       {/* Diagonal Ribbon - Top Right */}
       <div
-        className={`absolute top-6 -right-8 w-40 bg-gradient-to-r ${getBannerColor()} text-white text-center py-1 rotate-[40deg] flex items-center justify-center`}
+        className={`absolute top-6 -right-8 w-40 bg-gradient-to-r ${getBannerColor()} text-white text-center py-1 rotate-[40deg] flex items-center justify-center animate-pulse-slow`}
         style={{
           boxShadow: 'rgba(0, 0, 0, 0.3) 0px 4px 6px, rgba(0, 0, 0, 0.2) 0px 2px 4px'
         }}
