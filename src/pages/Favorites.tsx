@@ -8,7 +8,8 @@ import { Favorite, Game, ForumTopic } from '@/types';
 import { useState, useEffect } from 'react';
 import { GameCard } from '@/components/GameCard';
 import { SavedScanCard } from '@/components/SavedScanCard';
-import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight, ShoppingCart, Calendar, DollarSign, Edit2, Trash2 } from 'lucide-react';
+import { WinLossPopup } from '@/components/WinLossPopup';
+import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight, ShoppingCart, Calendar, DollarSign, Edit2, Trash2, Zap } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePoints } from '@/hooks/usePoints';
 import { useUserColors } from '@/hooks/useUserColor';
@@ -90,10 +91,27 @@ export function Favorites() {
     return acc;
   }, { count: 0, total: 0 });
 
+  // Calculate win/loss stats
+  const winLossStats = purchases.reduce((acc, purchase) => {
+    if (purchase.is_winner === true) {
+      acc.wins += 1;
+      acc.winAmount += purchase.win_amount || 0;
+    } else if (purchase.is_winner === false) {
+      acc.losses += 1;
+    }
+    return acc;
+  }, { wins: 0, losses: 0, winAmount: 0 });
+
+  const totalDecided = winLossStats.wins + winLossStats.losses;
+  const winPercentage = totalDecided > 0 ? Math.round((winLossStats.wins / totalDecided) * 100) : 0;
+
   // Edit purchase state
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editDateTime, setEditDateTime] = useState<string>('');
+  const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
+  const [showWinLossPopup, setShowWinLossPopup] = useState(false);
+  const [showLossMessage, setShowLossMessage] = useState(false);
 
   // Get user profile to check if admin
   const { data: userProfile } = useQuery({
@@ -266,6 +284,63 @@ export function Favorites() {
     setEditDateTime(`${year}-${month}-${day}T${hours}:${minutes}`);
   };
 
+  // Handle opening W/L popup
+  const handleOpenWinLoss = (purchase: any) => {
+    setSelectedPurchaseForWinLoss(purchase);
+    setShowWinLossPopup(true);
+  };
+
+  // Handle marking as win
+  const handleMarkAsWin = async (winAmount: number) => {
+    try {
+      await supabase
+        .from('purchases')
+        .update({
+          is_winner: true,
+          win_amount: winAmount,
+        })
+        .eq('id', selectedPurchaseForWinLoss.id);
+
+      setShowWinLossPopup(false);
+      setSelectedPurchaseForWinLoss(null);
+      refetchPurchases();
+      const { toast } = await import('sonner');
+      toast.success('Marked as winning ticket! 🏆');
+    } catch (error) {
+      console.error('Error marking as win:', error);
+      const { toast } = await import('sonner');
+      toast.error('Failed to mark as win');
+    }
+  };
+
+  // Handle marking as loss
+  const handleMarkAsLoss = async () => {
+    try {
+      await supabase
+        .from('purchases')
+        .update({
+          is_winner: false,
+          win_amount: null,
+        })
+        .eq('id', selectedPurchaseForWinLoss.id);
+
+      setShowWinLossPopup(false);
+      setShowLossMessage(true);
+      
+      // Hide loss message after 2 seconds
+      setTimeout(() => {
+        setShowLossMessage(false);
+        setSelectedPurchaseForWinLoss(null);
+      }, 2000);
+      
+      refetchPurchases();
+    } catch (error) {
+      console.error('Error marking as loss:', error);
+      const { toast } = await import('sonner');
+      toast.error('Failed to mark as loss');
+    }
+  };
+
   return (
     <Layout>
       <PullToRefresh onRefresh={handleRefresh} enabled={!!user}>
@@ -335,8 +410,8 @@ export function Favorites() {
                         My Tickets
                       </h3>
                       
-                      {/* Weekly & Monthly Stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                      {/* Weekly, Monthly & Win/Loss Stats */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">This Week</span>
@@ -360,6 +435,16 @@ export function Favorites() {
                           <p className="text-2xl font-bold text-purple-600">🎫{monthlyStats.count} / ${Math.floor(monthlyStats.total)}</p>
                           <p className="text-xs text-gray-500 mt-1">last 30 days</p>
                         </div>
+                        
+                        <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">Wins/Losses</span>
+                          </div>
+                          <p className="text-2xl font-bold text-yellow-600">
+                            {winPercentage}% <span className="text-sm">({winLossStats.wins}W {winLossStats.losses}L)</span>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">wins / losses</p>
+                        </div>
                       </div>
                     </div>
                     
@@ -376,7 +461,12 @@ export function Favorites() {
                             key={purchase.id}
                             className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
                           >
-                            {editingPurchaseId === purchase.id ? (
+                            {showLossMessage && selectedPurchaseForWinLoss?.id === purchase.id ? (
+                              // Loss Message
+                              <div className="flex items-center justify-center py-8">
+                                <p className="text-2xl font-bold text-gray-700">Better Luck🍀 Next Time</p>
+                              </div>
+                            ) : editingPurchaseId === purchase.id ? (
                               // Edit Mode
                               <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
@@ -445,6 +535,41 @@ export function Favorites() {
                                   </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
+                                  {/* Win/Loss Indicator */}
+                                  {purchase.is_winner === true && (
+                                    <div className="w-8 h-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center">
+                                      <span className="text-lg">🏆</span>
+                                    </div>
+                                  )}
+                                  {purchase.is_winner === false && (
+                                    <div className="w-8 h-8 rounded-full bg-white border-2 border-red-500 flex items-center justify-center">
+                                      <span className="text-lg">💥</span>
+                                    </div>
+                                  )}
+                                  
+                                  {/* W/L Buttons - Only show if not decided */}
+                                  {purchase.is_winner === null && (
+                                    <>
+                                      <button
+                                        onClick={() => handleOpenWinLoss(purchase)}
+                                        className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                        title="Mark as Win"
+                                      >
+                                        W
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedPurchaseForWinLoss(purchase);
+                                          handleMarkAsLoss();
+                                        }}
+                                        className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                        title="Mark as Loss"
+                                      >
+                                        L
+                                      </button>
+                                    </>
+                                  )}
+                                  
                                   <button
                                     onClick={() => startEdit(purchase)}
                                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
@@ -847,6 +972,20 @@ export function Favorites() {
               )}
             </div>
           </>
+        )}
+        
+        {/* Win/Loss Popup */}
+        {selectedPurchaseForWinLoss && (
+          <WinLossPopup
+            isOpen={showWinLossPopup}
+            onClose={() => {
+              setShowWinLossPopup(false);
+              setSelectedPurchaseForWinLoss(null);
+            }}
+            onWin={handleMarkAsWin}
+            onLoss={handleMarkAsLoss}
+            purchase={selectedPurchaseForWinLoss}
+          />
         )}
       </div>
       </PullToRefresh>
