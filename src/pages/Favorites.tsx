@@ -65,45 +65,59 @@ export function Favorites() {
     enabled: !!user,
   });
 
-  // Calculate weekly stats (last 7 days)
-  const weeklyStats = purchases.reduce((acc, purchase) => {
-    const purchaseDate = new Date(purchase.created_at);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Filter purchases based on time filter
+  const getFilteredPurchases = () => {
+    const now = new Date();
+    const filterDate = new Date();
     
-    if (purchaseDate >= sevenDaysAgo) {
-      acc.count += purchase.quantity;
-      acc.total += purchase.quantity * (purchase.games?.price || 0);
+    switch (timeFilter) {
+      case '7D':
+        filterDate.setDate(now.getDate() - 7);
+        break;
+      case '1M':
+        filterDate.setDate(now.getDate() - 30);
+        break;
+      case '6M':
+        filterDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1Y':
+        filterDate.setFullYear(now.getFullYear() - 1);
+        break;
     }
-    return acc;
-  }, { count: 0, total: 0 });
-
-  // Calculate monthly stats (last 30 days)
-  const monthlyStats = purchases.reduce((acc, purchase) => {
-    const purchaseDate = new Date(purchase.created_at);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    if (purchaseDate >= thirtyDaysAgo) {
-      acc.count += purchase.quantity;
-      acc.total += purchase.quantity * (purchase.games?.price || 0);
-    }
-    return acc;
-  }, { count: 0, total: 0 });
+    return purchases.filter(purchase => {
+      const purchaseDate = new Date(purchase.created_at);
+      return purchaseDate >= filterDate;
+    });
+  };
 
-  // Calculate win/loss stats
-  const winLossStats = purchases.reduce((acc, purchase) => {
+  const filteredPurchases = getFilteredPurchases();
+
+  // Calculate all stats from filtered purchases
+  const stats = filteredPurchases.reduce((acc, purchase) => {
+    // Total tickets count and spent
+    acc.totalTickets += purchase.quantity;
+    acc.totalSpent += purchase.quantity * (purchase.games?.price || 0);
+    
+    // Win/Loss stats
     if (purchase.is_winner === true) {
       acc.wins += 1;
       acc.winAmount += purchase.win_amount || 0;
     } else if (purchase.is_winner === false) {
       acc.losses += 1;
     }
+    
     return acc;
-  }, { wins: 0, losses: 0, winAmount: 0 });
+  }, { 
+    totalTickets: 0, 
+    totalSpent: 0, 
+    wins: 0, 
+    losses: 0, 
+    winAmount: 0 
+  });
 
-  const totalDecided = winLossStats.wins + winLossStats.losses;
-  const winPercentage = totalDecided > 0 ? Math.round((winLossStats.wins / totalDecided) * 100) : 0;
+  const totalDecided = stats.wins + stats.losses;
+  const winPercentage = totalDecided > 0 ? Math.round((stats.wins / totalDecided) * 100) : 0;
 
   // Edit purchase state
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
@@ -114,6 +128,7 @@ export function Favorites() {
   const [popupMode, setPopupMode] = useState<'win' | 'loss'>('win');
   const [showLossMessage, setShowLossMessage] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<'7D' | '1M' | '6M' | '1Y'>('1M');
 
   // Get user profile to check if admin
   const { data: userProfile } = useQuery({
@@ -418,45 +433,81 @@ export function Favorites() {
                 <div className="space-y-6">
                   <div className="bg-white rounded-lg shadow p-6">
                     <div className="mb-4">
-                      <h3 className="text-xl font-bold flex items-center gap-2 mb-4">
-                        <ShoppingCart className="w-5 h-5 text-teal" />
-                        My Tickets
-                      </h3>
-                      
-                      {/* Weekly, Monthly & Win/Loss Stats */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">This Week</span>
-                          </div>
-                          <p className="text-3xl font-bold text-teal">🎫{weeklyStats.count}</p>
-                          <p className="text-xs text-gray-500 mt-1">purchased</p>
-                        </div>
+                      {/* Header with Time Filter Buttons */}
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                          <ShoppingCart className="w-5 h-5 text-teal" />
+                          My Tickets
+                        </h3>
                         
+                        {/* Time Filter Buttons */}
+                        <div className="flex gap-1">
+                          {(['7D', '1M', '6M', '1Y'] as const).map((filter) => (
+                            <button
+                              key={filter}
+                              onClick={() => setTimeFilter(filter)}
+                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                timeFilter === filter
+                                  ? 'bg-teal text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {filter}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Summary Stats - 6 blocks, 2 per row on mobile */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                        {/* Wins */}
                         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">This Week</span>
+                            <span className="text-sm font-semibold text-gray-600">🏆 Wins</span>
                           </div>
-                          <p className="text-3xl font-bold text-green-600">${Math.floor(weeklyStats.total)}</p>
-                          <p className="text-xs text-gray-500 mt-1">total spent</p>
+                          <p className="text-3xl font-bold text-green-600">{stats.wins}</p>
                         </div>
                         
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                        {/* Win Amount */}
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border-2 border-emerald-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">This Month</span>
+                            <span className="text-sm font-semibold text-gray-600">💰 Win$</span>
                           </div>
-                          <p className="text-2xl font-bold text-purple-600">🎫{monthlyStats.count} / ${Math.floor(monthlyStats.total)}</p>
-                          <p className="text-xs text-gray-500 mt-1">last 30 days</p>
+                          <p className="text-3xl font-bold text-emerald-600">${Math.floor(stats.winAmount)}</p>
                         </div>
                         
+                        {/* Losses */}
+                        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">💥 Losses</span>
+                          </div>
+                          <p className="text-3xl font-bold text-red-600">{stats.losses}</p>
+                        </div>
+                        
+                        {/* Winrate */}
                         <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">Wins/Losses</span>
+                            <span className="text-sm font-semibold text-gray-600">🎫 Winrate</span>
                           </div>
                           <p className="text-2xl font-bold text-yellow-600">
-                            {winPercentage}% <span className="text-sm">({winLossStats.wins}W {winLossStats.losses}L)</span>
+                            {winPercentage}%
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">wins / losses</p>
+                        </div>
+                        
+                        {/* Total Tickets */}
+                        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">🛒 Tickets</span>
+                          </div>
+                          <p className="text-3xl font-bold text-teal">{stats.totalTickets}</p>
+                        </div>
+                        
+                        {/* Total Spent */}
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">💸 Spent</span>
+                          </div>
+                          <p className="text-3xl font-bold text-purple-600">${Math.floor(stats.totalSpent)}</p>
                         </div>
                       </div>
                     </div>
