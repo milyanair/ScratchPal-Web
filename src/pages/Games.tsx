@@ -345,7 +345,12 @@ export function Games() {
           <div className="mb-6">
             {/* Header with Time Filter */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">My Tickets</h2>
+              <h2 
+                onClick={() => navigate('/favorites')}
+                className="text-xl font-bold cursor-pointer hover:text-teal transition-colors"
+              >
+                My Tickets
+              </h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => setTicketTimeFilter('7D')}
