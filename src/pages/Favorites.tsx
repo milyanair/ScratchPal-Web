@@ -50,8 +50,9 @@ export function Favorites() {
 
   // State - must be declared before being used
   const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
-  const [editQuantity, setEditQuantity] = useState<number>(1);
   const [editDateTime, setEditDateTime] = useState<string>('');
+  const [editWinStatus, setEditWinStatus] = useState<string>('none'); // 'true', 'false', 'none'
+  const [editWinAmount, setEditWinAmount] = useState<string>('');
   const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
   const [showWinLossPopup, setShowWinLossPopup] = useState(false);
   const [popupMode, setPopupMode] = useState<'win' | 'loss'>('win');
@@ -243,11 +244,23 @@ export function Favorites() {
   // Handle edit purchase
   const handleEditPurchase = async (purchaseId: string) => {
     try {
+      // Convert win status string to proper value
+      let isWinner: boolean | null = null;
+      if (editWinStatus === 'true') {
+        isWinner = true;
+      } else if (editWinStatus === 'false') {
+        isWinner = false;
+      }
+
+      // Parse win amount
+      const winAmount = editWinAmount ? parseFloat(editWinAmount) : null;
+
       const { error } = await supabase
         .from('purchases')
         .update({
-          quantity: editQuantity,
           created_at: editDateTime,
+          is_winner: isWinner,
+          win_amount: winAmount,
         })
         .eq('id', purchaseId);
 
@@ -290,7 +303,6 @@ export function Favorites() {
   // Start editing a purchase
   const startEdit = (purchase: any) => {
     setEditingPurchaseId(purchase.id);
-    setEditQuantity(purchase.quantity);
     // Format datetime for input
     const date = new Date(purchase.created_at);
     const year = date.getFullYear();
@@ -299,6 +311,18 @@ export function Favorites() {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     setEditDateTime(`${year}-${month}-${day}T${hours}:${minutes}`);
+    
+    // Set win status
+    if (purchase.is_winner === true) {
+      setEditWinStatus('true');
+    } else if (purchase.is_winner === false) {
+      setEditWinStatus('false');
+    } else {
+      setEditWinStatus('none');
+    }
+    
+    // Set win amount
+    setEditWinAmount(purchase.win_amount ? purchase.win_amount.toString() : '');
   };
 
   // Handle opening W/L popup
@@ -539,16 +563,6 @@ export function Favorites() {
                               <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
                                   <div>
-                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Quantity</label>
-                                    <input
-                                      type="number"
-                                      value={editQuantity}
-                                      onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
-                                      min="1"
-                                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    />
-                                  </div>
-                                  <div>
                                     <label className="text-xs font-semibold text-gray-600 block mb-1">Date & Time</label>
                                     <input
                                       type="datetime-local"
@@ -557,6 +571,31 @@ export function Favorites() {
                                       className="w-full px-3 py-2 border rounded-lg text-sm"
                                     />
                                   </div>
+                                  <div>
+                                    <label className="text-xs font-semibold text-gray-600 block mb-1">Win/Loss Status</label>
+                                    <select
+                                      value={editWinStatus}
+                                      onChange={(e) => setEditWinStatus(e.target.value)}
+                                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    >
+                                      <option value="none">None</option>
+                                      <option value="true">Winner</option>
+                                      <option value="false">Loser</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="text-xs font-semibold text-gray-600 block mb-1">Win Amount ($)</label>
+                                  <input
+                                    type="number"
+                                    value={editWinAmount}
+                                    onChange={(e) => setEditWinAmount(e.target.value)}
+                                    placeholder="Enter win amount"
+                                    min="0"
+                                    step="0.01"
+                                    disabled={editWinStatus !== 'true'}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                                  />
                                 </div>
                                 <div className="flex gap-2">
                                   <button
@@ -1111,16 +1150,6 @@ export function Favorites() {
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-xs font-semibold text-gray-600 block mb-1">Quantity</label>
-                            <input
-                              type="number"
-                              value={editQuantity}
-                              onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
-                              min="1"
-                              className="w-full px-3 py-2 border rounded-lg text-sm"
-                            />
-                          </div>
-                          <div>
                             <label className="text-xs font-semibold text-gray-600 block mb-1">Date & Time</label>
                             <input
                               type="datetime-local"
@@ -1129,6 +1158,31 @@ export function Favorites() {
                               className="w-full px-3 py-2 border rounded-lg text-sm"
                             />
                           </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-600 block mb-1">Win/Loss Status</label>
+                            <select
+                              value={editWinStatus}
+                              onChange={(e) => setEditWinStatus(e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg text-sm"
+                            >
+                              <option value="none">None</option>
+                              <option value="true">Winner</option>
+                              <option value="false">Loser</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-gray-600 block mb-1">Win Amount ($)</label>
+                          <input
+                            type="number"
+                            value={editWinAmount}
+                            onChange={(e) => setEditWinAmount(e.target.value)}
+                            placeholder="Enter win amount"
+                            min="0"
+                            step="0.01"
+                            disabled={editWinStatus !== 'true'}
+                            className="w-full px-3 py-2 border rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                          />
                         </div>
                         <div className="flex gap-2">
                           <button
