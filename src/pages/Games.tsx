@@ -153,16 +153,24 @@ export function Games() {
 
   const favoriteGameIds = new Set(favorites.map(f => f.reference_id));
 
-  // Fetch user's ticket purchases
+  // Fetch user's ticket purchases (optimized: last 6 months only)
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchases', user?.id],
     queryFn: async () => {
       if (!user) return [];
+      
+      // Only fetch purchases from last 6 months for performance
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const cutoffDate = sixMonthsAgo.toISOString();
+      
       const { data, error } = await supabase
         .from('purchases')
-        .select('*, games(*)')
+        .select('id, quantity, created_at, is_winner, win_amount, games(id, game_name, game_number, price)')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .gte('created_at', cutoffDate)
+        .order('created_at', { ascending: false })
+        .limit(500); // Hard limit for safety
       
       if (error) throw error;
       return data;
