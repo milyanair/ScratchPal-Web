@@ -534,6 +534,8 @@ export function Favorites() {
                                     {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </div>
                                 </div>
+                                
+                                {/* W/L Buttons Column */}
                                 <div className="flex flex-col gap-2">
                                   {/* Win/Loss Indicator */}
                                   {purchase.is_winner === true && (
@@ -569,7 +571,10 @@ export function Favorites() {
                                       </button>
                                     </>
                                   )}
-                                  
+                                </div>
+                                
+                                {/* Edit/Delete Column */}
+                                <div className="flex flex-col gap-2">
                                   <button
                                     onClick={() => startEdit(purchase)}
                                     className="p-2 hover:bg-gray-200 rounded-lg transition-colors"

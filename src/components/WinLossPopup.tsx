@@ -71,29 +71,16 @@ export function WinLossPopup({ isOpen, onClose, onWin, onLoss, purchase }: WinLo
           <h2 className="text-2xl font-bold text-center pr-8">Winning Ticket?</h2>
           
           {/* Ticket Details */}
-          <div className="mt-4 space-y-2 text-sm opacity-90">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Game:</span>
-              <span className="truncate ml-2">#{purchase.games?.game_number} {purchase.games?.game_name}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Ticket Price:</span>
-              <span className="font-bold">${purchase.games?.price}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Date/Time:</span>
-              <span>
-                {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+          <div className="mt-4 space-y-1 text-sm opacity-90 text-left">
+            <div>#{purchase.games?.game_number} {purchase.games?.game_name}</div>
+            <div>
+              ${purchase.games?.price} - {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
         </div>
 
         {/* Body */}
         <div className="p-6 space-y-6 bg-white/10 backdrop-blur-lg rounded-b-2xl">
-          {/* Question */}
-          <p className="text-xl text-white font-bold text-center">Winning Ticket?</p>
-
           {/* Win Amount Input */}
           <div>
             <input
@@ -102,7 +89,7 @@ export function WinLossPopup({ isOpen, onClose, onWin, onLoss, purchase }: WinLo
               value={winAmount}
               onChange={(e) => setWinAmount(e.target.value)}
               placeholder="Win Amount"
-              className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center font-semibold text-lg text-gray-800 placeholder:text-gray-600 focus:border-purple-400 focus:bg-white/40 focus:outline-none transition-all"
+              className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center text-lg text-gray-800 placeholder:text-gray-600 placeholder:font-normal focus:border-purple-400 focus:bg-white/40 focus:outline-none transition-all"
               step="0.01"
               min="0"
             />
