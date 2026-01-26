@@ -130,12 +130,17 @@ export function GameCard({ game, isFavorited = false, onFavoriteChange }: GameCa
 
   const handleBuyConfirm = async (quantity: number, purchaseDate?: Date) => {
     try {
-      await supabase.from('purchases').insert({
+      // Create individual records for each ticket (quantity times)
+      const purchaseRecords = Array.from({ length: quantity }, () => ({
         user_id: user!.id,
         game_id: game.id,
-        quantity,
+        quantity: 1, // Each record represents 1 ticket
         created_at: purchaseDate?.toISOString() || new Date().toISOString(),
-      });
+      }));
+      
+      const { error } = await supabase.from('purchases').insert(purchaseRecords);
+      
+      if (error) throw error;
       
       toast.success(`Tracked ${quantity} ticket${quantity > 1 ? 's' : ''} purchased! 🎫`);
       setShowBuyPopup(false);

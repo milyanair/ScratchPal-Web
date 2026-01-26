@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserColors } from '@/hooks/useUserColor';
 import { slugifyCategory } from '@/lib/utils';
 import { useStateFromUrl } from '@/hooks/useStateFromUrl';
+import { toast } from 'sonner';
 
 export function Games() {
   const { user } = useAuth();

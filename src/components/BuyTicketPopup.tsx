@@ -7,7 +7,7 @@ import { Game } from '@/types';
 interface BuyTicketPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (quantity: number, purchaseDate?: Date) => void;
+  onConfirm: (quantity: number, purchaseDate?: Date) => Promise<void>;
   game: Game;
 }
 
@@ -55,14 +55,14 @@ export function BuyTicketPopup({ isOpen, onClose, onConfirm, game }: BuyTicketPo
     }
   };
 
-  const handleConfirm = (e: React.MouseEvent) => {
+  const handleConfirm = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     haptics.medium();
     const quantity = customQuantity ? parseInt(customQuantity, 10) : selectedQuantity;
     if (quantity > 0) {
       const selectedDate = purchaseDateTime ? new Date(purchaseDateTime) : new Date();
-      onConfirm(quantity, selectedDate);
+      await onConfirm(quantity, selectedDate);
     }
   };
 
