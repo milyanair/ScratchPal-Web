@@ -8,10 +8,12 @@ interface WinLossPopupProps {
   onClose: () => void;
   onWin: (winAmount: number) => void;
   onLoss: () => void;
+  onSwitchToWin?: () => void;
   purchase: any;
+  mode?: 'win' | 'loss';
 }
 
-export function WinLossPopup({ isOpen, onClose, onWin, onLoss, purchase }: WinLossPopupProps) {
+export function WinLossPopup({ isOpen, onClose, onWin, onLoss, onSwitchToWin, purchase, mode = 'win' }: WinLossPopupProps) {
   const [winAmount, setWinAmount] = useState<string>('');
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export function WinLossPopup({ isOpen, onClose, onWin, onLoss, purchase }: WinLo
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-2xl font-bold text-center pr-8">Winning Ticket?</h2>
+          <h2 className="text-2xl font-bold text-center pr-8">{mode === 'win' ? 'Winning Ticket?' : 'Another Loser?'}</h2>
           
           {/* Ticket Details */}
           <div className="mt-4 space-y-1 text-sm opacity-90 text-left">
@@ -81,43 +83,75 @@ export function WinLossPopup({ isOpen, onClose, onWin, onLoss, purchase }: WinLo
 
         {/* Body */}
         <div className="p-6 space-y-6 bg-white/10 backdrop-blur-lg rounded-b-2xl">
-          {/* Win Amount Input */}
-          <div>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={winAmount}
-              onChange={(e) => setWinAmount(e.target.value)}
-              placeholder="Win Amount"
-              className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center text-lg text-gray-800 placeholder:text-gray-600 placeholder:font-normal focus:border-purple-400 focus:bg-white/40 focus:outline-none transition-all"
-              step="0.01"
-              min="0"
-            />
-          </div>
+          {/* Win Amount Input - Only show in win mode */}
+          {mode === 'win' && (
+            <div>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={winAmount}
+                onChange={(e) => setWinAmount(e.target.value)}
+                placeholder="Win Amount"
+                className="w-full px-4 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 rounded-lg text-center text-lg text-gray-800 placeholder:text-gray-600 placeholder:font-normal focus:border-purple-400 focus:bg-white/40 focus:outline-none transition-all"
+                step="0.01"
+                min="0"
+              />
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleWinConfirm(e);
-              }}
-              disabled={!winAmount || parseFloat(winAmount) <= 0}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500/90 to-purple-600/90 backdrop-blur-md text-white rounded-lg font-semibold hover:from-purple-600/90 hover:to-purple-700/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-white/20"
-            >
-              Yes
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleLossConfirm(e);
-              }}
-              className="flex-1 px-6 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 text-gray-800 rounded-lg font-semibold hover:bg-white/40 transition-all"
-            >
-              No
-            </button>
+            {mode === 'win' ? (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleWinConfirm(e);
+                  }}
+                  disabled={!winAmount || parseFloat(winAmount) <= 0}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500/90 to-purple-600/90 backdrop-blur-md text-white rounded-lg font-semibold hover:from-purple-600/90 hover:to-purple-700/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg border border-white/20"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleLossConfirm(e);
+                  }}
+                  className="flex-1 px-6 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 text-gray-800 rounded-lg font-semibold hover:bg-white/40 transition-all"
+                >
+                  No
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleLossConfirm(e);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500/90 to-purple-600/90 backdrop-blur-md text-white rounded-lg font-semibold hover:from-purple-600/90 hover:to-purple-700/90 transition-all shadow-lg border border-white/20"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    haptics.light();
+                    if (onSwitchToWin) {
+                      onSwitchToWin();
+                    }
+                  }}
+                  className="flex-1 px-6 py-3 bg-white/30 backdrop-blur-md border-2 border-white/30 text-gray-800 rounded-lg font-semibold hover:bg-white/40 transition-all"
+                >
+                  No
+                </button>
+              </>
+            )}
             <button
               onClick={(e) => {
                 e.preventDefault();

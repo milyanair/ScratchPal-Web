@@ -111,6 +111,7 @@ export function Favorites() {
   const [editDateTime, setEditDateTime] = useState<string>('');
   const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
   const [showWinLossPopup, setShowWinLossPopup] = useState(false);
+  const [popupMode, setPopupMode] = useState<'win' | 'loss'>('win');
   const [showLossMessage, setShowLossMessage] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
 
@@ -286,9 +287,15 @@ export function Favorites() {
   };
 
   // Handle opening W/L popup
-  const handleOpenWinLoss = (purchase: any) => {
+  const handleOpenWinLoss = (purchase: any, mode: 'win' | 'loss' = 'win') => {
     setSelectedPurchaseForWinLoss(purchase);
+    setPopupMode(mode);
     setShowWinLossPopup(true);
+  };
+
+  // Handle switching from loss to win mode
+  const handleSwitchToWin = () => {
+    setPopupMode('win');
   };
 
   // Handle marking as win
@@ -571,10 +578,7 @@ export function Favorites() {
                                           W
                                         </button>
                                         <button
-                                          onClick={() => {
-                                            setSelectedPurchaseForWinLoss(purchase);
-                                            handleMarkAsLoss();
-                                          }}
+                                          onClick={() => handleOpenWinLoss(purchase, 'loss')}
                                           className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
                                           title="Mark as Loss"
                                         >
@@ -1010,10 +1014,13 @@ export function Favorites() {
             onClose={() => {
               setShowWinLossPopup(false);
               setSelectedPurchaseForWinLoss(null);
+              setPopupMode('win');
             }}
             onWin={handleMarkAsWin}
             onLoss={handleMarkAsLoss}
+            onSwitchToWin={handleSwitchToWin}
             purchase={selectedPurchaseForWinLoss}
+            mode={popupMode}
           />
         )}
         
@@ -1143,10 +1150,7 @@ export function Favorites() {
                                   W
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setSelectedPurchaseForWinLoss(purchase);
-                                    handleMarkAsLoss();
-                                  }}
+                                  onClick={() => handleOpenWinLoss(purchase, 'loss')}
                                   className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
                                   title="Mark as Loss"
                                 >
