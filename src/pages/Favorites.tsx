@@ -112,6 +112,7 @@ export function Favorites() {
   const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
   const [showWinLossPopup, setShowWinLossPopup] = useState(false);
   const [showLossMessage, setShowLossMessage] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
 
   // Get user profile to check if admin
   const { data: userProfile } = useQuery({
@@ -455,8 +456,8 @@ export function Favorites() {
                         <p className="text-sm text-gray-400">Use the 🛒 button on game cards to track your purchases</p>
                       </div>
                     ) : (
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {purchases.slice(0, 10).map((purchase) => (
+                      <div className="space-y-3">
+                        {purchases.slice(0, 6).map((purchase) => (
                           <div
                             key={purchase.id}
                             className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
@@ -507,93 +508,109 @@ export function Favorites() {
                               </div>
                             ) : (
                               // View Mode
-                              <div className="flex items-center gap-3">
-                                <div className="flex-1">
-                                  {/* Row 1: Game number, then game title */}
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
-                                      #{purchase.games?.game_number || 'N/A'}
-                                    </span>
-                                    <h4 className="font-bold text-sm line-clamp-1">
-                                      {purchase.games?.game_name || 'Unknown Game'}
-                                    </h4>
+                              <div className="flex flex-col gap-2">
+                                {/* Row 1: Game title (full width) */}
+                                <div className="w-full">
+                                  <h4 className="font-bold text-sm line-clamp-1">
+                                    {purchase.games?.game_name || 'Unknown Game'}
+                                  </h4>
+                                </div>
+                                
+                                {/* Row 2: Game number, W/L buttons, Edit/Delete */}
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                                    #{purchase.games?.game_number || 'N/A'}
+                                  </span>
+                                  
+                                  <div className="flex-1" />
+                                  
+                                  {/* W/L Buttons Column */}
+                                  <div className="flex flex-col gap-2">
+                                    {/* Win/Loss Indicator */}
+                                    {purchase.is_winner === true && (
+                                      <div className="w-8 h-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center">
+                                        <span className="text-lg">🏆</span>
+                                      </div>
+                                    )}
+                                    {purchase.is_winner === false && (
+                                      <div className="w-8 h-8 rounded-full bg-white border-2 border-red-500 flex items-center justify-center">
+                                        <span className="text-lg">💥</span>
+                                      </div>
+                                    )}
+                                    
+                                    {/* W/L Buttons - Only show if not decided */}
+                                    {purchase.is_winner === null && (
+                                      <>
+                                        <button
+                                          onClick={() => handleOpenWinLoss(purchase)}
+                                          className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                          title="Mark as Win"
+                                        >
+                                          W
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            setSelectedPurchaseForWinLoss(purchase);
+                                            handleMarkAsLoss();
+                                          }}
+                                          className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                          title="Mark as Loss"
+                                        >
+                                          L
+                                        </button>
+                                      </>
+                                    )}
                                   </div>
                                   
-                                  {/* Row 2: Ticket price, number of tickets */}
-                                  <div className="flex items-center gap-3 text-sm mb-1">
-                                    <span className="font-semibold text-green-600">
-                                      ${purchase.games?.price || 0}
-                                    </span>
-                                    <span className="text-gray-700">
-                                      {purchase.quantity} 🎫
-                                    </span>
-                                  </div>
-                                  
-                                  {/* Row 3: Date and time */}
-                                  <div className="text-xs text-gray-500">
-                                    {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {/* Edit/Delete Column */}
+                                  <div className="flex flex-col gap-2">
+                                    <button
+                                      onClick={() => startEdit(purchase)}
+                                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                      title="Edit"
+                                    >
+                                      <Edit2 className="w-4 h-4 text-teal" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeletePurchase(purchase.id)}
+                                      className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-500" />
+                                    </button>
                                   </div>
                                 </div>
                                 
-                                {/* W/L Buttons Column */}
-                                <div className="flex flex-col gap-2">
-                                  {/* Win/Loss Indicator */}
-                                  {purchase.is_winner === true && (
-                                    <div className="w-8 h-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center">
-                                      <span className="text-lg">🏆</span>
-                                    </div>
-                                  )}
-                                  {purchase.is_winner === false && (
-                                    <div className="w-8 h-8 rounded-full bg-white border-2 border-red-500 flex items-center justify-center">
-                                      <span className="text-lg">💥</span>
-                                    </div>
-                                  )}
-                                  
-                                  {/* W/L Buttons - Only show if not decided */}
-                                  {purchase.is_winner === null && (
-                                    <>
-                                      <button
-                                        onClick={() => handleOpenWinLoss(purchase)}
-                                        className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
-                                        title="Mark as Win"
-                                      >
-                                        W
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          setSelectedPurchaseForWinLoss(purchase);
-                                          handleMarkAsLoss();
-                                        }}
-                                        className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
-                                        title="Mark as Loss"
-                                      >
-                                        L
-                                      </button>
-                                    </>
-                                  )}
+                                {/* Row 3: Ticket price, number of tickets */}
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="font-semibold text-green-600">
+                                    ${purchase.games?.price || 0}
+                                  </span>
+                                  <span className="text-gray-700">
+                                    {purchase.quantity} 🎫
+                                  </span>
                                 </div>
                                 
-                                {/* Edit/Delete Column */}
-                                <div className="flex flex-col gap-2">
-                                  <button
-                                    onClick={() => startEdit(purchase)}
-                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <Edit2 className="w-4 h-4 text-teal" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeletePurchase(purchase.id)}
-                                    className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                  </button>
+                                {/* Row 4: Date and time */}
+                                <div className="text-xs text-gray-500">
+                                  {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                               </div>
                             )}
                           </div>
                         ))}
+                      </div>
+                    )}
+                    
+                    {/* View More Button */}
+                    {purchases.length > 6 && (
+                      <div className="text-center mt-4">
+                        <button
+                          onClick={() => setShowAllTickets(true)}
+                          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                        >
+                          View More ({purchases.length - 6} more)
+                        </button>
                       </div>
                     )}
                   </div>
@@ -991,6 +1008,170 @@ export function Favorites() {
             onLoss={handleMarkAsLoss}
             purchase={selectedPurchaseForWinLoss}
           />
+        )}
+        
+        {/* All Tickets Popup */}
+        {showAllTickets && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6 flex items-center justify-between">
+                <h2 className="text-2xl font-bold">All My Tickets ({purchases.length})</h2>
+                <button
+                  onClick={() => setShowAllTickets(false)}
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto max-h-[calc(80vh-100px)] p-6 space-y-3">
+                {purchases.map((purchase) => (
+                  <div
+                    key={purchase.id}
+                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                  >
+                    {showLossMessage && selectedPurchaseForWinLoss?.id === purchase.id ? (
+                      // Loss Message
+                      <div className="flex items-center justify-center py-8">
+                        <p className="text-2xl font-bold text-gray-700">Better Luck🍀 Next Time</p>
+                      </div>
+                    ) : editingPurchaseId === purchase.id ? (
+                      // Edit Mode
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-semibold text-gray-600 block mb-1">Quantity</label>
+                            <input
+                              type="number"
+                              value={editQuantity}
+                              onChange={(e) => setEditQuantity(parseInt(e.target.value) || 1)}
+                              min="1"
+                              className="w-full px-3 py-2 border rounded-lg text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-600 block mb-1">Date & Time</label>
+                            <input
+                              type="datetime-local"
+                              value={editDateTime}
+                              onChange={(e) => setEditDateTime(e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditPurchase(purchase.id)}
+                            className="flex-1 bg-teal text-white px-4 py-2 rounded-lg font-semibold hover:bg-teal/90 text-sm"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingPurchaseId(null)}
+                            className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // View Mode
+                      <div className="flex flex-col gap-2">
+                        {/* Row 1: Game title (full width) */}
+                        <div className="w-full">
+                          <h4 className="font-bold text-sm line-clamp-1">
+                            {purchase.games?.game_name || 'Unknown Game'}
+                          </h4>
+                        </div>
+                        
+                        {/* Row 2: Game number, W/L buttons, Edit/Delete */}
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                            #{purchase.games?.game_number || 'N/A'}
+                          </span>
+                          
+                          <div className="flex-1" />
+                          
+                          {/* W/L Buttons Column */}
+                          <div className="flex flex-col gap-2">
+                            {/* Win/Loss Indicator */}
+                            {purchase.is_winner === true && (
+                              <div className="w-8 h-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center">
+                                <span className="text-lg">🏆</span>
+                              </div>
+                            )}
+                            {purchase.is_winner === false && (
+                              <div className="w-8 h-8 rounded-full bg-white border-2 border-red-500 flex items-center justify-center">
+                                <span className="text-lg">💥</span>
+                              </div>
+                            )}
+                            
+                            {/* W/L Buttons - Only show if not decided */}
+                            {purchase.is_winner === null && (
+                              <>
+                                <button
+                                  onClick={() => handleOpenWinLoss(purchase)}
+                                  className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                  title="Mark as Win"
+                                >
+                                  W
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedPurchaseForWinLoss(purchase);
+                                    handleMarkAsLoss();
+                                  }}
+                                  className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 transition-all"
+                                  title="Mark as Loss"
+                                >
+                                  L
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Edit/Delete Column */}
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => startEdit(purchase)}
+                              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4 text-teal" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePurchase(purchase.id)}
+                              className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Row 3: Ticket price, number of tickets */}
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="font-semibold text-green-600">
+                            ${purchase.games?.price || 0}
+                          </span>
+                          <span className="text-gray-700">
+                            {purchase.quantity} 🎫
+                          </span>
+                        </div>
+                        
+                        {/* Row 4: Date and time */}
+                        <div className="text-xs text-gray-500">
+                          {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
       </PullToRefresh>
