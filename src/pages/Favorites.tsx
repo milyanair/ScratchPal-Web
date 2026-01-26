@@ -477,11 +477,11 @@ export function Favorites() {
                         </div>
                         
                         {/* Win Amount */}
-                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border-2 border-emerald-200">
+                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border-2 border-orange-200">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">💰 Win$</span>
                           </div>
-                          <p className="text-3xl font-bold text-emerald-600">${Math.floor(stats.winAmount)}</p>
+                          <p className="text-3xl font-bold text-orange-600">${Math.floor(stats.winAmount)}</p>
                         </div>
                         
                         {/* Total Spent */}
