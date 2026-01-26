@@ -516,13 +516,11 @@ export function Favorites() {
                                     {purchase.games?.game_name || 'Unknown Game'}
                                   </h4>
                                   
-                                  {/* Row 2: Game number */}
-                                  <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold inline-block w-fit">
-                                    #{purchase.games?.game_number || 'N/A'}
-                                  </span>
-                                  
-                                  {/* Row 3: Ticket price, number of tickets */}
+                                  {/* Row 2: Game number, Ticket price, number of tickets */}
                                   <div className="flex items-center gap-3 text-sm">
+                                    <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                                      #{purchase.games?.game_number || 'N/A'}
+                                    </span>
                                     <span className="font-semibold text-green-600">
                                       ${purchase.games?.price || 0}
                                     </span>
@@ -531,7 +529,7 @@ export function Favorites() {
                                     </span>
                                   </div>
                                   
-                                  {/* Row 4: Date and time */}
+                                  {/* Row 3: Date and time */}
                                   <div className="text-xs text-gray-500">
                                     {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </div>
@@ -1086,13 +1084,11 @@ export function Favorites() {
                             {purchase.games?.game_name || 'Unknown Game'}
                           </h4>
                           
-                          {/* Row 2: Game number */}
-                          <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold inline-block w-fit">
-                            #{purchase.games?.game_number || 'N/A'}
-                          </span>
-                          
-                          {/* Row 3: Ticket price, number of tickets */}
+                          {/* Row 2: Game number, Ticket price, number of tickets */}
                           <div className="flex items-center gap-3 text-sm">
+                            <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                              #{purchase.games?.game_number || 'N/A'}
+                            </span>
                             <span className="font-semibold text-green-600">
                               ${purchase.games?.price || 0}
                             </span>
@@ -1101,7 +1097,7 @@ export function Favorites() {
                             </span>
                           </div>
                           
-                          {/* Row 4: Date and time */}
+                          {/* Row 3: Date and time */}
                           <div className="text-xs text-gray-500">
                             {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
