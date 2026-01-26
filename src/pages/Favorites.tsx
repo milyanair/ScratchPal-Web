@@ -446,7 +446,7 @@ export function Favorites() {
                             <button
                               key={filter}
                               onClick={() => setTimeFilter(filter)}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                              className={`px-2 py-0.5 text-xs font-semibold rounded-lg transition-all ${
                                 timeFilter === filter
                                   ? 'bg-teal text-white shadow-md'
                                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -468,14 +468,6 @@ export function Favorites() {
                           <p className="text-3xl font-bold text-green-600">{stats.wins}</p>
                         </div>
                         
-                        {/* Win Amount */}
-                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border-2 border-emerald-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">💰 Win$</span>
-                          </div>
-                          <p className="text-3xl font-bold text-emerald-600">${Math.floor(stats.winAmount)}</p>
-                        </div>
-                        
                         {/* Losses */}
                         <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
                           <div className="flex items-center gap-2 mb-2">
@@ -484,14 +476,20 @@ export function Favorites() {
                           <p className="text-3xl font-bold text-red-600">{stats.losses}</p>
                         </div>
                         
-                        {/* Winrate */}
-                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
+                        {/* Win Amount */}
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border-2 border-emerald-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">🎫 Winrate</span>
+                            <span className="text-sm font-semibold text-gray-600">💰 Win$</span>
                           </div>
-                          <p className="text-2xl font-bold text-yellow-600">
-                            {winPercentage}%
-                          </p>
+                          <p className="text-3xl font-bold text-emerald-600">${Math.floor(stats.winAmount)}</p>
+                        </div>
+                        
+                        {/* Total Spent */}
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-gray-600">💸 Spent</span>
+                          </div>
+                          <p className="text-3xl font-bold text-purple-600">${Math.floor(stats.totalSpent)}</p>
                         </div>
                         
                         {/* Total Tickets */}
@@ -502,12 +500,14 @@ export function Favorites() {
                           <p className="text-3xl font-bold text-teal">{stats.totalTickets}</p>
                         </div>
                         
-                        {/* Total Spent */}
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+                        {/* Winrate */}
+                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border-2 border-yellow-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm font-semibold text-gray-600">💸 Spent</span>
+                            <span className="text-sm font-semibold text-gray-600">🎫 Winrate</span>
                           </div>
-                          <p className="text-3xl font-bold text-purple-600">${Math.floor(stats.totalSpent)}</p>
+                          <p className="text-2xl font-bold text-yellow-600">
+                            {winPercentage}%
+                          </p>
                         </div>
                       </div>
                     </div>
