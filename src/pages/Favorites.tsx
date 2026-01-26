@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { GameCard } from '@/components/GameCard';
 import { SavedScanCard } from '@/components/SavedScanCard';
 import { WinLossPopup } from '@/components/WinLossPopup';
-import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight, ShoppingCart, Calendar, DollarSign, Edit2, Trash2, Zap } from 'lucide-react';
+import { Heart, Trophy, TrendingUp, Award, ScanLine, MessageSquare, ChevronRight, ShoppingCart, Calendar, DollarSign, Edit2, Trash2, Zap, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePoints } from '@/hooks/usePoints';
 import { useUserColors } from '@/hooks/useUserColor';
