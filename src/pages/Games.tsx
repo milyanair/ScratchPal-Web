@@ -406,8 +406,8 @@ export function Games() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="mb-6 space-y-4">
+        {/* Filters - Sticky Container */}
+        <div className="sticky top-[85px] z-40 bg-white shadow-md mb-6 -mx-4 px-4 py-4 space-y-4">
           {/* Search Field - Mobile: Full Width Row */}
           <div className="md:hidden">
             <div className="relative">
