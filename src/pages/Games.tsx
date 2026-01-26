@@ -24,6 +24,7 @@ export function Games() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [displayCount, setDisplayCount] = useState(20);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+  const [ticketTimeFilter, setTicketTimeFilter] = useState<'7D' | '1M'>('1M');
 
   // Get user's selected state
   const { data: userPref, isLoading: isPrefLoading } = useQuery({
@@ -152,6 +153,66 @@ export function Games() {
 
   const favoriteGameIds = new Set(favorites.map(f => f.reference_id));
 
+  // Fetch user's ticket purchases
+  const { data: purchases = [] } = useQuery({
+    queryKey: ['purchases', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('purchases')
+        .select('*, games(*)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Filter purchases based on time filter
+  const getFilteredPurchases = () => {
+    const now = new Date();
+    const filterDate = new Date();
+    
+    if (ticketTimeFilter === '7D') {
+      filterDate.setDate(now.getDate() - 7);
+    } else {
+      filterDate.setDate(now.getDate() - 30);
+    }
+    
+    return purchases.filter(purchase => {
+      const purchaseDate = new Date(purchase.created_at);
+      return purchaseDate >= filterDate;
+    });
+  };
+
+  const filteredPurchases = getFilteredPurchases();
+
+  // Calculate ticket stats from filtered purchases
+  const ticketStats = filteredPurchases.reduce((acc, purchase) => {
+    const ticketPrice = purchase.games?.price || 0;
+    acc.totalSpent += purchase.quantity * ticketPrice;
+    
+    if (purchase.is_winner === true) {
+      acc.wins += 1;
+      acc.winAmount += purchase.win_amount || 0;
+    } else if (purchase.is_winner === false) {
+      acc.losses += 1;
+    }
+    
+    return acc;
+  }, { 
+    wins: 0, 
+    losses: 0, 
+    winAmount: 0,
+    totalSpent: 0
+  });
+
+  const totalDecided = ticketStats.wins + ticketStats.losses;
+  const winPercentage = totalDecided > 0 ? Math.round((ticketStats.wins / totalDecided) * 100) : 0;
+  const netAmount = ticketStats.winAmount - ticketStats.totalSpent;
+
   // Fetch recent forum topics
   const { data: hotTopics = [] } = useQuery({
     queryKey: ['hotTopics'],
@@ -221,6 +282,16 @@ export function Games() {
     return content.substring(0, maxLength) + '...';
   };
 
+  // Get newest games (top 4 by start_date)
+  const newestGames = filteredGames
+    .filter(game => game.start_date) // Only games with start dates
+    .sort((a, b) => {
+      const dateA = new Date(a.start_date!);
+      const dateB = new Date(b.start_date!);
+      return dateB.getTime() - dateA.getTime(); // Most recent first
+    })
+    .slice(0, 4);
+
   // Determine which games to display based on displayCount
   const displayedGames = filteredGames.slice(0, displayCount);
   const hasMoreGames = filteredGames.length > displayCount;
@@ -269,6 +340,66 @@ export function Games() {
         </div>
       
       <div className="max-w-screen-xl mx-auto px-4 pb-6">
+        {/* My Tickets Section - Only show if user is logged in */}
+        {user && purchases.length > 0 && (
+          <div className="mb-6">
+            {/* Header with Time Filter */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">My Tickets</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTicketTimeFilter('7D')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    ticketTimeFilter === '7D'
+                      ? 'bg-teal text-white shadow-md'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  7D
+                </button>
+                <button
+                  onClick={() => setTicketTimeFilter('1M')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    ticketTimeFilter === '1M'
+                      ? 'bg-teal text-white shadow-md'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                >
+                  1M
+                </button>
+              </div>
+            </div>
+
+            {/* Summary Blocks */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* Win/Loss Block */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-semibold text-gray-600">🏆W / 💥L</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">
+                  {ticketStats.wins} / {ticketStats.losses}
+                  <span className="text-base ml-2 text-gray-500">({totalDecided})</span>
+                </p>
+                <p className="text-sm text-gray-600 mt-1">{winPercentage}% winrate</p>
+              </div>
+
+              {/* Win$ / Spend Block */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-semibold text-gray-600">🏆W$ / 💸Spend</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-600">
+                  ${Math.floor(ticketStats.winAmount)} / ${Math.floor(ticketStats.totalSpent)}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {netAmount >= 0 ? '+' : ''}${Math.floor(netAmount)} net
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="mb-6 space-y-4">
           {/* Search Field - Mobile: Full Width Row */}
@@ -411,6 +542,28 @@ export function Games() {
             </div>
           </div>
         </div>
+
+        {/* Newest Games Section */}
+        {newestGames.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Newest Games</h2>
+              <span className="text-sm text-gray-500">
+                ↪ by {sortBy === 'rank' ? 'rank' : 'prizes'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {newestGames.map((game) => (
+                <GameCard
+                  key={game.id}
+                  game={game}
+                  isFavorited={favoriteGameIds.has(game.id)}
+                  onFavoriteChange={handleFavoriteChange}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Top 20 Games Header */}
         {filteredGames.length > 0 && (
