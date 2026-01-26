@@ -457,10 +457,14 @@ export function Favorites() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {purchases.slice(0, 6).map((purchase) => (
+                        {purchases.slice(0, 6).map((purchase, index) => (
                           <div
                             key={purchase.id}
-                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                            className={`rounded-lg p-4 transition-colors ${
+                              index % 2 === 0 
+                                ? 'bg-gray-50 hover:bg-gray-100' 
+                                : 'bg-white hover:bg-gray-50'
+                            }`}
                           >
                             {showLossMessage && selectedPurchaseForWinLoss?.id === purchase.id ? (
                               // Loss Message
@@ -517,8 +521,8 @@ export function Favorites() {
                                   </h4>
                                   
                                   {/* Row 2: Game number, Ticket price, number of tickets */}
-                                  <div className="flex items-center gap-3 text-sm">
-                                    <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-xs bg-white px-1 py-0.5 rounded font-semibold">
                                       #{purchase.games?.game_number || 'N/A'}
                                     </span>
                                     <span className="font-semibold text-green-600">
@@ -1025,10 +1029,14 @@ export function Favorites() {
               
               {/* Scrollable Content */}
               <div className="overflow-y-auto max-h-[calc(80vh-100px)] p-6 space-y-3">
-                {purchases.map((purchase) => (
+                {purchases.map((purchase, index) => (
                   <div
                     key={purchase.id}
-                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                    className={`rounded-lg p-4 transition-colors ${
+                      index % 2 === 0 
+                        ? 'bg-gray-50 hover:bg-gray-100' 
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
                   >
                     {showLossMessage && selectedPurchaseForWinLoss?.id === purchase.id ? (
                       // Loss Message
@@ -1085,8 +1093,8 @@ export function Favorites() {
                           </h4>
                           
                           {/* Row 2: Game number, Ticket price, number of tickets */}
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-xs bg-white px-1 py-0.5 rounded font-semibold">
                               #{purchase.games?.game_number || 'N/A'}
                             </span>
                             <span className="font-semibold text-green-600">
