@@ -392,10 +392,11 @@ export function Games() {
               {/* Win$ / Spend Block */}
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-gray-600">🏆W$ / 💸Spend</span>
+                  <span className="text-sm font-semibold text-gray-600">💰W$ / 💸$</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
-                  ${Math.floor(ticketStats.winAmount)} / ${Math.floor(ticketStats.totalSpent)}
+                  ${Math.floor(ticketStats.winAmount)}
+                  <span className="text-base ml-2 text-gray-500">(-${Math.floor(ticketStats.totalSpent)})</span>
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
                   {netAmount >= 0 ? '+' : ''}${Math.floor(netAmount)} net
