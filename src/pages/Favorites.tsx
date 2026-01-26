@@ -294,7 +294,7 @@ export function Favorites() {
   // Handle marking as win
   const handleMarkAsWin = async (winAmount: number) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('purchases')
         .update({
           is_winner: true,
@@ -302,9 +302,11 @@ export function Favorites() {
         })
         .eq('id', selectedPurchaseForWinLoss.id);
 
+      if (error) throw error;
+
       setShowWinLossPopup(false);
       setSelectedPurchaseForWinLoss(null);
-      refetchPurchases();
+      await refetchPurchases();
       const { toast } = await import('sonner');
       toast.success('Marked as winning ticket! 🏆');
     } catch (error) {
@@ -317,7 +319,7 @@ export function Favorites() {
   // Handle marking as loss
   const handleMarkAsLoss = async () => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('purchases')
         .update({
           is_winner: false,
@@ -325,16 +327,19 @@ export function Favorites() {
         })
         .eq('id', selectedPurchaseForWinLoss.id);
 
+      if (error) throw error;
+
       setShowWinLossPopup(false);
       setShowLossMessage(true);
+      
+      // Refetch purchases immediately to update stats
+      await refetchPurchases();
       
       // Hide loss message after 2 seconds
       setTimeout(() => {
         setShowLossMessage(false);
         setSelectedPurchaseForWinLoss(null);
       }, 2000);
-      
-      refetchPurchases();
     } catch (error) {
       console.error('Error marking as loss:', error);
       const { toast } = await import('sonner');
