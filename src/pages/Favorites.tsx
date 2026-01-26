@@ -508,22 +508,37 @@ export function Favorites() {
                               </div>
                             ) : (
                               // View Mode
-                              <div className="flex flex-col gap-2">
-                                {/* Row 1: Game title (full width) */}
-                                <div className="w-full">
+                              <div className="flex gap-3">
+                                {/* Left side: Game info */}
+                                <div className="flex-1 flex flex-col gap-2">
+                                  {/* Row 1: Game title */}
                                   <h4 className="font-bold text-sm line-clamp-1">
                                     {purchase.games?.game_name || 'Unknown Game'}
                                   </h4>
-                                </div>
-                                
-                                {/* Row 2: Game number, W/L buttons, Edit/Delete */}
-                                <div className="flex items-center gap-3">
-                                  <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                                  
+                                  {/* Row 2: Game number */}
+                                  <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold inline-block w-fit">
                                     #{purchase.games?.game_number || 'N/A'}
                                   </span>
                                   
-                                  <div className="flex-1" />
+                                  {/* Row 3: Ticket price, number of tickets */}
+                                  <div className="flex items-center gap-3 text-sm">
+                                    <span className="font-semibold text-green-600">
+                                      ${purchase.games?.price || 0}
+                                    </span>
+                                    <span className="text-gray-700">
+                                      {purchase.quantity} 🎫
+                                    </span>
+                                  </div>
                                   
+                                  {/* Row 4: Date and time */}
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                </div>
+                                
+                                {/* Right side: Action buttons */}
+                                <div className="flex gap-2">
                                   {/* W/L Buttons Column */}
                                   <div className="flex flex-col gap-2">
                                     {/* Win/Loss Indicator */}
@@ -579,21 +594,6 @@ export function Favorites() {
                                       <Trash2 className="w-4 h-4 text-red-500" />
                                     </button>
                                   </div>
-                                </div>
-                                
-                                {/* Row 3: Ticket price, number of tickets */}
-                                <div className="flex items-center gap-3 text-sm">
-                                  <span className="font-semibold text-green-600">
-                                    ${purchase.games?.price || 0}
-                                  </span>
-                                  <span className="text-gray-700">
-                                    {purchase.quantity} 🎫
-                                  </span>
-                                </div>
-                                
-                                {/* Row 4: Date and time */}
-                                <div className="text-xs text-gray-500">
-                                  {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                               </div>
                             )}
@@ -1078,22 +1078,37 @@ export function Favorites() {
                       </div>
                     ) : (
                       // View Mode
-                      <div className="flex flex-col gap-2">
-                        {/* Row 1: Game title (full width) */}
-                        <div className="w-full">
+                      <div className="flex gap-3">
+                        {/* Left side: Game info */}
+                        <div className="flex-1 flex flex-col gap-2">
+                          {/* Row 1: Game title */}
                           <h4 className="font-bold text-sm line-clamp-1">
                             {purchase.games?.game_name || 'Unknown Game'}
                           </h4>
-                        </div>
-                        
-                        {/* Row 2: Game number, W/L buttons, Edit/Delete */}
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold">
+                          
+                          {/* Row 2: Game number */}
+                          <span className="text-xs bg-white px-2 py-0.5 rounded font-semibold inline-block w-fit">
                             #{purchase.games?.game_number || 'N/A'}
                           </span>
                           
-                          <div className="flex-1" />
+                          {/* Row 3: Ticket price, number of tickets */}
+                          <div className="flex items-center gap-3 text-sm">
+                            <span className="font-semibold text-green-600">
+                              ${purchase.games?.price || 0}
+                            </span>
+                            <span className="text-gray-700">
+                              {purchase.quantity} 🎫
+                            </span>
+                          </div>
                           
+                          {/* Row 4: Date and time */}
+                          <div className="text-xs text-gray-500">
+                            {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        
+                        {/* Right side: Action buttons */}
+                        <div className="flex gap-2">
                           {/* W/L Buttons Column */}
                           <div className="flex flex-col gap-2">
                             {/* Win/Loss Indicator */}
@@ -1149,21 +1164,6 @@ export function Favorites() {
                               <Trash2 className="w-4 h-4 text-red-500" />
                             </button>
                           </div>
-                        </div>
-                        
-                        {/* Row 3: Ticket price, number of tickets */}
-                        <div className="flex items-center gap-3 text-sm">
-                          <span className="font-semibold text-green-600">
-                            ${purchase.games?.price || 0}
-                          </span>
-                          <span className="text-gray-700">
-                            {purchase.quantity} 🎫
-                          </span>
-                        </div>
-                        
-                        {/* Row 4: Date and time */}
-                        <div className="text-xs text-gray-500">
-                          {new Date(purchase.created_at).toLocaleDateString()} {new Date(purchase.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     )}
