@@ -48,6 +48,17 @@ export function Favorites() {
   const gameFavorites = favorites.filter(f => f.favorite_type === 'game');
   const convoFavorites = favorites.filter(f => f.favorite_type === 'topic');
 
+  // State - must be declared before being used
+  const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+  const [editQuantity, setEditQuantity] = useState<number>(1);
+  const [editDateTime, setEditDateTime] = useState<string>('');
+  const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
+  const [showWinLossPopup, setShowWinLossPopup] = useState(false);
+  const [popupMode, setPopupMode] = useState<'win' | 'loss'>('win');
+  const [showLossMessage, setShowLossMessage] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<'7D' | '1M' | '6M' | '1Y'>('1M');
+
   // Get user's ticket purchases
   const { data: purchases = [], refetch: refetchPurchases } = useQuery({
     queryKey: ['purchases', user?.id],
@@ -118,17 +129,6 @@ export function Favorites() {
 
   const totalDecided = stats.wins + stats.losses;
   const winPercentage = totalDecided > 0 ? Math.round((stats.wins / totalDecided) * 100) : 0;
-
-  // Edit purchase state
-  const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
-  const [editQuantity, setEditQuantity] = useState<number>(1);
-  const [editDateTime, setEditDateTime] = useState<string>('');
-  const [selectedPurchaseForWinLoss, setSelectedPurchaseForWinLoss] = useState<any>(null);
-  const [showWinLossPopup, setShowWinLossPopup] = useState(false);
-  const [popupMode, setPopupMode] = useState<'win' | 'loss'>('win');
-  const [showLossMessage, setShowLossMessage] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
-  const [timeFilter, setTimeFilter] = useState<'7D' | '1M' | '6M' | '1Y'>('1M');
 
   // Get user profile to check if admin
   const { data: userProfile } = useQuery({
