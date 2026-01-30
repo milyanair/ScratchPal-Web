@@ -386,7 +386,10 @@ export function Games() {
             {/* Summary Blocks */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               {/* Win/Loss Block */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+              <div 
+                onClick={() => navigate('/favorites')}
+                className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200 cursor-pointer hover:shadow-lg transition-all"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-semibold text-gray-600">🏆W / 💥L</span>
                 </div>
@@ -398,7 +401,10 @@ export function Games() {
               </div>
 
               {/* Win$ / Spend Block */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
+              <div 
+                onClick={() => navigate('/favorites')}
+                className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200 cursor-pointer hover:shadow-lg transition-all"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-semibold text-gray-600">💰W$ / 💸$</span>
                 </div>

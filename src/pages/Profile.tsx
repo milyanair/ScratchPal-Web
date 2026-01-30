@@ -1147,23 +1147,17 @@ export function Profile() {
               )}
             </div>
 
-            {/* Support Message */}
-            <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg shadow p-6 border-2 border-teal-100">
+            {/* Delete Account Link */}
+            <div className="bg-red-50 rounded-lg shadow p-6 border-2 border-red-200">
               <div className="text-center">
                 <p className="text-gray-700 leading-relaxed mb-3">
-                  We hope you're having fun and winning big! If you'd like to help us keep the lights on and the new features coming, you can support us on our{' '}
-                  <button
-                    onClick={() => navigate('/donate')}
-                    className="text-teal font-bold hover:underline"
-                  >
-                    Donate page
-                  </button>
+                  Need to delete your account and all associated data?
                 </p>
                 <button
-                  onClick={() => navigate('/donate')}
-                  className="inline-block gradient-teal text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  onClick={() => navigate('/delete-account')}
+                  className="inline-block bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
                 >
-                  💖 Support ScratchPal
+                  Delete My Account
                 </button>
               </div>
             </div>

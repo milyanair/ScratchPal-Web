@@ -59,6 +59,7 @@ export function Favorites() {
   const [showLossMessage, setShowLossMessage] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const [timeFilter, setTimeFilter] = useState<'7D' | '1M' | '6M' | '1Y'>('1M');
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'wins' | 'losses'>('all');
 
   // Get user's ticket purchases
   const { data: purchases = [], refetch: refetchPurchases } = useQuery({
@@ -104,6 +105,13 @@ export function Favorites() {
   };
 
   const filteredPurchases = getFilteredPurchases();
+
+  // Apply ticket filter (wins/losses)
+  const displayedPurchases = filteredPurchases.filter(purchase => {
+    if (ticketFilter === 'wins') return purchase.is_winner === true;
+    if (ticketFilter === 'losses') return purchase.is_winner === false;
+    return true; // 'all'
+  });
 
   // Calculate all stats from filtered purchases
   const stats = filteredPurchases.reduce((acc, purchase) => {
@@ -485,7 +493,12 @@ export function Favorites() {
                       {/* Summary Stats - 6 blocks, 2 per row on mobile */}
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                         {/* Wins */}
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+                        <div 
+                          onClick={() => setTicketFilter(ticketFilter === 'wins' ? 'all' : 'wins')}
+                          className={`bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 cursor-pointer hover:shadow-lg transition-all ${
+                            ticketFilter === 'wins' ? 'border-green-500 ring-2 ring-green-500' : 'border-green-200'
+                          }`}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">🏆 Wins</span>
                           </div>
@@ -493,7 +506,12 @@ export function Favorites() {
                         </div>
                         
                         {/* Losses */}
-                        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 border-red-200">
+                        <div 
+                          onClick={() => setTicketFilter(ticketFilter === 'losses' ? 'all' : 'losses')}
+                          className={`bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 border-2 cursor-pointer hover:shadow-lg transition-all ${
+                            ticketFilter === 'losses' ? 'border-red-500 ring-2 ring-red-500' : 'border-red-200'
+                          }`}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">💥 Losses</span>
                           </div>
@@ -501,7 +519,12 @@ export function Favorites() {
                         </div>
                         
                         {/* Win Amount */}
-                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border-2 border-orange-200">
+                        <div 
+                          onClick={() => setTicketFilter(ticketFilter === 'wins' ? 'all' : 'wins')}
+                          className={`bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border-2 cursor-pointer hover:shadow-lg transition-all ${
+                            ticketFilter === 'wins' ? 'border-orange-500 ring-2 ring-orange-500' : 'border-orange-200'
+                          }`}
+                        >
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-semibold text-gray-600">💰 Win$</span>
                           </div>
@@ -536,15 +559,35 @@ export function Favorites() {
                       </div>
                     </div>
                     
-                    {purchases.length === 0 ? (
+                    {/* Active Filter Indicator */}
+                    {ticketFilter !== 'all' && (
+                      <div className="mb-3 flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
+                        <span className="text-sm font-semibold text-gray-700">
+                          Showing: {ticketFilter === 'wins' ? '🏆 Wins Only' : '💥 Losses Only'}
+                        </span>
+                        <button
+                          onClick={() => setTicketFilter('all')}
+                          className="text-xs text-teal hover:underline font-semibold"
+                        >
+                          Clear Filter
+                        </button>
+                      </div>
+                    )}
+
+                    {displayedPurchases.length === 0 ? (
                       <div className="text-center py-8">
                         <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 mb-3">No ticket purchases tracked yet</p>
+                        <p className="text-gray-500 mb-3">
+                          {ticketFilter !== 'all' 
+                            ? `No ${ticketFilter} found in this time period`
+                            : 'No ticket purchases tracked yet'
+                          }
+                        </p>
                         <p className="text-sm text-gray-400">Use the 🛒 button on game cards to track your purchases</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {purchases.slice(0, 6).map((purchase, index) => (
+                        {displayedPurchases.slice(0, 6).map((purchase, index) => (
                           <div
                             key={purchase.id}
                             className={`rounded-lg p-4 transition-colors ${
@@ -704,13 +747,13 @@ export function Favorites() {
                     )}
                     
                     {/* View More Button */}
-                    {purchases.length > 6 && (
+                    {displayedPurchases.length > 6 && (
                       <div className="text-center mt-4">
                         <button
                           onClick={() => setShowAllTickets(true)}
                           className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
                         >
-                          View More ({purchases.length - 6} more)
+                          View More ({displayedPurchases.length - 6} more)
                         </button>
                       </div>
                     )}
@@ -1120,7 +1163,9 @@ export function Favorites() {
             <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
               {/* Header */}
               <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">All My Tickets ({purchases.length})</h2>
+                <h2 className="text-2xl font-bold">
+                  All My Tickets ({displayedPurchases.length}{ticketFilter !== 'all' ? ` - ${ticketFilter === 'wins' ? 'Wins' : 'Losses'}` : ''})
+                </h2>
                 <button
                   onClick={() => setShowAllTickets(false)}
                   className="p-1 hover:bg-white/20 rounded-full transition-colors"
@@ -1131,7 +1176,22 @@ export function Favorites() {
               
               {/* Scrollable Content */}
               <div className="overflow-y-auto max-h-[calc(80vh-100px)] p-6 space-y-3">
-                {purchases.map((purchase, index) => (
+                {/* Active Filter Indicator in Popup */}
+                {ticketFilter !== 'all' && (
+                  <div className="mb-3 flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2 sticky top-0 z-10">
+                    <span className="text-sm font-semibold text-gray-700">
+                      Showing: {ticketFilter === 'wins' ? '🏆 Wins Only' : '💥 Losses Only'}
+                    </span>
+                    <button
+                      onClick={() => setTicketFilter('all')}
+                      className="text-xs text-teal hover:underline font-semibold"
+                    >
+                      Clear Filter
+                    </button>
+                  </div>
+                )}
+
+                {displayedPurchases.map((purchase, index) => (
                   <div
                     key={purchase.id}
                     className={`rounded-lg p-4 transition-colors ${
