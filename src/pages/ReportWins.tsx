@@ -8,6 +8,7 @@ import { Search, Upload, Trophy, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { haptics } from '@/lib/haptics';
+import { Confetti } from '@/components/Confetti';
 
 export function ReportWins() {
   const { user } = useAuth();
@@ -22,6 +23,9 @@ export function ReportWins() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [gameSearch, setGameSearch] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [pointsEarned, setPointsEarned] = useState(0);
 
   // Get selected state from localStorage for anonymous users
   const [anonymousState, setAnonymousState] = useState<string>(() => {
@@ -185,9 +189,37 @@ export function ReportWins() {
         image_urls: uploadedImages.length > 0 ? uploadedImages : null,
       });
 
+      // Get points config for win reporting
+      const { data: pointsConfig } = await supabase
+        .from('points_config')
+        .select('points_awarded')
+        .eq('activity_name', 'report_win')
+        .single();
+
+      const earnedPoints = pointsConfig?.points_awarded || 0;
+      setPointsEarned(earnedPoints);
+
+      // Play tada sound
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSBY=');
+      audio.play().catch(() => {});
+
       haptics.success(); // Success vibration pattern
-      toast.success('Win reported! 🎉');
-      navigate('/');
+      
+      // Show success popup with confetti
+      setShowConfetti(true);
+      setShowSuccessPopup(true);
+
+      // Navigate after 3 seconds
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        setShowConfetti(false);
+        if (selectedGame.slug) {
+          navigate(`/game/${selectedGame.state}/${selectedGame.slug}`);
+        } else {
+          navigate(`/game/${selectedGame.id}`);
+        }
+      }, 3000);
+
     } catch (error) {
       console.error('Error reporting win:', error);
       haptics.error(); // Error vibration
@@ -199,6 +231,35 @@ export function ReportWins() {
 
   return (
     <Layout>
+      {/* Confetti Effect */}
+      {showConfetti && <Confetti />}
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center animate-bounce-in">
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center">
+                <Trophy className="w-12 h-12 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Thanks For Sharing!</h2>
+              <p className="text-gray-600 text-lg">Your win has been successfully reported</p>
+            </div>
+            
+            {pointsEarned > 0 && (
+              <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl p-4 mb-4">
+                <p className="text-sm font-semibold text-yellow-800 mb-1">Points Earned!</p>
+                <p className="text-3xl font-bold text-yellow-600">+{pointsEarned}</p>
+              </div>
+            )}
+
+            <div className="text-sm text-gray-500">
+              Redirecting to game details...
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="mb-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
