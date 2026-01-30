@@ -193,10 +193,10 @@ export function StateSelection() {
               </a>
               <span className="text-gray-300">|</span>
               <button
-                onClick={() => navigate('/donate')}
+                onClick={() => navigate('/delete-account')}
                 className="text-teal hover:underline"
               >
-                Donate
+                Delete My Account
               </button>
             </div>
           </div>
