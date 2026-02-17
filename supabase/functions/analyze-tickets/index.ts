@@ -125,19 +125,25 @@ CRITICAL INSTRUCTIONS FOR ACCURACY:
 3. For each ticket detected:
    - Extract visible game number (remove any leading zeros, just digits)
    - Find the matching game from the list above
-   - Estimate position as percentages (x: 0-100%, y: 0-100%) relative to image center
+   - Provide position in PIXELS (x, y coordinates) where the ticket's CENTER is located
    - Assign confidence based on clarity (0.9+ = very clear, 0.7-0.9 = mostly clear, 0.5-0.7 = partial visibility)
 
-4. Return ONLY up to ${config.max_tickets_detected} tickets (prioritize highest confidence)
+4. IMPORTANT: Also provide the image dimensions:
+   - image_width: total width of the image in pixels
+   - image_height: total height of the image in pixels
 
-5. Return ONLY valid JSON (no markdown, no code blocks, no explanations):
+5. Return ONLY up to ${config.max_tickets_detected} tickets (prioritize highest confidence)
+
+6. Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
 {
+  "image_width": 1920,
+  "image_height": 1080,
   "matches": [
     {
       "game_number": "1234",
       "confidence": 0.95,
-      "position": { "x": 25, "y": 30 },
+      "position": { "x": 480, "y": 324 },
       "detected_text": "MEGA MONEY"
     }
   ]
@@ -146,7 +152,7 @@ CRITICAL INSTRUCTIONS FOR ACCURACY:
 ACCURACY TIPS:
 - Game numbers are usually the most reliable way to identify tickets
 - If you see multiple rows/columns of tickets, process them systematically
-- Position should be the CENTER of each ticket display
+- Position should be the CENTER of each ticket display in PIXEL coordinates
 - Higher confidence = clearer visibility of identifying information
 - Lower confidence if you're making assumptions or partial matches
 
@@ -235,6 +241,12 @@ Analyze the image now and return JSON only:`;
       return cleanDetected.toLowerCase() === cleanActual.toLowerCase();
     };
 
+    // Get image dimensions from AI response (or use defaults)
+    const imageWidth = aiData.image_width || 1920;
+    const imageHeight = aiData.image_height || 1080;
+    
+    console.log(`Image dimensions: ${imageWidth}x${imageHeight}`);
+
     // Match detected tickets to games database
     const ticketMatches: TicketMatch[] = [];
     const lowConfidenceMatches: any[] = [];
@@ -262,12 +274,19 @@ Analyze the image now and return JSON only:`;
       );
 
       if (matchedGame) {
+        // Convert pixel positions to percentages
+        const percentX = (detection.position.x / imageWidth) * 100;
+        const percentY = (detection.position.y / imageHeight) * 100;
+        
         ticketMatches.push({
           game: matchedGame,
           confidence: detection.confidence,
-          position: detection.position,
+          position: {
+            x: Math.round(percentX * 100) / 100, // Round to 2 decimals
+            y: Math.round(percentY * 100) / 100,
+          },
         });
-        console.log(`✓ Matched: ${matchedGame.game_name} (confidence: ${detection.confidence}) at position (${detection.position.x}%, ${detection.position.y}%)`);
+        console.log(`✓ Matched: ${matchedGame.game_name} (confidence: ${detection.confidence}) at pixel (${detection.position.x}, ${detection.position.y}) = (${percentX.toFixed(1)}%, ${percentY.toFixed(1)}%)`);
       } else {
         console.warn(`✗ No match found for game #${detection.game_number} (confidence: ${detection.confidence})`);
       }
