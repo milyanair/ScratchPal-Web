@@ -88,36 +88,6 @@ Deno.serve(async (req) => {
     // Extract base64 image data
     const base64Image = image.replace(/^data:image\/\w+;base64,/, '');
 
-    // Decode image to get actual dimensions
-    let actualImageWidth = 1920; // fallback
-    let actualImageHeight = 1080; // fallback
-    
-    try {
-      const imageBuffer = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
-      
-      // Read image dimensions from buffer (simplified approach)
-      // For JPEG: look for SOF0 (Start Of Frame) marker
-      // For PNG: read IHDR chunk
-      if (imageBuffer[0] === 0xFF && imageBuffer[1] === 0xD8) {
-        // JPEG format
-        for (let i = 2; i < imageBuffer.length - 8; i++) {
-          if (imageBuffer[i] === 0xFF && (imageBuffer[i + 1] === 0xC0 || imageBuffer[i + 1] === 0xC2)) {
-            actualImageHeight = (imageBuffer[i + 5] << 8) | imageBuffer[i + 6];
-            actualImageWidth = (imageBuffer[i + 7] << 8) | imageBuffer[i + 8];
-            break;
-          }
-        }
-      } else if (imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 && imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47) {
-        // PNG format - read IHDR chunk
-        actualImageWidth = (imageBuffer[16] << 24) | (imageBuffer[17] << 16) | (imageBuffer[18] << 8) | imageBuffer[19];
-        actualImageHeight = (imageBuffer[20] << 24) | (imageBuffer[21] << 16) | (imageBuffer[22] << 8) | imageBuffer[23];
-      }
-      
-      console.log(`✓ Decoded actual image dimensions: ${actualImageWidth}x${actualImageHeight}`);
-    } catch (error) {
-      console.warn('⚠️ Failed to decode image dimensions, using defaults:', error);
-    }
-
     // Call OnSpace AI vision model
     const aiBaseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
     const aiApiKey = Deno.env.get('ONSPACE_AI_API_KEY');
@@ -155,25 +125,19 @@ CRITICAL INSTRUCTIONS FOR ACCURACY:
 3. For each ticket detected:
    - Extract visible game number (remove any leading zeros, just digits)
    - Find the matching game from the list above
-   - Provide position in PIXELS (x, y coordinates) where the ticket's CENTER is located
+   - Estimate position as percentages (x: 0-100%, y: 0-100%) where the ticket's CENTER is located
    - Assign confidence based on clarity (0.9+ = very clear, 0.7-0.9 = mostly clear, 0.5-0.7 = partial visibility)
 
-4. IMPORTANT: Also provide the image dimensions:
-   - image_width: total width of the image in pixels
-   - image_height: total height of the image in pixels
+4. Return ONLY up to ${config.max_tickets_detected} tickets (prioritize highest confidence)
 
-5. Return ONLY up to ${config.max_tickets_detected} tickets (prioritize highest confidence)
-
-6. Return ONLY valid JSON (no markdown, no code blocks, no explanations):
+5. Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
 {
-  "image_width": 1920,
-  "image_height": 1080,
   "matches": [
     {
       "game_number": "1234",
       "confidence": 0.95,
-      "position": { "x": 480, "y": 324 },
+      "position": { "x": 25, "y": 30 },
       "detected_text": "MEGA MONEY"
     }
   ]
@@ -182,7 +146,7 @@ CRITICAL INSTRUCTIONS FOR ACCURACY:
 ACCURACY TIPS:
 - Game numbers are usually the most reliable way to identify tickets
 - If you see multiple rows/columns of tickets, process them systematically
-- Position should be the CENTER of each ticket display in PIXEL coordinates
+- Position should be the CENTER of each ticket display as PERCENTAGE (0-100) of image width/height
 - Higher confidence = clearer visibility of identifying information
 - Lower confidence if you're making assumptions or partial matches
 
@@ -271,13 +235,6 @@ Analyze the image now and return JSON only:`;
       return cleanDetected.toLowerCase() === cleanActual.toLowerCase();
     };
 
-    // Use actual decoded image dimensions instead of AI-reported dimensions
-    const imageWidth = actualImageWidth;
-    const imageHeight = actualImageHeight;
-    
-    console.log(`Using actual image dimensions for conversion: ${imageWidth}x${imageHeight}`);
-    console.log(`(AI reported: ${aiData.image_width || 'not provided'}x${aiData.image_height || 'not provided'})`);
-
     // Match detected tickets to games database
     const ticketMatches: TicketMatch[] = [];
     const lowConfidenceMatches: any[] = [];
@@ -305,19 +262,12 @@ Analyze the image now and return JSON only:`;
       );
 
       if (matchedGame) {
-        // Convert pixel positions to percentages
-        const percentX = (detection.position.x / imageWidth) * 100;
-        const percentY = (detection.position.y / imageHeight) * 100;
-        
         ticketMatches.push({
           game: matchedGame,
           confidence: detection.confidence,
-          position: {
-            x: Math.round(percentX * 100) / 100, // Round to 2 decimals
-            y: Math.round(percentY * 100) / 100,
-          },
+          position: detection.position,
         });
-        console.log(`✓ Matched: ${matchedGame.game_name} (confidence: ${detection.confidence}) at pixel (${detection.position.x}, ${detection.position.y}) = (${percentX.toFixed(1)}%, ${percentY.toFixed(1)}%)`);
+        console.log(`✓ Matched: ${matchedGame.game_name} (confidence: ${detection.confidence}) at position (${detection.position.x}%, ${detection.position.y}%)`);
       } else {
         console.warn(`✗ No match found for game #${detection.game_number} (confidence: ${detection.confidence})`);
       }
