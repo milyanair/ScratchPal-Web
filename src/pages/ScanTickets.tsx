@@ -666,7 +666,13 @@ export function ScanTickets() {
               <button
                 onClick={() => {
                   haptics.medium();
-                  startCamera(); // Changed fileInputRef.current?.click() to startCamera()
+                  // Use file input with camera capture for WebView compatibility
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.capture = 'environment'; // Request back camera
+                  input.onchange = handlePhotoCapture;
+                  input.click();
                 }}
                 className="gradient-teal text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold flex items-center justify-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity text-sm sm:text-base"
               >
@@ -677,10 +683,11 @@ export function ScanTickets() {
               <button
                 onClick={() => {
                   haptics.light();
-                  // Trigger upload from gallery
+                  // Trigger upload from gallery (no capture attribute)
                   const input = document.createElement('input');
                   input.type = 'file';
                   input.accept = 'image/*';
+                  // No capture attribute = let user choose camera OR gallery
                   input.onchange = handlePhotoCapture;
                   input.click();
                 }}
