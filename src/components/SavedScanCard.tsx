@@ -242,7 +242,7 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete, showA
                 <img
                   src={scan.image_url}
                   alt="Scanned tickets"
-                  className="w-full h-auto"
+                  className="w-full h-auto relative z-0"
                 />
 
                 {/* Ticket Match Dots */}
@@ -252,7 +252,7 @@ export function SavedScanCard({ scan, autoOpen = false, onClose, onDelete, showA
                       return (
                         <div
                           key={index}
-                          className={`absolute w-11 h-11 md:w-[76px] md:h-[76px] rounded-full ${getDotColor(match.game.rank)} opacity-80 flex flex-col items-center justify-center font-bold shadow-lg cursor-pointer hover:scale-110 transition-transform`}
+                          className={`absolute w-11 h-11 md:w-[76px] md:h-[76px] rounded-full ${getDotColor(match.game.rank)} opacity-80 flex flex-col items-center justify-center font-bold shadow-lg cursor-pointer hover:scale-110 transition-transform z-10`}
                           style={{
                             left: `${match.position.x}%`,
                             top: `${match.position.y}%`,
