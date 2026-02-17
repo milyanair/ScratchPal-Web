@@ -88,6 +88,36 @@ Deno.serve(async (req) => {
     // Extract base64 image data
     const base64Image = image.replace(/^data:image\/\w+;base64,/, '');
 
+    // Decode image to get actual dimensions
+    let actualImageWidth = 1920; // fallback
+    let actualImageHeight = 1080; // fallback
+    
+    try {
+      const imageBuffer = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
+      
+      // Read image dimensions from buffer (simplified approach)
+      // For JPEG: look for SOF0 (Start Of Frame) marker
+      // For PNG: read IHDR chunk
+      if (imageBuffer[0] === 0xFF && imageBuffer[1] === 0xD8) {
+        // JPEG format
+        for (let i = 2; i < imageBuffer.length - 8; i++) {
+          if (imageBuffer[i] === 0xFF && (imageBuffer[i + 1] === 0xC0 || imageBuffer[i + 1] === 0xC2)) {
+            actualImageHeight = (imageBuffer[i + 5] << 8) | imageBuffer[i + 6];
+            actualImageWidth = (imageBuffer[i + 7] << 8) | imageBuffer[i + 8];
+            break;
+          }
+        }
+      } else if (imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50 && imageBuffer[2] === 0x4E && imageBuffer[3] === 0x47) {
+        // PNG format - read IHDR chunk
+        actualImageWidth = (imageBuffer[16] << 24) | (imageBuffer[17] << 16) | (imageBuffer[18] << 8) | imageBuffer[19];
+        actualImageHeight = (imageBuffer[20] << 24) | (imageBuffer[21] << 16) | (imageBuffer[22] << 8) | imageBuffer[23];
+      }
+      
+      console.log(`✓ Decoded actual image dimensions: ${actualImageWidth}x${actualImageHeight}`);
+    } catch (error) {
+      console.warn('⚠️ Failed to decode image dimensions, using defaults:', error);
+    }
+
     // Call OnSpace AI vision model
     const aiBaseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
     const aiApiKey = Deno.env.get('ONSPACE_AI_API_KEY');
@@ -241,11 +271,12 @@ Analyze the image now and return JSON only:`;
       return cleanDetected.toLowerCase() === cleanActual.toLowerCase();
     };
 
-    // Get image dimensions from AI response (or use defaults)
-    const imageWidth = aiData.image_width || 1920;
-    const imageHeight = aiData.image_height || 1080;
+    // Use actual decoded image dimensions instead of AI-reported dimensions
+    const imageWidth = actualImageWidth;
+    const imageHeight = actualImageHeight;
     
-    console.log(`Image dimensions: ${imageWidth}x${imageHeight}`);
+    console.log(`Using actual image dimensions for conversion: ${imageWidth}x${imageHeight}`);
+    console.log(`(AI reported: ${aiData.image_width || 'not provided'}x${aiData.image_height || 'not provided'})`);
 
     // Match detected tickets to games database
     const ticketMatches: TicketMatch[] = [];
