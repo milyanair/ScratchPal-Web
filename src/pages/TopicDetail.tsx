@@ -630,62 +630,62 @@ export function TopicDetail() {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <button
-                onClick={handleUpvote}
-                className={`flex items-center gap-1 transition-colors ${
-                  hasUpvoted ? 'text-teal font-semibold' : 'hover:text-teal'
+          {/* First Row: Upvote, Date, User */}
+          <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+            <button
+              onClick={handleUpvote}
+              className={`flex items-center gap-1 transition-colors ${
+                hasUpvoted ? 'text-teal font-semibold' : 'hover:text-teal'
+              }`}
+            >
+              <ThumbsUp className={`w-4 h-4 ${hasUpvoted ? 'fill-teal' : ''}`} />
+              <span>{topic.upvotes || 0}</span>
+            </button>
+            <span>{new Date(topic.created_at).toLocaleString()}</span>
+            <div 
+              className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0 text-xs"
+              style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+            >
+              {getUserInitials(topic.user_id)}
+            </div>
+          </div>
+          
+          {/* Second Row: Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Favorite Button */}
+            <button
+              onClick={handleToggleFavorite}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:bg-gray-50"
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400'
                 }`}
-              >
-                <ThumbsUp className={`w-4 h-4 ${hasUpvoted ? 'fill-teal' : ''}`} />
-                <span>{topic.upvotes || 0}</span>
-              </button>
-              <span>{new Date(topic.created_at).toLocaleString()}</span>
-              <div 
-                className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0 text-xs"
-                style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
-              >
-                {getUserInitials(topic.user_id)}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {/* Favorite Button */}
+              />
+            </button>
+
+            {/* Report Button */}
+            {user && topic.user_id !== user.id && (
               <button
-                onClick={handleToggleFavorite}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:bg-gray-50"
-                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                onClick={() => handleOpenReportModal('topic', topic.id)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-orange-200 text-orange-600 hover:bg-orange-50 transition-all"
+                title="Report this topic"
               >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-400'
-                  }`}
-                />
+                <Flag className="w-5 h-5" />
               </button>
+            )}
 
-              {/* Report Button */}
-              {user && topic.user_id !== user.id && (
-                <button
-                  onClick={() => handleOpenReportModal('topic', topic.id)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-orange-200 text-orange-600 hover:bg-orange-50 transition-all"
-                  title="Report this topic"
-                >
-                  <Flag className="w-5 h-5" />
-                </button>
-              )}
-
-              {/* Block User Button */}
-              {user && topic.user_id !== user.id && (
-                <button
-                  onClick={() => handleOpenBlockModal(topic.user_id)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 transition-all"
-                  title="Block this user"
-                >
-                  <Ban className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+            {/* Block User Button */}
+            {user && topic.user_id !== user.id && (
+              <button
+                onClick={() => handleOpenBlockModal(topic.user_id)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 transition-all"
+                title="Block this user"
+              >
+                <Ban className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
