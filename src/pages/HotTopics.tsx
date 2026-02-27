@@ -276,13 +276,18 @@ export function HotTopics() {
                   className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
                 >
                   <div className="flex flex-col">
-                    {/* User Circle and Action Buttons Row */}
+                    {/* User Circle, Date, and Action Buttons Row */}
                     <div className="flex items-start justify-between mb-4">
-                      <div 
-                        className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
-                        style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
-                      >
-                        {getUserInitials(topic.user_id)}
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
+                          style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                        >
+                          {getUserInitials(topic.user_id)}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(topic.created_at).toLocaleDateString()}
+                        </span>
                       </div>
 
                       {/* Action Buttons */}
@@ -335,9 +340,6 @@ export function HotTopics() {
                             {topic.game.state} - {topic.game.game_name}
                           </span>
                         )}
-                        <span className="text-xs text-gray-500">
-                          {new Date(topic.created_at).toLocaleDateString()}
-                        </span>
                       </div>
 
                       {/* Title */}
