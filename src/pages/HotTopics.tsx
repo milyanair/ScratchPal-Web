@@ -275,18 +275,45 @@ export function HotTopics() {
                   key={topic.id}
                   className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
                 >
-                  <div className="flex items-start gap-4">
-                    {/* User Circle */}
-                    <div 
-                      className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
-                      style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
-                    >
-                      {getUserInitials(topic.user_id)}
+                  <div className="flex flex-col">
+                    {/* User Circle and Action Buttons Row */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div 
+                        className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0"
+                        style={{ backgroundColor: userColors[topic.user_id] || '#14b8a6' }}
+                      >
+                        {getUserInitials(topic.user_id)}
+                      </div>
+
+                      {/* Action Buttons */}
+                      {user && topic.user_id !== user.id && (
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenReportModal(topic.id);
+                            }}
+                            className="p-2 hover:bg-orange-100 rounded-lg transition-colors"
+                            title="Report topic"
+                          >
+                            <Flag className="w-5 h-5 text-orange-600" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenBlockModal(topic.user_id);
+                            }}
+                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                            title="Block user"
+                          >
+                            <Ban className="w-5 h-5 text-red-600" />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Content */}
+                    {/* Content - starts from left under circle */}
                     <div 
-                      className="flex-1 min-w-0"
                       onClick={() => {
                         if (topic.slug) {
                           navigate(`/topic/${slugifyCategory(topic.category)}/${topic.slug}`);
@@ -335,32 +362,6 @@ export function HotTopics() {
                         </span>
                       </div>
                     </div>
-
-                    {/* Action Buttons */}
-                    {user && topic.user_id !== user.id && (
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenReportModal(topic.id);
-                          }}
-                          className="p-2 hover:bg-orange-100 rounded-lg transition-colors"
-                          title="Report topic"
-                        >
-                          <Flag className="w-5 h-5 text-orange-600" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenBlockModal(topic.user_id);
-                          }}
-                          className="p-2 hover:bg-red-100 rounded-lg transition-colors"
-                          title="Block user"
-                        >
-                          <Ban className="w-5 h-5 text-red-600" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))
