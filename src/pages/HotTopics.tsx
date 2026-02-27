@@ -327,7 +327,7 @@ export function HotTopics() {
               {user && (
                 <button
                   onClick={() => setShowNewTopicModal(true)}
-                  className="gradient-hot text-white w-12 h-12 rounded-full font-semibold hover:opacity-90 flex items-center justify-center shadow-lg"
+                  className="gradient-hot text-white w-14 h-14 rounded-full font-semibold hover:opacity-90 flex items-center justify-center shadow-lg p-0 flex-shrink-0"
                   title="Create New Topic"
                 >
                   <Plus className="w-6 h-6" />
@@ -571,7 +571,7 @@ export function HotTopics() {
 
         {/* New Topic Modal */}
         {showNewTopicModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] overflow-y-auto">
             <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold">Create New Topic</h2>
