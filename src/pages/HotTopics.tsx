@@ -314,6 +314,127 @@ export function HotTopics() {
 
   return (
     <Layout>
+      {/* New Topic Modal - Rendered at top level */}
+      {showNewTopicModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8 relative z-[10000]">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Create New Topic</h2>
+              <button
+                onClick={() => setShowNewTopicModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Category Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2">Category</label>
+              <select
+                value={newTopicCategory}
+                onChange={(e) => setNewTopicCategory(e.target.value)}
+                className="w-full border rounded-lg p-3"
+              >
+                {categories.filter(c => c !== 'All').map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Title */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2">Title</label>
+              <input
+                type="text"
+                value={newTopicTitle}
+                onChange={(e) => setNewTopicTitle(e.target.value)}
+                placeholder="What's your topic about?"
+                className="w-full border rounded-lg p-3"
+                maxLength={200}
+              />
+            </div>
+
+            {/* Content */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2">Content</label>
+              <textarea
+                value={newTopicContent}
+                onChange={(e) => setNewTopicContent(e.target.value)}
+                placeholder="Share your thoughts..."
+                className="w-full border rounded-lg p-3 min-h-[150px]"
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div className="mb-4">
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-teal">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  onChange={handleNewTopicImageUpload}
+                  className="hidden"
+                  disabled={isUploadingImages}
+                />
+                <ImageIcon className="w-5 h-5" />
+                <span>{isUploadingImages ? 'Uploading...' : 'Add Images (Optional)'}</span>
+              </label>
+
+              {newTopicImages.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  {newTopicImages.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Upload ${idx + 1}`}
+                        className="w-full h-24 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => removeNewTopicImage(url)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNewTopicModal(false)}
+                className="flex-1 px-4 py-3 border rounded-lg hover:bg-gray-50"
+                disabled={isSubmittingTopic}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitNewTopic}
+                className="flex-1 px-4 py-3 gradient-hot text-white rounded-lg hover:opacity-90 flex items-center justify-center gap-2"
+                disabled={isSubmittingTopic || !newTopicTitle.trim() || !newTopicContent.trim()}
+              >
+                {isSubmittingTopic ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Posting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    <span>Post Topic</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="mb-6">
@@ -569,126 +690,6 @@ export function HotTopics() {
           </div>
         )}
 
-        {/* New Topic Modal */}
-        {showNewTopicModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[9999] overflow-y-auto">
-            <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Create New Topic</h2>
-                <button
-                  onClick={() => setShowNewTopicModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Category Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-2">Category</label>
-                <select
-                  value={newTopicCategory}
-                  onChange={(e) => setNewTopicCategory(e.target.value)}
-                  className="w-full border rounded-lg p-3"
-                >
-                  {categories.filter(c => c !== 'All').map(category => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Title */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-2">Title</label>
-                <input
-                  type="text"
-                  value={newTopicTitle}
-                  onChange={(e) => setNewTopicTitle(e.target.value)}
-                  placeholder="What's your topic about?"
-                  className="w-full border rounded-lg p-3"
-                  maxLength={200}
-                />
-              </div>
-
-              {/* Content */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold mb-2">Content</label>
-                <textarea
-                  value={newTopicContent}
-                  onChange={(e) => setNewTopicContent(e.target.value)}
-                  placeholder="Share your thoughts..."
-                  className="w-full border rounded-lg p-3 min-h-[150px]"
-                />
-              </div>
-
-              {/* Image Upload */}
-              <div className="mb-4">
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-teal">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                    onChange={handleNewTopicImageUpload}
-                    className="hidden"
-                    disabled={isUploadingImages}
-                  />
-                  <ImageIcon className="w-5 h-5" />
-                  <span>{isUploadingImages ? 'Uploading...' : 'Add Images (Optional)'}</span>
-                </label>
-
-                {newTopicImages.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    {newTopicImages.map((url, idx) => (
-                      <div key={idx} className="relative group">
-                        <img
-                          src={url}
-                          alt={`Upload ${idx + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                        <button
-                          onClick={() => removeNewTopicImage(url)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowNewTopicModal(false)}
-                  className="flex-1 px-4 py-3 border rounded-lg hover:bg-gray-50"
-                  disabled={isSubmittingTopic}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmitNewTopic}
-                  className="flex-1 px-4 py-3 gradient-hot text-white rounded-lg hover:opacity-90 flex items-center justify-center gap-2"
-                  disabled={isSubmittingTopic || !newTopicTitle.trim() || !newTopicContent.trim()}
-                >
-                  {isSubmittingTopic ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Posting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      <span>Post Topic</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </PullToRefresh>
     </Layout>
   );
