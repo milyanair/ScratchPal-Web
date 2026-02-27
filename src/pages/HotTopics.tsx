@@ -7,10 +7,11 @@ import { ForumTopic } from '@/types';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Search, Plus, Pin, ThumbsUp, MessageSquare, Flag, Ban } from 'lucide-react';
+import { Search, Plus, Pin, ThumbsUp, MessageSquare, Flag, Ban, X, Image as ImageIcon, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserColors } from '@/hooks/useUserColor';
 import { slugifyCategory } from '@/lib/utils';
+import { usePoints } from '@/hooks/usePoints';
 
 const categories = [
   'All',
@@ -35,6 +36,16 @@ export function HotTopics() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [blockUserId, setBlockUserId] = useState<string>('');
   const [blockReason, setBlockReason] = useState('');
+  
+  // New Topic Modal states
+  const [showNewTopicModal, setShowNewTopicModal] = useState(false);
+  const [newTopicCategory, setNewTopicCategory] = useState('General');
+  const [newTopicTitle, setNewTopicTitle] = useState('');
+  const [newTopicContent, setNewTopicContent] = useState('');
+  const [newTopicImages, setNewTopicImages] = useState<string[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isSubmittingTopic, setIsSubmittingTopic] = useState(false);
+  const { awardPoints } = usePoints();
 
   // Fetch blocked users
   const { data: blockedUsers = [] } = useQuery({
@@ -200,6 +211,107 @@ export function HotTopics() {
     'Other'
   ];
 
+  // Handle image upload for new topic
+  const handleNewTopicImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!user) {
+      toast.error('Please sign in to upload images');
+      return;
+    }
+
+    setIsUploadingImages(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.size > 10485760) {
+          toast.error(`${file.name} is too large. Max size is 10MB.`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}_${i}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('forum-images')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('forum-images')
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        await awardPoints('add_attachment', `Added ${uploadedUrls.length} image(s)`);
+      }
+
+      setNewTopicImages([...newTopicImages, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} image(s) uploaded`);
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error('Failed to upload images');
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+  const removeNewTopicImage = (url: string) => {
+    setNewTopicImages(newTopicImages.filter(img => img !== url));
+  };
+
+  // Submit new topic
+  const handleSubmitNewTopic = async () => {
+    if (!user) {
+      toast.error('Please sign in to create topics');
+      return;
+    }
+
+    if (!newTopicTitle.trim() || !newTopicContent.trim()) {
+      toast.error('Please fill in title and content');
+      return;
+    }
+
+    setIsSubmittingTopic(true);
+    try {
+      const { error } = await supabase.from('forum_topics').insert({
+        user_id: user.id,
+        category: newTopicCategory,
+        title: newTopicTitle,
+        content: newTopicContent,
+        image_urls: newTopicImages.length > 0 ? newTopicImages : null,
+      });
+
+      if (error) throw error;
+
+      toast.success('Topic created!');
+      
+      // Reset form
+      setShowNewTopicModal(false);
+      setNewTopicCategory('General');
+      setNewTopicTitle('');
+      setNewTopicContent('');
+      setNewTopicImages([]);
+      
+      // Refresh topics
+      refetch();
+    } catch (error) {
+      console.error('Error creating topic:', error);
+      toast.error('Failed to create topic');
+    } finally {
+      setIsSubmittingTopic(false);
+    }
+  };
+
   return (
     <Layout>
       <PullToRefresh onRefresh={handleRefresh}>
@@ -214,11 +326,11 @@ export function HotTopics() {
               </div>
               {user && (
                 <button
-                  onClick={() => navigate('/hot-topics/new')}
-                  className="gradient-hot text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 flex items-center gap-2"
+                  onClick={() => setShowNewTopicModal(true)}
+                  className="gradient-hot text-white w-12 h-12 rounded-full font-semibold hover:opacity-90 flex items-center justify-center shadow-lg"
+                  title="Create New Topic"
                 >
-                  <Plus className="w-5 h-5" />
-                  <span className="hidden sm:inline">New Topic</span>
+                  <Plus className="w-6 h-6" />
                 </button>
               )}
             </div>
@@ -451,6 +563,127 @@ export function HotTopics() {
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Block User
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* New Topic Modal */}
+        {showNewTopicModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Create New Topic</h2>
+                <button
+                  onClick={() => setShowNewTopicModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Category Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Category</label>
+                <select
+                  value={newTopicCategory}
+                  onChange={(e) => setNewTopicCategory(e.target.value)}
+                  className="w-full border rounded-lg p-3"
+                >
+                  {categories.filter(c => c !== 'All').map(category => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Title */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Title</label>
+                <input
+                  type="text"
+                  value={newTopicTitle}
+                  onChange={(e) => setNewTopicTitle(e.target.value)}
+                  placeholder="What's your topic about?"
+                  className="w-full border rounded-lg p-3"
+                  maxLength={200}
+                />
+              </div>
+
+              {/* Content */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Content</label>
+                <textarea
+                  value={newTopicContent}
+                  onChange={(e) => setNewTopicContent(e.target.value)}
+                  placeholder="Share your thoughts..."
+                  className="w-full border rounded-lg p-3 min-h-[150px]"
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div className="mb-4">
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-teal">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleNewTopicImageUpload}
+                    className="hidden"
+                    disabled={isUploadingImages}
+                  />
+                  <ImageIcon className="w-5 h-5" />
+                  <span>{isUploadingImages ? 'Uploading...' : 'Add Images (Optional)'}</span>
+                </label>
+
+                {newTopicImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    {newTopicImages.map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Upload ${idx + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => removeNewTopicImage(url)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowNewTopicModal(false)}
+                  className="flex-1 px-4 py-3 border rounded-lg hover:bg-gray-50"
+                  disabled={isSubmittingTopic}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitNewTopic}
+                  className="flex-1 px-4 py-3 gradient-hot text-white rounded-lg hover:opacity-90 flex items-center justify-center gap-2"
+                  disabled={isSubmittingTopic || !newTopicTitle.trim() || !newTopicContent.trim()}
+                >
+                  {isSubmittingTopic ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Posting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      <span>Post Topic</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
